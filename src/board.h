@@ -214,32 +214,32 @@
                             | PIN_MODE_INPUT(     GPIOB_IO_POWER_EN    )       \
                             | PIN_MODE_ALTERNATE( GPIOB_UART1_TX_CONN1 )       \
                             | PIN_MODE_ALTERNATE( GPIOB_UART1_RX_CONN1 )       \
-                            | PIN_MODE_INPUT(     GPIOB_I2C1_SCL       )       \
-                            | PIN_MODE_INPUT(     GPIOB_I2C1_SDA       )       \
-                            | PIN_MODE_INPUT(     GPIOB_I2C2_SCL_CONN  )       \
-                            | PIN_MODE_INPUT(     GPIOB_I2C2_SDA_CONN  )       \
+                            | PIN_MODE_ALTERNATE( GPIOB_I2C1_SCL       )       \
+                            | PIN_MODE_ALTERNATE( GPIOB_I2C1_SDA       )       \
+                            | PIN_MODE_ALTERNATE( GPIOB_I2C2_SCL_CONN  )       \
+                            | PIN_MODE_ALTERNATE( GPIOB_I2C2_SDA_CONN  )       \
                             | PIN_MODE_INPUT(     GPIOB_CAN2_RX_CONN   )       \
                             | PIN_MODE_INPUT(     GPIOB_CAN2_TX_CONN   )       \
                             | PIN_MODE_OUTPUT(    GPIOB_LED_STATUS     )       \
                             | PIN_MODE_OUTPUT(    GPIOB_LED_SDCARD     ) )
 
 
-#define VAL_GPIOB_OTYPER    ( PIN_OTYPE_PUSHPULL( GPIOB_HMC5883L_DRDY  )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_NC_1           )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_NC_2           )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_JTAG_TDO       )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_JTAG_TRST      )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_IO_POWER_EN    )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_UART1_TX_CONN1 )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_UART1_RX_CONN1 )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_I2C1_SCL       )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_I2C1_SDA       )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_I2C2_SCL_CONN  )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_I2C2_SDA_CONN  )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_CAN2_RX_CONN   )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_CAN2_TX_CONN   )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_LED_STATUS     )   \
-                            | PIN_OTYPE_PUSHPULL( GPIOB_LED_SDCARD     ) )
+#define VAL_GPIOB_OTYPER    ( PIN_OTYPE_PUSHPULL(  GPIOB_HMC5883L_DRDY  )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_NC_1           )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_NC_2           )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_JTAG_TDO       )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_JTAG_TRST      )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_IO_POWER_EN    )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_UART1_TX_CONN1 )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_UART1_RX_CONN1 )   \
+                            | PIN_OTYPE_OPENDRAIN( GPIOB_I2C1_SCL       )   \
+                            | PIN_OTYPE_OPENDRAIN( GPIOB_I2C1_SDA       )   \
+                            | PIN_OTYPE_OPENDRAIN( GPIOB_I2C2_SCL_CONN  )   \
+                            | PIN_OTYPE_OPENDRAIN( GPIOB_I2C2_SDA_CONN  )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_CAN2_RX_CONN   )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_CAN2_TX_CONN   )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_LED_STATUS     )   \
+                            | PIN_OTYPE_PUSHPULL(  GPIOB_LED_SDCARD     ) )
 
 #define VAL_GPIOB_OSPEEDR   ( PIN_OSPEED_100M( GPIOB_HMC5883L_DRDY  )      \
                             | PIN_OSPEED_100M( GPIOB_NC_1           )      \
@@ -301,10 +301,10 @@
                             | PIN_AFIO_AF( GPIOB_UART1_TX_CONN1 ,  7)      \
                             | PIN_AFIO_AF( GPIOB_UART1_RX_CONN1 ,  7) )
 
-#define VAL_GPIOB_AFRH      ( PIN_AFIO_AF( GPIOB_I2C1_SCL       ,  0)      \
-                            | PIN_AFIO_AF( GPIOB_I2C1_SDA       ,  0)      \
-                            | PIN_AFIO_AF( GPIOB_I2C2_SCL_CONN  ,  0)      \
-                            | PIN_AFIO_AF( GPIOB_I2C2_SDA_CONN  ,  0)      \
+#define VAL_GPIOB_AFRH      ( PIN_AFIO_AF( GPIOB_I2C1_SCL       ,  4)      \
+                            | PIN_AFIO_AF( GPIOB_I2C1_SDA       ,  4)      \
+                            | PIN_AFIO_AF( GPIOB_I2C2_SCL_CONN  ,  4)      \
+                            | PIN_AFIO_AF( GPIOB_I2C2_SDA_CONN  ,  4)      \
                             | PIN_AFIO_AF( GPIOB_CAN2_RX_CONN   ,  0)      \
                             | PIN_AFIO_AF( GPIOB_CAN2_TX_CONN   ,  0)      \
                             | PIN_AFIO_AF( GPIOB_LED_STATUS     ,  0)      \
