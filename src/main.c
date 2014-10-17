@@ -94,19 +94,17 @@ int main(void)
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
 
+    shellInit();
     thread_t *shelltp = NULL;
     while (true) {
         if (!shelltp) {
             if (SDU1.config->usbp->state == USB_ACTIVE) {
-                palSetPad(GPIOB, GPIOB_LED_STATUS);
                 shelltp = shellCreate(&shell_cfg1, SHELL_WA_SIZE, NORMALPRIO);
             }
-        }
-        else {
+        } else {
             if (chThdTerminatedX(shelltp)) {
                 chThdRelease(shelltp);
                 shelltp = NULL;
-                palClearPad(GPIOB, GPIOB_LED_STATUS);
             }
         }
         chThdSleepMilliseconds(500);
