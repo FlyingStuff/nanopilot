@@ -99,10 +99,10 @@
 
 // GPIO A
 
-#define VAL_GPIOA_MODER     ( PIN_MODE_ALTERNATE( GPIOA_UART4_TX_CONN2  )       \
-                            | PIN_MODE_ALTERNATE( GPIOA_UART4_RX_CONN2  )       \
-                            | PIN_MODE_ALTERNATE( GPIOA_UART2_TX_CONN3  )       \
-                            | PIN_MODE_ALTERNATE( GPIOA_UART2_RX_CONN3  )       \
+#define VAL_GPIOA_MODER     ( PIN_MODE_INPUT(     GPIOA_UART4_TX_CONN2  )       \
+                            | PIN_MODE_INPUT(     GPIOA_UART4_RX_CONN2  )       \
+                            | PIN_MODE_INPUT(     GPIOA_UART2_TX_CONN3  )       \
+                            | PIN_MODE_INPUT(     GPIOA_UART2_RX_CONN3  )       \
                             | PIN_MODE_INPUT(     GPIOA_NC_4            )       \
                             | PIN_MODE_INPUT(     GPIOA_SPI1_SCK        )       \
                             | PIN_MODE_INPUT(     GPIOA_SPI1_MISO       )       \
@@ -151,9 +151,9 @@
                             | PIN_OSPEED_100M( GPIOA_JTAG_TDI        ) )
 
 #define VAL_GPIOA_PUPDR     ( PIN_PUPDR_FLOATING( GPIOA_UART4_TX_CONN2  )   \
-                            | PIN_PUPDR_PULLUP(   GPIOA_UART4_RX_CONN2  )   \
+                            | PIN_PUPDR_FLOATING( GPIOA_UART4_RX_CONN2  )   \
                             | PIN_PUPDR_FLOATING( GPIOA_UART2_TX_CONN3  )   \
-                            | PIN_PUPDR_PULLUP(   GPIOA_UART2_RX_CONN3  )   \
+                            | PIN_PUPDR_FLOATING( GPIOA_UART2_RX_CONN3  )   \
                             | PIN_PUPDR_PULLDOWN( GPIOA_NC_4            )   \
                             | PIN_PUPDR_FLOATING( GPIOA_SPI1_SCK        )   \
                             | PIN_PUPDR_FLOATING( GPIOA_SPI1_MISO       )   \
@@ -211,12 +211,12 @@
                             | PIN_MODE_ALTERNATE( GPIOB_JTAG_TDO       )       \
                             | PIN_MODE_ALTERNATE( GPIOB_JTAG_TRST      )       \
                             | PIN_MODE_OUTPUT(    GPIOB_IO_POWER_EN    )       \
-                            | PIN_MODE_ALTERNATE( GPIOB_UART1_TX_CONN1 )       \
-                            | PIN_MODE_ALTERNATE( GPIOB_UART1_RX_CONN1 )       \
+                            | PIN_MODE_INPUT(     GPIOB_UART1_TX_CONN1 )       \
+                            | PIN_MODE_INPUT(     GPIOB_UART1_RX_CONN1 )       \
                             | PIN_MODE_ALTERNATE( GPIOB_I2C1_SCL       )       \
                             | PIN_MODE_ALTERNATE( GPIOB_I2C1_SDA       )       \
-                            | PIN_MODE_ALTERNATE( GPIOB_I2C2_SCL_CONN  )       \
-                            | PIN_MODE_ALTERNATE( GPIOB_I2C2_SDA_CONN  )       \
+                            | PIN_MODE_INPUT(     GPIOB_I2C2_SCL_CONN  )       \
+                            | PIN_MODE_INPUT(     GPIOB_I2C2_SDA_CONN  )       \
                             | PIN_MODE_ALTERNATE( GPIOB_CAN2_RX_CONN   )       \
                             | PIN_MODE_ALTERNATE( GPIOB_CAN2_TX_CONN   )       \
                             | PIN_MODE_OUTPUT(    GPIOB_LED_STATUS     )       \
@@ -256,14 +256,14 @@
                             | PIN_OSPEED_100M( GPIOB_LED_STATUS     )      \
                             | PIN_OSPEED_100M( GPIOB_LED_SDCARD     ) )
 
-#define VAL_GPIOB_PUPDR     ( PIN_PUPDR_FLOATING( GPIOB_HMC5883L_DRDY  )   \
+#define VAL_GPIOB_PUPDR     ( PIN_PUPDR_PULLDOWN( GPIOB_HMC5883L_DRDY  )   \
                             | PIN_PUPDR_PULLDOWN( GPIOB_NC_1           )   \
                             | PIN_PUPDR_PULLDOWN( GPIOB_NC_2           )   \
                             | PIN_PUPDR_FLOATING( GPIOB_JTAG_TDO       )   \
                             | PIN_PUPDR_PULLUP(   GPIOB_JTAG_TRST      )   \
                             | PIN_PUPDR_FLOATING( GPIOB_IO_POWER_EN    )   \
                             | PIN_PUPDR_FLOATING( GPIOB_UART1_TX_CONN1 )   \
-                            | PIN_PUPDR_PULLUP(   GPIOB_UART1_RX_CONN1 )   \
+                            | PIN_PUPDR_FLOATING( GPIOB_UART1_RX_CONN1 )   \
                             | PIN_PUPDR_FLOATING( GPIOB_I2C1_SCL       )   \
                             | PIN_PUPDR_FLOATING( GPIOB_I2C1_SDA       )   \
                             | PIN_PUPDR_FLOATING( GPIOB_I2C2_SCL_CONN  )   \
@@ -317,8 +317,8 @@
                             | PIN_MODE_INPUT(     GPIOC_MPU6000_FSYNC   )       \
                             | PIN_MODE_INPUT(     GPIOC_MPU6000_CS      )       \
                             | PIN_MODE_OUTPUT(    GPIOC_CAN_CONN_EN     )       \
-                            | PIN_MODE_ALTERNATE( GPIOC_UART6_TX_CONN4  )       \
-                            | PIN_MODE_ALTERNATE( GPIOC_UART6_RX_CONN4  )       \
+                            | PIN_MODE_INPUT(     GPIOC_UART6_TX_CONN4  )       \
+                            | PIN_MODE_INPUT(     GPIOC_UART6_RX_CONN4  )       \
                             | PIN_MODE_INPUT(     GPIOC_SDIO_D0         )       \
                             | PIN_MODE_INPUT(     GPIOC_SDIO_D1         )       \
                             | PIN_MODE_INPUT(     GPIOC_SDIO_D2         )       \
@@ -363,13 +363,13 @@
                             | PIN_OSPEED_100M( GPIOC_H3LIS331DL_INT  ) )
 
 #define VAL_GPIOC_PUPDR     ( PIN_PUPDR_FLOATING( GPIOC_VBAT_MON_AIN    )   \
-                            | PIN_PUPDR_FLOATING( GPIOC_SDCARD_DETECT   )   \
-                            | PIN_PUPDR_FLOATING( GPIOC_MPU6000_INT     )   \
+                            | PIN_PUPDR_PULLUP(   GPIOC_SDCARD_DETECT   )   \
+                            | PIN_PUPDR_PULLDOWN( GPIOC_MPU6000_INT     )   \
                             | PIN_PUPDR_FLOATING( GPIOC_MPU6000_FSYNC   )   \
                             | PIN_PUPDR_FLOATING( GPIOC_MPU6000_CS      )   \
                             | PIN_PUPDR_FLOATING( GPIOC_CAN_CONN_EN     )   \
                             | PIN_PUPDR_FLOATING( GPIOC_UART6_TX_CONN4  )   \
-                            | PIN_PUPDR_PULLUP(   GPIOC_UART6_RX_CONN4  )   \
+                            | PIN_PUPDR_FLOATING( GPIOC_UART6_RX_CONN4  )   \
                             | PIN_PUPDR_FLOATING( GPIOC_SDIO_D0         )   \
                             | PIN_PUPDR_FLOATING( GPIOC_SDIO_D1         )   \
                             | PIN_PUPDR_FLOATING( GPIOC_SDIO_D2         )   \
@@ -377,7 +377,7 @@
                             | PIN_PUPDR_FLOATING( GPIOC_SDIO_CK         )   \
                             | PIN_PUPDR_FLOATING( GPIOC_SDCARD_POWER_EN )   \
                             | PIN_PUPDR_FLOATING( GPIOC_VCC_A_POWER_EN  )   \
-                            | PIN_PUPDR_FLOATING( GPIOC_H3LIS331DL_INT  ) )
+                            | PIN_PUPDR_PULLDOWN( GPIOC_H3LIS331DL_INT  ) )
 
 #define VAL_GPIOC_ODR       ( PIN_ODR_LOW(  GPIOC_VBAT_MON_AIN    )          \
                             | PIN_ODR_LOW(  GPIOC_SDCARD_DETECT   )          \
@@ -527,7 +527,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void boardInit(void);
+
+
+#define boardInit() board_init()
+
+void board_init(void);
+void board_io_pwr_en(bool en);
+void board_sensor_pwr_en(bool en);
+void board_sdcard_pwr_en(bool en);
+
 #ifdef __cplusplus
 }
 #endif
