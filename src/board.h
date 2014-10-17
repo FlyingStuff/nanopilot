@@ -155,7 +155,7 @@
                             | PIN_PUPDR_PULLUP(   GPIOA_UART4_RX_CONN2  )   \
                             | PIN_PUPDR_FLOATING( GPIOA_UART2_TX_CONN3  )   \
                             | PIN_PUPDR_PULLUP(   GPIOA_UART2_RX_CONN3  )   \
-                            | PIN_PUPDR_FLOATING( GPIOA_NC_4            )   \
+                            | PIN_PUPDR_PULLDOWN( GPIOA_NC_4            )   \
                             | PIN_PUPDR_FLOATING( GPIOA_SPI1_SCK        )   \
                             | PIN_PUPDR_FLOATING( GPIOA_SPI1_MISO       )   \
                             | PIN_PUPDR_FLOATING( GPIOA_SPI1_MOSI       )   \
@@ -259,8 +259,8 @@
                             | PIN_OSPEED_100M( GPIOB_LED_SDCARD     ) )
 
 #define VAL_GPIOB_PUPDR     ( PIN_PUPDR_FLOATING( GPIOB_HMC5883L_DRDY  )   \
-                            | PIN_PUPDR_FLOATING( GPIOB_NC_1           )   \
-                            | PIN_PUPDR_FLOATING( GPIOB_NC_2           )   \
+                            | PIN_PUPDR_PULLDOWN( GPIOB_NC_1           )   \
+                            | PIN_PUPDR_PULLDOWN( GPIOB_NC_2           )   \
                             | PIN_PUPDR_FLOATING( GPIOB_JTAG_TDO       )   \
                             | PIN_PUPDR_PULLUP(   GPIOB_JTAG_TRST      )   \
                             | PIN_PUPDR_FLOATING( GPIOB_IO_POWER_EN    )   \
