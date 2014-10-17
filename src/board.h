@@ -217,8 +217,8 @@
                             | PIN_MODE_ALTERNATE( GPIOB_I2C1_SDA       )       \
                             | PIN_MODE_ALTERNATE( GPIOB_I2C2_SCL_CONN  )       \
                             | PIN_MODE_ALTERNATE( GPIOB_I2C2_SDA_CONN  )       \
-                            | PIN_MODE_INPUT(     GPIOB_CAN2_RX_CONN   )       \
-                            | PIN_MODE_INPUT(     GPIOB_CAN2_TX_CONN   )       \
+                            | PIN_MODE_ALTERNATE( GPIOB_CAN2_RX_CONN   )       \
+                            | PIN_MODE_ALTERNATE( GPIOB_CAN2_TX_CONN   )       \
                             | PIN_MODE_OUTPUT(    GPIOB_LED_STATUS     )       \
                             | PIN_MODE_OUTPUT(    GPIOB_LED_SDCARD     ) )
 
@@ -303,8 +303,8 @@
                             | PIN_AFIO_AF( GPIOB_I2C1_SDA       ,  4)      \
                             | PIN_AFIO_AF( GPIOB_I2C2_SCL_CONN  ,  4)      \
                             | PIN_AFIO_AF( GPIOB_I2C2_SDA_CONN  ,  4)      \
-                            | PIN_AFIO_AF( GPIOB_CAN2_RX_CONN   ,  0)      \
-                            | PIN_AFIO_AF( GPIOB_CAN2_TX_CONN   ,  0)      \
+                            | PIN_AFIO_AF( GPIOB_CAN2_RX_CONN   ,  9)      \
+                            | PIN_AFIO_AF( GPIOB_CAN2_TX_CONN   ,  9)      \
                             | PIN_AFIO_AF( GPIOB_LED_STATUS     ,  0)      \
                             | PIN_AFIO_AF( GPIOB_LED_SDCARD     ,  0) )
 
