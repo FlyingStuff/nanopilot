@@ -40,7 +40,7 @@
 #define GPIOB_NC_2                  2
 #define GPIOB_JTAG_TDO              3
 #define GPIOB_JTAG_TRST             4
-#define GPIOB_IO_POWER_EN           5
+#define GPIOB_IO_POWER_EN           5 // low = disable
 #define GPIOB_UART1_TX_CONN1        6
 #define GPIOB_UART1_RX_CONN1        7
 #define GPIOB_I2C1_SCL              8
@@ -57,7 +57,7 @@
 #define GPIOC_MPU6000_INT           2
 #define GPIOC_MPU6000_FSYNC         3
 #define GPIOC_MPU6000_CS            4
-#define GPIOC_CAN_CONN_EN           5
+#define GPIOC_CAN_CONN_EN           5 // high = standby
 #define GPIOC_UART6_TX_CONN4        6
 #define GPIOC_UART6_RX_CONN4        7
 #define GPIOC_SDIO_D0               8
@@ -65,8 +65,8 @@
 #define GPIOC_SDIO_D2               10
 #define GPIOC_SDIO_D3               11
 #define GPIOC_SDIO_CK               12
-#define GPIOC_SDCARD_POWER_EN       13
-#define GPIOC_VCC_A_POWER_EN        14
+#define GPIOC_SDCARD_POWER_EN       13 // high = disable
+#define GPIOC_VCC_A_POWER_EN        14 // low = disable
 #define GPIOC_H3LIS331DL_INT        15
 
 #define GPIOD_SDIO_CMD              2
@@ -211,7 +211,7 @@
                             | PIN_MODE_INPUT(     GPIOB_NC_2           )       \
                             | PIN_MODE_ALTERNATE( GPIOB_JTAG_TDO       )       \
                             | PIN_MODE_ALTERNATE( GPIOB_JTAG_TRST      )       \
-                            | PIN_MODE_INPUT(     GPIOB_IO_POWER_EN    )       \
+                            | PIN_MODE_OUTPUT(    GPIOB_IO_POWER_EN    )       \
                             | PIN_MODE_ALTERNATE( GPIOB_UART1_TX_CONN1 )       \
                             | PIN_MODE_ALTERNATE( GPIOB_UART1_RX_CONN1 )       \
                             | PIN_MODE_ALTERNATE( GPIOB_I2C1_SCL       )       \
@@ -318,7 +318,7 @@
                             | PIN_MODE_INPUT(     GPIOC_MPU6000_INT     )       \
                             | PIN_MODE_INPUT(     GPIOC_MPU6000_FSYNC   )       \
                             | PIN_MODE_INPUT(     GPIOC_MPU6000_CS      )       \
-                            | PIN_MODE_INPUT(     GPIOC_CAN_CONN_EN     )       \
+                            | PIN_MODE_OUTPUT(    GPIOC_CAN_CONN_EN     )       \
                             | PIN_MODE_ALTERNATE( GPIOC_UART6_TX_CONN4  )       \
                             | PIN_MODE_ALTERNATE( GPIOC_UART6_RX_CONN4  )       \
                             | PIN_MODE_INPUT(     GPIOC_SDIO_D0         )       \
@@ -326,8 +326,8 @@
                             | PIN_MODE_INPUT(     GPIOC_SDIO_D2         )       \
                             | PIN_MODE_INPUT(     GPIOC_SDIO_D3         )       \
                             | PIN_MODE_INPUT(     GPIOC_SDIO_CK         )       \
-                            | PIN_MODE_INPUT(     GPIOC_SDCARD_POWER_EN )       \
-                            | PIN_MODE_INPUT(     GPIOC_VCC_A_POWER_EN  )       \
+                            | PIN_MODE_OUTPUT(    GPIOC_SDCARD_POWER_EN )       \
+                            | PIN_MODE_OUTPUT(    GPIOC_VCC_A_POWER_EN  )       \
                             | PIN_MODE_INPUT(     GPIOC_H3LIS331DL_INT  ) )
 
 
@@ -382,22 +382,22 @@
                             | PIN_PUPDR_FLOATING( GPIOC_VCC_A_POWER_EN  )   \
                             | PIN_PUPDR_FLOATING( GPIOC_H3LIS331DL_INT  ) )
 
-#define VAL_GPIOC_ODR       ( PIN_ODR_LOW( GPIOC_VBAT_MON_AIN    )          \
-                            | PIN_ODR_LOW( GPIOC_SDCARD_DETECT   )          \
-                            | PIN_ODR_LOW( GPIOC_MPU6000_INT     )          \
-                            | PIN_ODR_LOW( GPIOC_MPU6000_FSYNC   )          \
-                            | PIN_ODR_LOW( GPIOC_MPU6000_CS      )          \
-                            | PIN_ODR_LOW( GPIOC_CAN_CONN_EN     )          \
-                            | PIN_ODR_LOW( GPIOC_UART6_TX_CONN4  )          \
-                            | PIN_ODR_LOW( GPIOC_UART6_RX_CONN4  )          \
-                            | PIN_ODR_LOW( GPIOC_SDIO_D0         )          \
-                            | PIN_ODR_LOW( GPIOC_SDIO_D1         )          \
-                            | PIN_ODR_LOW( GPIOC_SDIO_D2         )          \
-                            | PIN_ODR_LOW( GPIOC_SDIO_D3         )          \
-                            | PIN_ODR_LOW( GPIOC_SDIO_CK         )          \
-                            | PIN_ODR_LOW( GPIOC_SDCARD_POWER_EN )          \
-                            | PIN_ODR_LOW( GPIOC_VCC_A_POWER_EN  )          \
-                            | PIN_ODR_LOW( GPIOC_H3LIS331DL_INT  ) )
+#define VAL_GPIOC_ODR       ( PIN_ODR_LOW(  GPIOC_VBAT_MON_AIN    )          \
+                            | PIN_ODR_LOW(  GPIOC_SDCARD_DETECT   )          \
+                            | PIN_ODR_LOW(  GPIOC_MPU6000_INT     )          \
+                            | PIN_ODR_LOW(  GPIOC_MPU6000_FSYNC   )          \
+                            | PIN_ODR_LOW(  GPIOC_MPU6000_CS      )          \
+                            | PIN_ODR_HIGH( GPIOC_CAN_CONN_EN     )          \
+                            | PIN_ODR_LOW(  GPIOC_UART6_TX_CONN4  )          \
+                            | PIN_ODR_LOW(  GPIOC_UART6_RX_CONN4  )          \
+                            | PIN_ODR_LOW(  GPIOC_SDIO_D0         )          \
+                            | PIN_ODR_LOW(  GPIOC_SDIO_D1         )          \
+                            | PIN_ODR_LOW(  GPIOC_SDIO_D2         )          \
+                            | PIN_ODR_LOW(  GPIOC_SDIO_D3         )          \
+                            | PIN_ODR_LOW(  GPIOC_SDIO_CK         )          \
+                            | PIN_ODR_HIGH( GPIOC_SDCARD_POWER_EN )          \
+                            | PIN_ODR_LOW(  GPIOC_VCC_A_POWER_EN  )          \
+                            | PIN_ODR_LOW(  GPIOC_H3LIS331DL_INT  ) )
 
 #define VAL_GPIOC_AFRL      ( PIN_AFIO_AF( GPIOC_VBAT_MON_AIN    ,  0)      \
                             | PIN_AFIO_AF( GPIOC_SDCARD_DETECT   ,  0)      \
