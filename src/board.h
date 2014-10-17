@@ -104,9 +104,9 @@
                             | PIN_MODE_ALTERNATE( GPIOA_UART2_TX_CONN3  )       \
                             | PIN_MODE_ALTERNATE( GPIOA_UART2_RX_CONN3  )       \
                             | PIN_MODE_INPUT(     GPIOA_NC_4            )       \
-                            | PIN_MODE_ALTERNATE( GPIOA_SPI1_SCK        )       \
-                            | PIN_MODE_ALTERNATE( GPIOA_SPI1_MISO       )       \
-                            | PIN_MODE_ALTERNATE( GPIOA_SPI1_MOSI       )       \
+                            | PIN_MODE_INPUT(     GPIOA_SPI1_SCK        )       \
+                            | PIN_MODE_INPUT(     GPIOA_SPI1_MISO       )       \
+                            | PIN_MODE_INPUT(     GPIOA_SPI1_MOSI       )       \
                             | PIN_MODE_OUTPUT(    GPIOA_LED_HEARTBEAT   )       \
                             | PIN_MODE_INPUT(     GPIOA_USB_VBUS        )       \
                             | PIN_MODE_OUTPUT(    GPIOA_LED_ERROR       )       \
@@ -311,7 +311,7 @@
 
 // GPIO C
 
-#define VAL_GPIOC_MODER     ( PIN_MODE_INPUT(     GPIOC_VBAT_MON_AIN    )       \
+#define VAL_GPIOC_MODER     ( PIN_MODE_ANALOG(    GPIOC_VBAT_MON_AIN    )       \
                             | PIN_MODE_INPUT(     GPIOC_SDCARD_DETECT   )       \
                             | PIN_MODE_INPUT(     GPIOC_MPU6000_INT     )       \
                             | PIN_MODE_INPUT(     GPIOC_MPU6000_FSYNC   )       \
