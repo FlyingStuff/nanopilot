@@ -104,9 +104,9 @@
                             | PIN_MODE_ALTERNATE( GPIOA_UART2_TX_CONN3  )       \
                             | PIN_MODE_ALTERNATE( GPIOA_UART2_RX_CONN3  )       \
                             | PIN_MODE_INPUT(     GPIOA_NC_4            )       \
-                            | PIN_MODE_INPUT(     GPIOA_SPI1_SCK        )       \
-                            | PIN_MODE_INPUT(     GPIOA_SPI1_MISO       )       \
-                            | PIN_MODE_INPUT(     GPIOA_SPI1_MOSI       )       \
+                            | PIN_MODE_ALTERNATE( GPIOA_SPI1_SCK        )       \
+                            | PIN_MODE_ALTERNATE( GPIOA_SPI1_MISO       )       \
+                            | PIN_MODE_ALTERNATE( GPIOA_SPI1_MOSI       )       \
                             | PIN_MODE_OUTPUT(    GPIOA_LED_HEARTBEAT   )       \
                             | PIN_MODE_INPUT(     GPIOA_USB_VBUS        )       \
                             | PIN_MODE_OUTPUT(    GPIOA_LED_ERROR       )       \
@@ -115,7 +115,6 @@
                             | PIN_MODE_ALTERNATE( GPIOA_JTAG_TMS        )       \
                             | PIN_MODE_ALTERNATE( GPIOA_JTAG_TCK        )       \
                             | PIN_MODE_ALTERNATE( GPIOA_JTAG_TDI        ) )
-
 
 #define VAL_GPIOA_OTYPER    ( PIN_OTYPE_PUSHPULL( GPIOA_UART4_TX_CONN2  )   \
                             | PIN_OTYPE_PUSHPULL( GPIOA_UART4_RX_CONN2  )   \
@@ -190,9 +189,9 @@
                             | PIN_AFIO_AF( GPIOA_UART2_TX_CONN3  ,  7)      \
                             | PIN_AFIO_AF( GPIOA_UART2_RX_CONN3  ,  7)      \
                             | PIN_AFIO_AF( GPIOA_NC_4            ,  0)      \
-                            | PIN_AFIO_AF( GPIOA_SPI1_SCK        ,  0)      \
-                            | PIN_AFIO_AF( GPIOA_SPI1_MISO       ,  0)      \
-                            | PIN_AFIO_AF( GPIOA_SPI1_MOSI       ,  0) )
+                            | PIN_AFIO_AF( GPIOA_SPI1_SCK        ,  5)      \
+                            | PIN_AFIO_AF( GPIOA_SPI1_MISO       ,  5)      \
+                            | PIN_AFIO_AF( GPIOA_SPI1_MOSI       ,  5) )
 
 #define VAL_GPIOA_AFRH      ( PIN_AFIO_AF( GPIOA_LED_HEARTBEAT   ,  0)      \
                             | PIN_AFIO_AF( GPIOA_USB_VBUS        ,  0)      \
@@ -222,7 +221,6 @@
                             | PIN_MODE_INPUT(     GPIOB_CAN2_TX_CONN   )       \
                             | PIN_MODE_OUTPUT(    GPIOB_LED_STATUS     )       \
                             | PIN_MODE_OUTPUT(    GPIOB_LED_SDCARD     ) )
-
 
 #define VAL_GPIOB_OTYPER    ( PIN_OTYPE_PUSHPULL(  GPIOB_HMC5883L_DRDY  )   \
                             | PIN_OTYPE_PUSHPULL(  GPIOB_NC_1           )   \
@@ -329,7 +327,6 @@
                             | PIN_MODE_OUTPUT(    GPIOC_SDCARD_POWER_EN )       \
                             | PIN_MODE_OUTPUT(    GPIOC_VCC_A_POWER_EN  )       \
                             | PIN_MODE_INPUT(     GPIOC_H3LIS331DL_INT  ) )
-
 
 #define VAL_GPIOC_OTYPER    ( PIN_OTYPE_PUSHPULL( GPIOC_VBAT_MON_AIN    )   \
                             | PIN_OTYPE_PUSHPULL( GPIOC_SDCARD_DETECT   )   \
