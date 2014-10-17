@@ -102,6 +102,7 @@ CSRC = $(PORTSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
        $(CHIBIOS)/os/various/chprintf.c \
+       $(CHIBIOS)/os/various/shell.c \
        $(PROJSRC)
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

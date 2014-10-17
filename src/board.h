@@ -535,6 +535,7 @@ void board_init(void);
 void board_io_pwr_en(bool en);
 void board_sensor_pwr_en(bool en);
 void board_sdcard_pwr_en(bool en);
+void board_can_standby(bool en);
 
 #ifdef __cplusplus
 }

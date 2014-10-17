@@ -57,6 +57,7 @@ void board_init(void) {
     board_io_pwr_en(true);
 }
 
+
 void board_io_pwr_en(bool en)
 {
     chSysLock();
@@ -88,6 +89,7 @@ void board_io_pwr_en(bool en)
     chSysUnlock();
 }
 
+
 void board_sensor_pwr_en(bool en)
 {
     chSysLock();
@@ -113,6 +115,7 @@ void board_sensor_pwr_en(bool en)
     chSysUnlock();
 }
 
+
 void board_sdcard_pwr_en(bool en)
 {
 // GPIOC_SDIO_D0
@@ -125,7 +128,16 @@ void board_sdcard_pwr_en(bool en)
 // GPIOC_SDCARD_POWER_EN // high = disable
 }
 
+
 void board_can_standby(bool en)
 {
 // GPIOC_CAN_CONN_EN // high = standby
+}
+
+
+void panic_handler(const char *reason)
+{
+    (void)reason;
+    palSetPad(GPIOA, GPIOA_LED_ERROR);
+    while (1);
 }
