@@ -537,6 +537,13 @@ void board_sensor_pwr_en(bool en);
 void board_sdcard_pwr_en(bool en);
 void board_can_standby(bool en);
 
+#define ERROR_LEVEL_NORMAL         0
+#define ERROR_LEVEL_WARNING        1
+#define ERROR_LEVEL_CRITICAL       2
+void board_error_set(int level);
+void board_error_clear(int level);
+int board_error_get_level(void);
+
 #ifdef __cplusplus
 }
 #endif

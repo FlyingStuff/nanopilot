@@ -30,6 +30,33 @@ static THD_FUNCTION(heartbeat, arg)
     return 0;
 }
 
+/*
+ *  Error LED
+ */
+static THD_WORKING_AREA(error_led_wa, 128);
+static THD_FUNCTION(error_led, arg)
+{
+    (void)arg;
+    chRegSetThreadName("error led");
+    while (1) {
+        int err = board_error_get_level();
+        if (err == ERROR_LEVEL_WARNING) {
+            palSetPad(GPIOA, GPIOA_LED_ERROR);
+            chThdSleepMilliseconds(300);
+            palClearPad(GPIOA, GPIOA_LED_ERROR);
+            chThdSleepMilliseconds(300);
+        } else if (err == ERROR_LEVEL_CRITICAL) {
+            palSetPad(GPIOA, GPIOA_LED_ERROR);
+            chThdSleepMilliseconds(80);
+            palClearPad(GPIOA, GPIOA_LED_ERROR);
+            chThdSleepMilliseconds(80);
+        } else {
+            chThdSleepMilliseconds(100);
+        }
+    }
+    return 0;
+}
+
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 static void cmd_mem(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -85,6 +112,7 @@ int main(void)
     chSysInit();
 
     chThdCreateStatic(heartbeat_wa, sizeof(heartbeat_wa), LOWPRIO, heartbeat, NULL);
+    chThdCreateStatic(error_led_wa, sizeof(error_led_wa), LOWPRIO, error_led, NULL);
 
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);

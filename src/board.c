@@ -118,6 +118,7 @@ void board_sensor_pwr_en(bool en)
 
 void board_sdcard_pwr_en(bool en)
 {
+    (void)en;
 // GPIOC_SDIO_D0
 // GPIOC_SDIO_D1
 // GPIOC_SDIO_D2
@@ -131,6 +132,7 @@ void board_sdcard_pwr_en(bool en)
 
 void board_can_standby(bool en)
 {
+    (void)en;
 // GPIOC_CAN_CONN_EN // high = standby
 }
 
@@ -140,4 +142,39 @@ void panic_handler(const char *reason)
     (void)reason;
     palSetPad(GPIOA, GPIOA_LED_ERROR);
     while (1);
+}
+
+static int error_level_cnt[2];
+
+void board_error_set(int level)
+{
+    if (level > ERROR_LEVEL_NORMAL && level <= ERROR_LEVEL_CRITICAL) {
+        chSysLock();
+        error_level_cnt[level - 1]++;
+        chSysUnlock();
+    }
+}
+
+void board_error_clear(int level)
+{
+    if (level > ERROR_LEVEL_NORMAL && level <= ERROR_LEVEL_CRITICAL) {
+        chSysLock();
+        if (error_level_cnt[level - 1] > 0) {
+            error_level_cnt[level - 1]--;
+        }
+        chSysUnlock();
+    }
+}
+
+int board_error_get_level(void)
+{
+    int lvl = ERROR_LEVEL_NORMAL;
+    chSysLock();
+    if (error_level_cnt[ERROR_LEVEL_CRITICAL - 1]) {
+        lvl = ERROR_LEVEL_CRITICAL;
+    } else if (error_level_cnt[ERROR_LEVEL_WARNING - 1]) {
+        lvl = ERROR_LEVEL_WARNING;
+    }
+    chSysUnlock();
+    return lvl;
 }
