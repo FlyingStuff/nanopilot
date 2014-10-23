@@ -107,16 +107,16 @@ void mpu60X0_read(mpu60X0_t *dev, float *gyro, float *acc, float *temp)
     uint8_t buf[1 + 6 + 2 + 6]; // interrupt status, accel, temp, gyro
     mpu60X0_reg_read_multi(dev, MPU60X0_RA_INT_STATUS, buf, sizeof(buf));
     if (acc) {
-        acc[0] = (float)read_word(&buf[1]) * gyro_res[dev->config & 0x3];
-        acc[1] = (float)read_word(&buf[3]) * gyro_res[dev->config & 0x3];
-        acc[2] = (float)read_word(&buf[5]) * gyro_res[dev->config & 0x3];
+        acc[0] = (float)read_word(&buf[1]) * acc_res[dev->config & 0x3];
+        acc[1] = (float)read_word(&buf[3]) * acc_res[dev->config & 0x3];
+        acc[2] = (float)read_word(&buf[5]) * acc_res[dev->config & 0x3];
     }
     if (temp) {
         *temp = (float)read_word(&buf[7]) / 340 + 36.53;
     }
     if (gyro) {
-        gyro[0] = (float)read_word(&buf[9]) * acc_res[(dev->config >> 2) & 0x3];
-        gyro[1] = (float)read_word(&buf[11]) * acc_res[(dev->config >> 2) & 0x3];
-        gyro[2] = (float)read_word(&buf[13]) * acc_res[(dev->config >> 2) & 0x3];
+        gyro[0] = (float)read_word(&buf[9]) * gyro_res[(dev->config >> 2) & 0x3];
+        gyro[1] = (float)read_word(&buf[11]) * gyro_res[(dev->config >> 2) & 0x3];
+        gyro[2] = (float)read_word(&buf[13]) * gyro_res[(dev->config >> 2) & 0x3];
     }
 }
