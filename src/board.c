@@ -144,7 +144,7 @@ void panic_handler(const char *reason)
     while (1);
 }
 
-static int error_level_cnt[2];
+static int error_level_cnt[2] = {0,0};
 
 void board_error_set(int level)
 {
