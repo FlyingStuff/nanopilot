@@ -5,6 +5,7 @@
 
 #include "usbcfg.h"
 
+#include "sensors/onboardsensors.h"
 
 SerialUSBDriver SDU1;
 
@@ -121,6 +122,8 @@ int main(void)
     chThdSleepMilliseconds(1000);
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
+
+    onboard_sensors_start();
 
     shellInit();
     thread_t *shelltp = NULL;
