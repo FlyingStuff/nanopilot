@@ -60,6 +60,9 @@ void mpu60X0_init_using_spi(mpu60X0_t *dev, SPIDriver *spi_dev)
 void mpu60X0_setup(mpu60X0_t *dev, int config)
 {
     dev->config = config;
+    // reset device
+    mpu60X0_reg_write(dev, MPU60X0_RA_PWR_MGMT_1, 0x80);
+    while (mpu60X0_reg_read(dev, MPU60X0_RA_PWR_MGMT_1) & 0x80);
     // select gyro x as clock source and disable sleep
     mpu60X0_reg_write(dev, MPU60X0_RA_PWR_MGMT_1, MPU60X0_CLOCK_PLL_XGYRO);
     if (dev->spi) { // disable I2C interface
