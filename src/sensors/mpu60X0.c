@@ -14,6 +14,7 @@ static uint8_t mpu60X0_reg_read(mpu60X0_t *dev, uint8_t reg)
         spiSend(dev->spi, 1, &reg);
         spiReceive(dev->spi, 1, &ret);
         spiUnselect(dev->spi);
+        chThdSleepMilliseconds(1);
     }
     return ret;
 }
@@ -25,6 +26,7 @@ static void mpu60X0_reg_write(mpu60X0_t *dev, uint8_t reg, uint8_t val)
         uint8_t buf[] = {reg, val};
         spiSend(dev->spi, 2, buf);
         spiUnselect(dev->spi);
+        chThdSleepMilliseconds(1);
     }
 }
 
@@ -36,6 +38,7 @@ static void mpu60X0_reg_read_multi(mpu60X0_t *dev, uint8_t reg, uint8_t *buf, in
         spiSend(dev->spi, 1, &reg);
         spiReceive(dev->spi, len, buf);
         spiUnselect(dev->spi);
+        chThdSleepMilliseconds(1);
     }
 }
 
