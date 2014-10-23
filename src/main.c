@@ -48,9 +48,9 @@ static THD_FUNCTION(error_led, arg)
             chThdSleepMilliseconds(300);
         } else if (err == ERROR_LEVEL_CRITICAL) {
             palSetPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(80);
+            chThdSleepMilliseconds(50);
             palClearPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(80);
+            chThdSleepMilliseconds(50);
         } else {
             chThdSleepMilliseconds(100);
         }
@@ -94,9 +94,25 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
     } while (tp != NULL);
 }
 
+
+static void cmd_gyro(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    int i;
+    for (i = 0; i < 100; i++) {
+        chSysLock();
+        int gx = 1000*gyro[0];
+        int gy = 1000*gyro[1];
+        int gz = 1000*gyro[2];
+        chSysUnlock();
+        chprintf(chp, "gyro %d %d %d\n", gx, gy, gz);
+        chThdSleepMilliseconds(1000);
+    }
+}
+
 static const ShellCommand commands[] = {
   {"mem", cmd_mem},
   {"threads", cmd_threads},
+  {"gyro", cmd_gyro},
   {NULL, NULL}
 };
 
