@@ -26,8 +26,7 @@ static THD_FUNCTION(spi_sensors, arg)
     mpu60X0_t mpu6000;
     mpu60X0_init_using_spi(&mpu6000, &SPID1);
     if (!mpu60X0_ping(&mpu6000)) {
-        board_error_set(ERROR_LEVEL_CRITICAL);
-    } else {
+        error_set(ERROR_LEVEL_CRITICAL);
     }
     mpu60X0_setup(&mpu6000, MPU60X0_SAMPLE_RATE_DIV(10) | MPU60X0_LOW_PASS_FILTER_6);
 

@@ -142,12 +142,15 @@ void panic_handler(const char *reason)
 {
     (void)reason;
     palSetPad(GPIOA, GPIOA_LED_ERROR);
+    palClearPad(GPIOB, GPIOB_LED_STATUS);
+    palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
+    palClearPad(GPIOB, GPIOB_LED_SDCARD);
     while (1);
 }
 
 static int error_level_cnt[2] = {0,0};
 
-void board_error_set(int level)
+void error_set(int level)
 {
     if (level > ERROR_LEVEL_NORMAL && level <= ERROR_LEVEL_CRITICAL) {
         chSysLock();
@@ -156,7 +159,7 @@ void board_error_set(int level)
     }
 }
 
-void board_error_clear(int level)
+void error_clear(int level)
 {
     if (level > ERROR_LEVEL_NORMAL && level <= ERROR_LEVEL_CRITICAL) {
         chSysLock();
@@ -167,7 +170,7 @@ void board_error_clear(int level)
     }
 }
 
-int board_error_get_level(void)
+int error_level_get(void)
 {
     int lvl = ERROR_LEVEL_NORMAL;
     chSysLock();
@@ -178,4 +181,9 @@ int board_error_get_level(void)
     }
     chSysUnlock();
     return lvl;
+}
+
+bool safemode_active(void)
+{
+    return false;
 }

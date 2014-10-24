@@ -11,7 +11,14 @@ SerialUSBDriver SDU1;
 
 
 /*
- *  Heartbeat, Error LED
+ *  Heartbeat, Error LED thread
+ *
+ * The Heartbeat-LED double-flashes every second in normal mode and continuously
+ *  flashes in safemode. If the error level is above NORMAL, the Heartbeat-LED
+ *  is off and the Error-LED indicates the error level.
+ * If the error level is WARNING, the Error-LED blinks slowly (once per second)
+ * If the error level is CRITICAL, the Error-LED blinks rapidly (10 times per second)
+ * If a kernel panic occurs the Error-LED is on and all LEDs are off.
  */
 static THD_WORKING_AREA(led_task_wa, 128);
 static THD_FUNCTION(led_task, arg)
@@ -19,12 +26,12 @@ static THD_FUNCTION(led_task, arg)
     (void)arg;
     chRegSetThreadName("led_task");
     while (1) {
-        int err = board_error_get_level();
+        int err = error_level_get();
         if (err == ERROR_LEVEL_WARNING) {
             palSetPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(300);
+            chThdSleepMilliseconds(500);
             palClearPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(300);
+            chThdSleepMilliseconds(500);
         } else if (err == ERROR_LEVEL_CRITICAL) {
             palSetPad(GPIOA, GPIOA_LED_ERROR);
             chThdSleepMilliseconds(50);
@@ -38,7 +45,11 @@ static THD_FUNCTION(led_task, arg)
             palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
             chThdSleepMilliseconds(80);
             palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-            chThdSleepMilliseconds(760);
+            if (safemode_active()) {
+                chThdSleepMilliseconds(80);
+            } else {
+                chThdSleepMilliseconds(760);
+            }
         }
     }
     return 0;
