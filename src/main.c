@@ -102,7 +102,7 @@ static void cmd_gyro(BaseSequentialStream *chp, int argc, char *argv[])
         int gz = 1000*gyro[2];
         chSysUnlock();
         chprintf(chp, "gyro %d %d %d\n", gx, gy, gz);
-        chThdSleepMilliseconds(1000);
+        chThdSleepMilliseconds(10);
     }
 }
 

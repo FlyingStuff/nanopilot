@@ -14,7 +14,6 @@ static uint8_t mpu60X0_reg_read(mpu60X0_t *dev, uint8_t reg)
         spiSend(dev->spi, 1, &reg);
         spiReceive(dev->spi, 1, &ret);
         spiUnselect(dev->spi);
-        chThdSleepMilliseconds(1);
     }
     return ret;
 }
@@ -26,7 +25,6 @@ static void mpu60X0_reg_write(mpu60X0_t *dev, uint8_t reg, uint8_t val)
         uint8_t buf[] = {reg, val};
         spiSend(dev->spi, 2, buf);
         spiUnselect(dev->spi);
-        chThdSleepMilliseconds(1);
     }
 }
 
@@ -38,7 +36,6 @@ static void mpu60X0_reg_read_multi(mpu60X0_t *dev, uint8_t reg, uint8_t *buf, in
         spiSend(dev->spi, 1, &reg);
         spiReceive(dev->spi, len, buf);
         spiUnselect(dev->spi);
-        chThdSleepMilliseconds(1);
     }
 }
 
@@ -65,31 +62,39 @@ void mpu60X0_setup(mpu60X0_t *dev, int config)
     dev->config = config;
     // reset device
     mpu60X0_reg_write(dev, MPU60X0_RA_PWR_MGMT_1, 0x80);
-    while (mpu60X0_reg_read(dev, MPU60X0_RA_PWR_MGMT_1) & 0x80);
+    chThdSleepMilliseconds(1);
+    while (mpu60X0_reg_read(dev, MPU60X0_RA_PWR_MGMT_1) & 0x80)
+        chThdSleepMilliseconds(1);
+    chThdSleepMilliseconds(1);
     // select gyro x as clock source and disable sleep
     mpu60X0_reg_write(dev, MPU60X0_RA_PWR_MGMT_1, MPU60X0_CLOCK_PLL_XGYRO);
+    chThdSleepMilliseconds(1);
     if (dev->spi) { // disable I2C interface
         mpu60X0_reg_write(dev, MPU60X0_RA_USER_CTRL, MPU60X0_USERCTRL_I2C_IF_DIS_BIT);
+        chThdSleepMilliseconds(1);
     }
     // gyro full scale
     mpu60X0_reg_write(dev, MPU60X0_RA_GYRO_CONFIG, (config<<1) & 0x18);
+    chThdSleepMilliseconds(1);
     // accelerometer full scale
     mpu60X0_reg_write(dev, MPU60X0_RA_ACCEL_CONFIG, (config<<3) & 0x18);
+    chThdSleepMilliseconds(1);
     // sample rate divisor
     mpu60X0_reg_write(dev, MPU60X0_RA_SMPLRT_DIV, (config >> 8) & 0xff);
+    chThdSleepMilliseconds(1);
     // enable interrupts: data ready
     mpu60X0_reg_write(dev, MPU60X0_RA_INT_ENABLE, MPU60X0_INTERRUPT_DATA_RDY);
+    chThdSleepMilliseconds(1);
     // low pass filter config, FSYNC disabled
     mpu60X0_reg_write(dev, MPU60X0_RA_CONFIG, (config>>16) & 0x07);
+    chThdSleepMilliseconds(1);
 }
 
 bool mpu60X0_ping(mpu60X0_t *dev)
 {
-    if (mpu60X0_reg_read(dev, MPU60X0_RA_WHO_AM_I) == 0x68) {
-        return true;
-    } else {
-        return false;
-    }
+    int id = mpu60X0_reg_read(dev, MPU60X0_RA_WHO_AM_I);
+    chThdSleepMilliseconds(1);
+    return (id == 0x68);
 }
 
 bool mpu60X0_self_test(mpu60X0_t *dev)
