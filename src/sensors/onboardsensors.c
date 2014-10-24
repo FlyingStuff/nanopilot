@@ -25,29 +25,24 @@ static THD_FUNCTION(spi_sensors, arg)
     spiStart(&SPID1, &spi_cfg);
     mpu60X0_t mpu6000;
     mpu60X0_init_using_spi(&mpu6000, &SPID1);
-    chThdSleepMilliseconds(100);
-    mpu60X0_ping(&mpu6000); // fist transmission fucks up
     if (!mpu60X0_ping(&mpu6000)) {
         board_error_set(ERROR_LEVEL_CRITICAL);
     } else {
     }
-    // mpu60X0_setup(&mpu6000, MPU60X0_SAMPLE_RATE_DIV(255) | MPU60X0_LOW_PASS_FILTER_6);
-    mpu60X0_setup(&mpu6000, 0);
+    mpu60X0_setup(&mpu6000, MPU60X0_SAMPLE_RATE_DIV(10) | MPU60X0_LOW_PASS_FILTER_6);
 
     while (1) {
         // timestamp_t timestamp;
-        // while (1) {
-        //     chThdSleepMicroseconds(1000);
-        //     if (palReadPad(GPIOC, GPIOC_MPU6000_INT)) {
-        //         palSetPad(GPIOB, GPIOB_LED_STATUS);
-        //         // timestamp = timestamp_get();
-        //         break;
-        //     }
-        // }
+        while (1) {
+            chThdSleep(1);
+            if (palReadPad(GPIOC, GPIOC_MPU6000_INT)) {
+                palSetPad(GPIOB, GPIOB_LED_STATUS);
+                // timestamp = timestamp_get();
+                break;
+            }
+            palClearPad(GPIOB, GPIOB_LED_STATUS);
+        }
         mpu60X0_read(&mpu6000, gyro, acc, &temp);
-
-        chThdSleepMilliseconds(100);
-        palClearPad(GPIOB, GPIOB_LED_STATUS);
     }
     return 0;
 }
