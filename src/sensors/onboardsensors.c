@@ -35,7 +35,7 @@ static THD_FUNCTION(spi_sensors, arg)
 
     mpu60X0_setup(&mpu6000, MPU60X0_SAMPLE_RATE_DIV(0) | MPU60X0_LOW_PASS_FILTER_6);
 
-    /* speed up SPI for sensor register reads (max 24MHz)
+    /* speed up SPI for sensor register reads (max 20MHz)
      * APB2 @ 84MHz / 8 = 10.5MHz
      */
     spi_cfg.cr1 = SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA;
