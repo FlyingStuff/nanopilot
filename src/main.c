@@ -11,34 +11,13 @@ SerialUSBDriver SDU1;
 
 
 /*
- *  Heartbeat
+ *  Heartbeat, Error LED
  */
-static THD_WORKING_AREA(heartbeat_wa, 128);
-static THD_FUNCTION(heartbeat, arg)
+static THD_WORKING_AREA(led_task_wa, 128);
+static THD_FUNCTION(led_task, arg)
 {
     (void)arg;
-    chRegSetThreadName("heartbeat");
-    while (1) {
-        palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(80);
-        palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(80);
-        palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(80);
-        palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(760);
-    }
-    return 0;
-}
-
-/*
- *  Error LED
- */
-static THD_WORKING_AREA(error_led_wa, 128);
-static THD_FUNCTION(error_led, arg)
-{
-    (void)arg;
-    chRegSetThreadName("error led");
+    chRegSetThreadName("led_task");
     while (1) {
         int err = board_error_get_level();
         if (err == ERROR_LEVEL_WARNING) {
@@ -52,7 +31,14 @@ static THD_FUNCTION(error_led, arg)
             palClearPad(GPIOA, GPIOA_LED_ERROR);
             chThdSleepMilliseconds(50);
         } else {
-            chThdSleepMilliseconds(100);
+            palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
+            chThdSleepMilliseconds(80);
+            palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
+            chThdSleepMilliseconds(80);
+            palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
+            chThdSleepMilliseconds(80);
+            palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
+            chThdSleepMilliseconds(760);
         }
     }
     return 0;
@@ -128,8 +114,7 @@ int main(void)
     halInit();
     chSysInit();
 
-    chThdCreateStatic(heartbeat_wa, sizeof(heartbeat_wa), LOWPRIO, heartbeat, NULL);
-    chThdCreateStatic(error_led_wa, sizeof(error_led_wa), LOWPRIO, error_led, NULL);
+    chThdCreateStatic(led_task_wa, sizeof(led_task_wa), LOWPRIO, led_task, NULL);
 
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);
