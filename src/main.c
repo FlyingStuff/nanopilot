@@ -5,53 +5,51 @@
 
 #include "usbcfg.h"
 
+#include "sensors/onboardsensors.h"
 
 SerialUSBDriver SDU1;
 
 
 /*
- *  Heartbeat
+ *  Heartbeat, Error LED thread
+ *
+ * The Heartbeat-LED double-flashes every second in normal mode and continuously
+ *  flashes in safemode. If the error level is above NORMAL, the Heartbeat-LED
+ *  is off and the Error-LED indicates the error level.
+ * If the error level is WARNING, the Error-LED blinks slowly (once per second)
+ * If the error level is CRITICAL, the Error-LED blinks rapidly (10 times per second)
+ * If a kernel panic occurs the Error-LED is on and all LEDs are off.
  */
-static THD_WORKING_AREA(heartbeat_wa, 128);
-static THD_FUNCTION(heartbeat, arg)
+static THD_WORKING_AREA(led_task_wa, 128);
+static THD_FUNCTION(led_task, arg)
 {
     (void)arg;
-    chRegSetThreadName("heartbeat");
+    chRegSetThreadName("led_task");
     while (1) {
-        palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(80);
-        palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(80);
-        palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(80);
-        palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(760);
-    }
-    return 0;
-}
-
-/*
- *  Error LED
- */
-static THD_WORKING_AREA(error_led_wa, 128);
-static THD_FUNCTION(error_led, arg)
-{
-    (void)arg;
-    chRegSetThreadName("error led");
-    while (1) {
-        int err = board_error_get_level();
+        int err = error_level_get();
         if (err == ERROR_LEVEL_WARNING) {
             palSetPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(300);
+            chThdSleepMilliseconds(500);
             palClearPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(300);
+            chThdSleepMilliseconds(500);
         } else if (err == ERROR_LEVEL_CRITICAL) {
             palSetPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(80);
+            chThdSleepMilliseconds(50);
             palClearPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(80);
+            chThdSleepMilliseconds(50);
         } else {
-            chThdSleepMilliseconds(100);
+            palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
+            chThdSleepMilliseconds(80);
+            palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
+            chThdSleepMilliseconds(80);
+            palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
+            chThdSleepMilliseconds(80);
+            palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
+            if (safemode_active()) {
+                chThdSleepMilliseconds(80);
+            } else {
+                chThdSleepMilliseconds(760);
+            }
         }
     }
     return 0;
@@ -93,9 +91,25 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
     } while (tp != NULL);
 }
 
+
+static void cmd_gyro(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    int i;
+    for (i = 0; i < 100; i++) {
+        chSysLock();
+        int gx = 1000*gyro[0];
+        int gy = 1000*gyro[1];
+        int gz = 1000*gyro[2];
+        chSysUnlock();
+        chprintf(chp, "gyro %d %d %d\n", gx, gy, gz);
+        chThdSleepMilliseconds(10);
+    }
+}
+
 static const ShellCommand commands[] = {
   {"mem", cmd_mem},
   {"threads", cmd_threads},
+  {"gyro", cmd_gyro},
   {NULL, NULL}
 };
 
@@ -111,8 +125,7 @@ int main(void)
     halInit();
     chSysInit();
 
-    chThdCreateStatic(heartbeat_wa, sizeof(heartbeat_wa), LOWPRIO, heartbeat, NULL);
-    chThdCreateStatic(error_led_wa, sizeof(error_led_wa), LOWPRIO, error_led, NULL);
+    chThdCreateStatic(led_task_wa, sizeof(led_task_wa), LOWPRIO, led_task, NULL);
 
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);
@@ -121,6 +134,8 @@ int main(void)
     chThdSleepMilliseconds(1000);
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
+
+    onboard_sensors_start();
 
     shellInit();
     thread_t *shelltp = NULL;

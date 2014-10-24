@@ -540,9 +540,11 @@ void board_can_standby(bool en);
 #define ERROR_LEVEL_NORMAL         0
 #define ERROR_LEVEL_WARNING        1
 #define ERROR_LEVEL_CRITICAL       2
-void board_error_set(int level);
-void board_error_clear(int level);
-int board_error_get_level(void);
+void error_set(int level);
+void error_clear(int level);
+int error_level_get(void);
+
+bool safemode_active(void);
 
 #ifdef __cplusplus
 }
