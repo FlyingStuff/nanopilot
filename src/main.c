@@ -3,7 +3,7 @@
 #include "chprintf.h"
 #include "shell.h"
 
-#include "ms5611.h"
+#include "sensors/ms5611.h"
 #include "usbcfg.h"
 
 #include "sensors/onboardsensors.h"
