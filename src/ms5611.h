@@ -38,7 +38,7 @@ int ms5611_i2c_init(ms5611_t *ms5611, I2CDriver *driver, int csb_pin_value);
 int ms5611_reset(ms5611_t *ms5611);
 
 /** Read the PROM calibration values.
- *  Returns 1 if CRC check failed. */
+ *  Returns 0 if read was successful. */
 int ms5611_prom_read(ms5611_t *ms5611);
 
 /** Measure the pressure with the given osr over sampling rate.
