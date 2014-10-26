@@ -3,6 +3,7 @@
 #include "chprintf.h"
 #include "shell.h"
 
+#include "ms5611.h"
 #include "usbcfg.h"
 
 #include "sensors/onboardsensors.h"
@@ -106,10 +107,59 @@ static void cmd_gyro(BaseSequentialStream *chp, int argc, char *argv[])
     }
 }
 
+static const I2CConfig i2c_cfg = {
+    .op_mode = OPMODE_I2C,
+    .clock_speed = 400000,
+    .duty_cycle = FAST_DUTY_CYCLE_2
+};
+
+static void cmd_barometer(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void) argc;
+    (void) argv;
+    ms5611_t barometer;
+
+    I2CDriver *driver = &I2CD1;
+
+    i2cStart(driver, &i2c_cfg);
+
+    chprintf(chp, "ms5611 init\r\n");
+
+    int init = ms5611_i2c_init(&barometer, driver, 0);
+
+    if (init != 0) {
+        i2cflags_t flags = i2cGetErrors(driver);
+        chprintf(chp, "ms5611 init failed: %d, %u\r\n", init, (uint32_t)flags);
+        i2cStop(driver);
+        return;
+    } else {
+        chprintf(chp, "ms5611 init succeeded\r\n");
+    }
+
+    chThdSleepMilliseconds(100);
+
+    int i = 50;
+    while (i-- > 0) {
+        uint32_t raw_t, raw_p, p;
+        int32_t t;
+
+        raw_t = ms5611_temp_adc_read(&barometer, MS5611_OSR_4096);
+        raw_p = ms5611_press_adc_read(&barometer, MS5611_OSR_4096);
+        p = ms5611_calc_press(&barometer, raw_p, raw_t, &t);
+
+        chprintf(chp, "pressure: %u, temperature: %u\r\n", p, t);
+
+        chThdSleepMilliseconds(100);
+    }
+
+    i2cStop(driver);
+}
+
 static const ShellCommand commands[] = {
   {"mem", cmd_mem},
   {"threads", cmd_threads},
   {"gyro", cmd_gyro},
+  {"baro", cmd_barometer},
   {NULL, NULL}
 };
 
