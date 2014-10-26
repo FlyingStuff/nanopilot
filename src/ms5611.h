@@ -1,4 +1,7 @@
 
+#ifndef MS5611_H
+#define MS5611_H
+
 #include <stdint.h>
 #include "hal.h"
 
@@ -53,3 +56,5 @@ uint32_t ms5611_calc_press(ms5611_t *ms5611, uint32_t raw_p, uint32_t raw_t, int
 
 /** Calculates temperature from adc value. */
 int32_t ms5611_calc_temp(ms5611_t *ms5611, uint32_t raw_t);
+
+#endif /* MS5611_H */
