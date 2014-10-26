@@ -1,7 +1,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-// #include <platform-abstraction/threading.h>
 #include "ms5611.h"
 
 #define PROM_SENS       0
@@ -22,13 +21,14 @@
 /* global variables */
 const uint16_t ms5611_osr_dly_us[] = {600, 1170, 2280, 4540, 9040};
 
-static uint16_t ms5611_prom_read_word_i2c(ms5611_t *ms5611, uint8_t addr);
-static uint16_t ms5611_prom_read_word(ms5611_t *ms5611, uint8_t addr);
+static int ms5611_prom_read_word_i2c(ms5611_t *ms5611, uint8_t addr, uint16_t *data);
+static int ms5611_prom_read_word(ms5611_t *ms5611, uint8_t addr, uint16_t *data);
 static uint16_t ms5611_crc4_update(uint16_t crc, uint16_t data);
 static uint32_t ms5611_adc_read_i2c(ms5611_t *ms5611, uint8_t cmd, uint8_t osr);
 
 int ms5611_i2c_init(ms5611_t *ms5611, I2CDriver *driver, int csb_pin_value)
 {
+    int err;
     uint8_t addr;
 
     ms5611->mode = ms5611_i2c;
@@ -40,55 +40,74 @@ int ms5611_i2c_init(ms5611_t *ms5611, I2CDriver *driver, int csb_pin_value)
         addr = 0x77;
     }
 
-    // i2c_device_init(&ms5611->dev.i2c, bus, addr);
     ms5611->dev.i2c.driver = driver;
     ms5611->dev.i2c.address = addr;
 
-    ms5611_reset(ms5611);
+    err = ms5611_reset(ms5611);
 
-    int ret = ms5611_prom_read(ms5611);
+    chThdSleepMilliseconds(5);
 
-    return ret;
+    if (err) {
+        return err; /* error */
+    }
+
+    err = ms5611_prom_read(ms5611);
+
+    return err;
 }
 
-void ms5611_reset(ms5611_t *ms5611)
+int ms5611_reset(ms5611_t *ms5611)
 {
+    int err = 0;
     uint8_t reset_cmd = MS5611_CMD_RESET;
+
     if (ms5611->mode == ms5611_i2c) {
         uint8_t addr = ms5611->dev.i2c.address;
         I2CDriver *driver = ms5611->dev.i2c.driver;
 
+        msg_t msg;
         i2cAcquireBus(driver);
-
-        i2cMasterTransmitTimeout(driver, addr, &reset_cmd, 1, NULL, 0, TIME_INFINITE);
-
+        msg = i2cMasterTransmit(driver, addr, &reset_cmd, 1, NULL, 0);
         i2cReleaseBus(driver);
+
+        if (msg != MSG_OK) {
+            err = 1;
+        }
     }
+
+    return err;
 }
 
-static uint16_t ms5611_prom_read_word_i2c(ms5611_t *ms5611, uint8_t addr)
+static int ms5611_prom_read_word_i2c(ms5611_t *ms5611, uint8_t addr, uint16_t *data)
 {
     uint8_t buf[2];
+    msg_t msg;
 
     uint8_t i2c_addr = ms5611->dev.i2c.address;
     I2CDriver *driver = ms5611->dev.i2c.driver;
 
     i2cAcquireBus(driver);
 
-    i2cMasterTransmitTimeout(driver, i2c_addr, &addr, 1, buf, 2, TIME_INFINITE);
+    msg = i2cMasterTransmit(driver, i2c_addr, &addr, 1, buf, 2);
 
     i2cReleaseBus(driver);
 
-    return (uint16_t) buf[1] | (buf[0] << 8);
+    if (msg != MSG_OK) {
+        return 1;
+    }
+
+    *data = (uint16_t) buf[1] | (buf[0] << 8);
+
+    return 0;
 }
 
-static uint16_t ms5611_prom_read_word(ms5611_t *ms5611, uint8_t addr)
+static int ms5611_prom_read_word(ms5611_t *ms5611, uint8_t addr, uint16_t *data)
 {
     if (ms5611->mode == ms5611_i2c) {
-        return ms5611_prom_read_word_i2c(ms5611, addr);
+        return ms5611_prom_read_word_i2c(ms5611, addr, data);
     } else {
-        // return ms5611_prom_read_word_spi(ms5611, addr);
-        return 0;
+        // return ms5611_prom_read_word_spi(ms5611, addr, data);
+        return 1;
     }
 }
 
@@ -128,21 +147,28 @@ int ms5611_prom_read(ms5611_t *ms5611)
     addr = MS5611_CMD_PROM_READ_BASE;
 
     /* read reserved 16 bit for CRC */
-    uint16_t d = ms5611_prom_read_word(ms5611, addr);
+    uint16_t d;
+    if (ms5611_prom_read_word(ms5611, addr, &d)) {
+        return 1;   /* read failed */
+    }
     crc = ms5611_crc4_update(0, d);
     addr += 2;
 
     /* read PROM memory */
     uint8_t i;
     for (i = 0; i < 6; i++) {
-        d = ms5611_prom_read_word(ms5611, addr);
+        if (ms5611_prom_read_word(ms5611, addr, &d)) {
+            return 1;   /* read failed */
+        }
         crc = ms5611_crc4_update(crc, d);
         ms5611->prom[i] = d;
         addr += 2;
     }
 
     /* read CRC word */
-    crc_read = ms5611_prom_read_word(ms5611, addr);
+    if (ms5611_prom_read_word(ms5611, addr, &crc_read)) {
+        return 1;   /* read failed */
+    }
     /* mask out CRC byte for calcualtion */
     crc = ms5611_crc4_update(crc, crc_read & 0xff00);
     /* get 4-bit CRC */
@@ -150,7 +176,7 @@ int ms5611_prom_read(ms5611_t *ms5611)
 
     /* check 4-bit CRC */
     if ((crc_read & 0x000f) != crc) {
-        return 1;
+        return 2;   /* CRC error */
     }
 
     return 0;
@@ -159,14 +185,19 @@ int ms5611_prom_read(ms5611_t *ms5611)
 static uint32_t ms5611_adc_read_i2c(ms5611_t *ms5611, uint8_t cmd, uint8_t osr)
 {
     uint8_t buf[3];
-
     uint8_t addr = ms5611->dev.i2c.address;
     I2CDriver *driver = ms5611->dev.i2c.driver;
+    msg_t msg;
 
     i2cAcquireBus(driver);
 
     /* send measurement command */
-    i2cMasterTransmitTimeout(driver, addr, &cmd, 1, NULL, 0, TIME_INFINITE);
+    msg = i2cMasterTransmit(driver, addr, &cmd, 1, NULL, 0);
+
+    if (msg != MSG_OK) {
+        i2cReleaseBus(driver);
+        return 0;
+    }
 
     /* sleep for needed conversion time */
     chThdSleepMilliseconds((ms5611_osr_dly_us[osr] - 1) / 1000 + 1);
@@ -174,9 +205,13 @@ static uint32_t ms5611_adc_read_i2c(ms5611_t *ms5611, uint8_t cmd, uint8_t osr)
     cmd = MS5611_CMD_ADC_READ;
 
     /* send ADC read command and read result */
-    i2cMasterTransmitTimeout(driver, addr, &cmd, 1, buf, 3, TIME_INFINITE);
+    msg = i2cMasterTransmit(driver, addr, &cmd, 1, buf, 3);
 
     i2cReleaseBus(driver);
+
+    if (msg != MSG_OK) {
+        return 0;
+    }
 
     /* setup 24bit result, MSByte received first */
     return (uint32_t) buf[2] | (buf[1] << 8) | (buf[0] << 16);
