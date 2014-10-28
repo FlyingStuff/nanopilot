@@ -97,9 +97,9 @@ static void cmd_gyro(BaseSequentialStream *chp, int argc, char *argv[])
     int i;
     for (i = 0; i < 100; i++) {
         chSysLock();
-        int gx = 1000*gyro[0];
-        int gy = 1000*gyro[1];
-        int gz = 1000*gyro[2];
+        int gx = 1000*mpu_gyro_sample.rate[0];
+        int gy = 1000*mpu_gyro_sample.rate[1];
+        int gz = 1000*mpu_gyro_sample.rate[2];
         chSysUnlock();
         chprintf(chp, "gyro %d %d %d\n", gx, gy, gz);
         chThdSleepMilliseconds(10);

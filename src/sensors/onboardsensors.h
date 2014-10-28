@@ -1,9 +1,10 @@
 #ifndef ONBOARDSENSORS_H
 #define ONBOARDSENSORS_H
 
-extern float gyro[3];
-extern float acc[3];
-extern float temp;
+#include "imu.h"
+
+extern rate_gyro_sample_t mpu_gyro_sample;
+extern accelerometer_sample_t mpu_acc_sample;
 
 void onboard_sensors_start(void);
 

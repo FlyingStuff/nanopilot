@@ -1,11 +1,12 @@
+#include <math.h>
 #include <ch.h>
 #include "mpu60X0.h"
 
+#include "imu.h"
 #include "exti.h"
 
-float gyro[3];
-float acc[3];
-float temp;
+rate_gyro_sample_t mpu_gyro_sample;
+accelerometer_sample_t mpu_acc_sample;
 
 #define SENSOR_INTERRUPT_EVENT 1
 
@@ -39,7 +40,17 @@ static THD_FUNCTION(spi_sensors, arg)
         return 0;
     }
 
-    mpu60X0_setup(&mpu6000, MPU60X0_SAMPLE_RATE_DIV(0) | MPU60X0_LOW_PASS_FILTER_6);
+    mpu60X0_setup(&mpu6000, MPU60X0_SAMPLE_RATE_DIV(0) | MPU60X0_ACC_FULL_RANGE_2G
+        | MPU60X0_GYRO_FULL_RANGE_500DPS | MPU60X0_LOW_PASS_FILTER_6);
+
+    static rate_gyro_t mpu_gyro = {
+        .device = "MPU6000", .full_scale_range = {500*M_PI/360, 500*M_PI/360, 500*M_PI/360},
+        .noise_stddev = {NAN, NAN, NAN}, .update_rate = 8000, .health = SENSOR_HEALTH_OK };
+    static accelerometer_t mpu_acc = {
+        .device = "MPU6000", .full_scale_range = {2*9.81, 2*9.81, 2*9.81},
+        .noise_stddev = {NAN, NAN, NAN}, .update_rate = 8000, .health = SENSOR_HEALTH_OK };;
+    mpu_gyro_sample.sensor = &mpu_gyro;
+    mpu_acc_sample.sensor = &mpu_acc;
 
     /* speed up SPI for sensor register reads (max 20MHz)
      * APB2 @ 84MHz / 8 = 10.5MHz
@@ -53,9 +64,17 @@ static THD_FUNCTION(spi_sensors, arg)
     }
     while (1) {
         // timestamp_t timestamp;
-        palTogglePad(GPIOB, GPIOB_LED_STATUS);
+        float gyro[3], acc[3], temp;
         chEvtWaitAny(SENSOR_INTERRUPT_EVENT);
         mpu60X0_read(&mpu6000, gyro, acc, &temp);
+        chSysLock();
+        mpu_gyro_sample.rate[0] = gyro[0];
+        mpu_gyro_sample.rate[1] = gyro[1];
+        mpu_gyro_sample.rate[2] = gyro[2];
+        mpu_acc_sample.acceleration[0] = acc[0];
+        mpu_acc_sample.acceleration[1] = acc[1];
+        mpu_acc_sample.acceleration[2] = acc[2];
+        chSysUnlock();
     }
     return 0;
 }
