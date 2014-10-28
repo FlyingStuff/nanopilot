@@ -1,17 +1,23 @@
 #include <ch.h>
 #include "mpu60X0.h"
 
+#include "exti.h"
+
 float gyro[3];
 float acc[3];
 float temp;
 
+#define SENSOR_INTERRUPT_EVENT 1
 
 static THD_WORKING_AREA(spi_sensors_wa, 128);
 static THD_FUNCTION(spi_sensors, arg)
 {
     (void)arg;
     chRegSetThreadName("onboard-sensors-spi");
-
+    event_listener_t sensor_int;
+    chEvtRegisterMaskWithFlags(&exti_events, &sensor_int,
+                               (eventmask_t)SENSOR_INTERRUPT_EVENT,
+                               (eventflags_t)EXTI_EVENT_MPU6000_INT);
     /*
      * SPI1 configuration structure for MPU6000.
      * SPI1 is on APB2 @ 84MHz / 128 = 656.25kHz
@@ -47,15 +53,8 @@ static THD_FUNCTION(spi_sensors, arg)
     }
     while (1) {
         // timestamp_t timestamp;
-        while (1) {
-            // chThdSleep(1); // TODO implement interrupt signal
-            if (palReadPad(GPIOC, GPIOC_MPU6000_INT)) {
-                palSetPad(GPIOB, GPIOB_LED_STATUS);
-                // timestamp = timestamp_get();
-                break;
-            }
-            palClearPad(GPIOB, GPIOB_LED_STATUS);
-        }
+        palTogglePad(GPIOB, GPIOB_LED_STATUS);
+        chEvtWaitAny(SENSOR_INTERRUPT_EVENT);
         mpu60X0_read(&mpu6000, gyro, acc, &temp);
     }
     return 0;
@@ -63,5 +62,6 @@ static THD_FUNCTION(spi_sensors, arg)
 
 void onboard_sensors_start(void)
 {
+    exti_setup();
     chThdCreateStatic(spi_sensors_wa, sizeof(spi_sensors_wa), LOWPRIO, spi_sensors, NULL);
 }
