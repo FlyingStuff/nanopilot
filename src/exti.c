@@ -5,6 +5,7 @@
 event_source_t exti_events;
 
 static void gpio_exti_callback(EXTDriver *extp, expchannel_t channel) {
+    (void)extp;
     if (channel == GPIOB_HMC5883L_DRDY) {
         chSysLockFromISR();
         chEvtBroadcastFlagsI(&exti_events, EXTI_EVENT_HMC5883L_DRDY);
