@@ -14,7 +14,7 @@ static THD_FUNCTION(spi_sensors, arg)
 {
     (void)arg;
     chRegSetThreadName("onboard-sensors-spi");
-    event_listener_t sensor_int;
+    static event_listener_t sensor_int;
     chEvtRegisterMaskWithFlags(&exti_events, &sensor_int,
                                (eventmask_t)SENSOR_INTERRUPT_EVENT,
                                (eventflags_t)EXTI_EVENT_MPU6000_INT);
