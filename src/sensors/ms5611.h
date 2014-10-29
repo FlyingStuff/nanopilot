@@ -11,6 +11,9 @@
 #define MS5611_OSR_2048     0x03
 #define MS5611_OSR_4096     0x04
 
+#define MS5611_ADC_PRESS    0
+#define MS5611_ADC_TEMP     1
+
 #define MS5611_I2C_ADDR1    0x76
 #define MS5611_I2C_ADDR2    0x77
 
@@ -41,13 +44,15 @@ int ms5611_reset(ms5611_t *ms5611);
  *  Returns 0 if read was successful. */
 int ms5611_prom_read(ms5611_t *ms5611);
 
-/** Measure the pressure with the given osr over sampling rate.
- *  Returns 0 if measurement failed. */
-uint32_t ms5611_press_adc_read(ms5611_t *ms5611, uint8_t osr);
+/** Starts an ADC conversion with oversampling rate osr.
+ * Returns conversion time in microseconds.
+ * Time value is negative if command failed. */
+int16_t ms5611_adc_start(ms5611_t *ms5611, uint8_t src, uint8_t osr);
 
-/** Measure the temperature with the given osr over sampling rate.
- *  Returns 0 if measurement failed. */
-uint32_t ms5611_temp_adc_read(ms5611_t *ms5611, uint8_t osr);
+/** Reads the ADC result.
+ * Data is 0 if conversion is not finished.
+ * Returns 0 if successful. */
+int ms5611_adc_read(ms5611_t *ms5611, uint32_t *data);
 
 /** Calculates pressure from pressure and temperature adc values.
  *  Optional: Save temperature in 1/100 deg Celsius to p_temp pointer.
