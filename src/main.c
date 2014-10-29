@@ -122,6 +122,7 @@ static void cmd_barometer(BaseSequentialStream *chp, int argc, char *argv[])
     I2CDriver *driver = &I2CD1;
 
     i2cStart(driver, &i2c_cfg);
+    i2cAcquireBus(driver);
 
     chprintf(chp, "ms5611 init\r\n");
 
@@ -130,6 +131,7 @@ static void cmd_barometer(BaseSequentialStream *chp, int argc, char *argv[])
     if (init != 0) {
         i2cflags_t flags = i2cGetErrors(driver);
         chprintf(chp, "ms5611 init failed: %d, %u\r\n", init, (uint32_t)flags);
+        i2cReleaseBus(driver);
         i2cStop(driver);
         return;
     } else {
@@ -140,18 +142,36 @@ static void cmd_barometer(BaseSequentialStream *chp, int argc, char *argv[])
 
     int i = 50;
     while (i-- > 0) {
-        uint32_t raw_t, raw_p, p;
-        int32_t t;
+        uint32_t raw_t, raw_p, press;
+        int32_t temp;
+        int16_t t;
 
-        raw_t = ms5611_temp_adc_read(&barometer, MS5611_OSR_4096);
-        raw_p = ms5611_press_adc_read(&barometer, MS5611_OSR_4096);
-        p = ms5611_calc_press(&barometer, raw_p, raw_t, &t);
+        t = ms5611_adc_start(&barometer, MS5611_ADC_TEMP, MS5611_OSR_4096);
+        if (t < 0) {
+            continue;
+        }
 
-        chprintf(chp, "pressure: %u, temperature: %u\r\n", p, t);
+        chThdSleepMilliseconds((t - 1)/1000 + 1);
+
+        ms5611_adc_read(&barometer, &raw_t);
+
+        t = ms5611_adc_start(&barometer, MS5611_ADC_PRESS, MS5611_OSR_4096);
+        if (t < 0) {
+            continue;
+        }
+
+        chThdSleepMilliseconds((t - 1)/1000 + 1);
+
+        ms5611_adc_read(&barometer, &raw_p);
+
+        press = ms5611_calc_press(&barometer, raw_p, raw_t, &temp);
+
+        chprintf(chp, "pressure: %u, temperature: %u\r\n", press, temp);
 
         chThdSleepMilliseconds(100);
     }
 
+    i2cReleaseBus(driver);
     i2cStop(driver);
 }
 
