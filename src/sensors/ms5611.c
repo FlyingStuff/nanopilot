@@ -19,7 +19,7 @@
 #define SQUARE(x) ((x)*(x))
 
 /* global variables */
-const uint16_t ms5611_osr_dly_us[] = {600, 1170, 2280, 4540, 9040};
+static const uint16_t ms5611_osr_dly_us[] = {600, 1170, 2280, 4540, 9040};
 
 static int ms5611_command_i2c(ms5611_t *ms5611, uint8_t cmd, uint32_t *data, uint8_t len);
 static int ms5611_command(ms5611_t *ms5611, uint8_t cmd, uint32_t *data, uint8_t len);
