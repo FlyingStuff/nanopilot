@@ -15,6 +15,12 @@
 
 #define STM32F405xx
 
+
+#define UART_CONN1 SD1
+#define UART_CONN2 SD4
+#define UART_CONN3 SD2
+#define UART_CONN4 SD6
+
 /*
  * IO pins assignments.
  */

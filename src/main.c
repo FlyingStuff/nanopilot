@@ -3,9 +3,13 @@
 #include "chprintf.h"
 #include "shell.h"
 
+#include <string.h>
+
 #include "usbcfg.h"
 
 #include "sensors/onboardsensors.h"
+#include "serial-datagram/serial_datagram.h"
+#include "cmp/cmp.h"
 
 SerialUSBDriver SDU1;
 
@@ -94,6 +98,8 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
 
 static void cmd_gyro(BaseSequentialStream *chp, int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
     int i;
     for (i = 0; i < 100; i++) {
         chSysLock();
@@ -119,6 +125,43 @@ static const ShellConfig shell_cfg1 = {
 };
 
 
+static void _stream_imu_values_sndfn(void *arg, const void *p, size_t len)
+{
+    chSequentialStreamWrite((BaseSequentialStream*)arg, (const uint8_t*)p, len);
+}
+
+static size_t _stream_imu_values_cmp_writer(cmp_ctx_t *ctx, const void *data, size_t count) {
+    char **writep = (char**)ctx->buf;
+    memcpy(*writep, data, count);
+    *writep += count;
+    return count;
+}
+
+void stream_imu_values(BaseSequentialStream *out)
+{
+    static char dtgrm[32] = {'\\', 'o', 0};
+    char *writep = &dtgrm[0];
+    cmp_ctx_t cmp;
+    cmp_init(&cmp, &writep, NULL, _stream_imu_values_cmp_writer);
+    while (1) {
+        chSysLock();
+        float gx = mpu_gyro_sample.rate[0];
+        float gy = mpu_gyro_sample.rate[1];
+        float gz = mpu_gyro_sample.rate[2];
+        chSysUnlock();
+        bool err = false;
+        err = err && !cmp_write_array(&cmp, 3);
+        err = err && !cmp_write_float(&cmp, gx);
+        err = err && !cmp_write_float(&cmp, gy);
+        err = err && !cmp_write_float(&cmp, gz);
+        if (!err) {
+            serial_datagram_send(dtgrm, writep - &dtgrm[0], _stream_imu_values_sndfn, out);
+        }
+        chThdSleepMilliseconds(1);
+    }
+}
+
+
 
 int main(void)
 {
@@ -136,6 +179,12 @@ int main(void)
     usbConnectBus(serusbcfg.usbp);
 
     onboard_sensors_start();
+
+    sdStart(&UART_CONN1, NULL);
+    // while (SDU1.config->usbp->state != USB_ACTIVE) {
+    //     chThdSleepMilliseconds(10);
+    // }
+    stream_imu_values((BaseSequentialStream*)&UART_CONN1);
 
     shellInit();
     thread_t *shelltp = NULL;
