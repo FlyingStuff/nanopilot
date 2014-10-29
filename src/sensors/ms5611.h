@@ -37,29 +37,30 @@ int ms5611_i2c_init(ms5611_t *ms5611, I2CDriver *driver, int csb_pin_value);
 /** Initializes MS5611 device for SPI */
 // void ms5611_spi_init(ms5611_t *ms5611, spi_dev_t *intf);
 
-/** Resets the MS5611 device */
+/** Resets the MS5611 device.
+ * Returns 1 on error accessing the sensor. */
 int ms5611_reset(ms5611_t *ms5611);
 
 /** Read the PROM calibration values.
- *  Returns 0 if read was successful. */
+ *  Returns 1 on error accessing the sensor. */
 int ms5611_prom_read(ms5611_t *ms5611);
 
 /** Starts an ADC conversion with oversampling rate osr.
- * Returns conversion time in microseconds.
- * Time value is negative if command failed. */
-int16_t ms5611_adc_start(ms5611_t *ms5611, uint8_t src, uint8_t osr);
+ * Returns required conversion time in microseconds.
+ * Command failed if returned value is negative. */
+int16_t ms5611_adc_start(ms5611_t *ms5611, uint8_t adc, uint8_t osr);
 
 /** Reads the ADC result.
- * Data is 0 if conversion is not finished.
- * Returns 0 if successful. */
-int ms5611_adc_read(ms5611_t *ms5611, uint32_t *data);
+ * Variable at adc_result holds 0 if ADC conversion is not finished.
+ * Returns 1 on error accessing the sensor. */
+int ms5611_adc_read(ms5611_t *ms5611, uint32_t *adc_result);
 
 /** Calculates pressure from pressure and temperature adc values.
- *  Optional: Save temperature in 1/100 deg Celsius to p_temp pointer.
- *  Returns pressure in 1/100 mbar (= 1 Pascal). */
-uint32_t ms5611_calc_press(ms5611_t *ms5611, uint32_t raw_p, uint32_t raw_t, int32_t *p_temp);
+ * Returns pressure in Pascal.
+ * Optional: Save temperature in 1/100 deg Celsius to variable at p_temp.*/
+uint32_t ms5611_calc_press(ms5611_t *ms5611, uint32_t adc_press, uint32_t adc_temp, int32_t *p_temp);
 
-/** Calculates temperature from adc value. */
-int32_t ms5611_calc_temp(ms5611_t *ms5611, uint32_t raw_t);
+/** Calculates temperature in 1/100 degrees Celsius. */
+int32_t ms5611_calc_temp(ms5611_t *ms5611, uint32_t adc_temp);
 
 #endif /* MS5611_H */

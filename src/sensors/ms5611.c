@@ -18,13 +18,11 @@
 
 #define SQUARE(x) ((x)*(x))
 
-/* global variables */
 static const uint16_t ms5611_osr_dly_us[] = {600, 1170, 2280, 4540, 9040};
 
 static int ms5611_command_i2c(ms5611_t *ms5611, uint8_t cmd, uint32_t *data, uint8_t len);
 static int ms5611_command(ms5611_t *ms5611, uint8_t cmd, uint32_t *data, uint8_t len);
 static uint16_t ms5611_crc4_update(uint16_t crc, uint16_t data);
-static uint32_t ms5611_adc_read_i2c(ms5611_t *ms5611, uint8_t cmd, uint8_t osr);
 
 int ms5611_i2c_init(ms5611_t *ms5611, I2CDriver *driver, int csb_pin_value)
 {
@@ -175,11 +173,11 @@ int ms5611_prom_read(ms5611_t *ms5611)
     return 0;
 }
 
-int16_t ms5611_adc_start(ms5611_t *ms5611, uint8_t src, uint8_t osr)
+int16_t ms5611_adc_start(ms5611_t *ms5611, uint8_t adc, uint8_t osr)
 {
     uint8_t cmd;
 
-    if (src == MS5611_ADC_PRESS) {
+    if (adc == MS5611_ADC_PRESS) {
         cmd = MS5611_CMD_ADC_PRESS(osr);
     } else {
         cmd = MS5611_CMD_ADC_TEMP(osr);
@@ -192,16 +190,16 @@ int16_t ms5611_adc_start(ms5611_t *ms5611, uint8_t src, uint8_t osr)
     }
 }
 
-int ms5611_adc_read(ms5611_t *ms5611, uint32_t *data)
+int ms5611_adc_read(ms5611_t *ms5611, uint32_t *adc_result)
 {
-    return ms5611_command(ms5611, MS5611_CMD_ADC_READ, data, 3);
+    return ms5611_command(ms5611, MS5611_CMD_ADC_READ, adc_result, 3);
 }
 
-int32_t ms5611_calc_temp(ms5611_t *ms5611, uint32_t raw_t)
+int32_t ms5611_calc_temp(ms5611_t *ms5611, uint32_t adc_temp)
 {
     int32_t dt, temp;
 
-    dt = (int32_t) raw_t - (ms5611->prom[PROM_TREF]<<8);
+    dt = (int32_t) adc_temp - (ms5611->prom[PROM_TREF]<<8);
     temp = (int32_t) 2000 + (dt * ms5611->prom[PROM_TEMPSENS] / (1<<23));
     /* low temperature correcture, (temp < 20.00 C) */
     if (temp < 2000) {
@@ -210,12 +208,12 @@ int32_t ms5611_calc_temp(ms5611_t *ms5611, uint32_t raw_t)
     return temp;
 }
 
-uint32_t ms5611_calc_press(ms5611_t *ms5611, uint32_t raw_p, uint32_t raw_t, int32_t *p_temp)
+uint32_t ms5611_calc_press(ms5611_t *ms5611, uint32_t adc_press, uint32_t adc_temp, int32_t *p_temp)
 {
     int32_t dt, temp;
     int64_t off, sens;
 
-    dt = (int32_t) raw_t - ms5611->prom[PROM_TREF] * (1<<8);
+    dt = (int32_t) adc_temp - ms5611->prom[PROM_TREF] * (1<<8);
     temp = (int32_t) 2000 + dt * ms5611->prom[PROM_TEMPSENS] / (1<<23);
 
     off = (int64_t) ms5611->prom[PROM_OFF] * (1<<16) + ms5611->prom[PROM_TCO] * dt / (1<<7);
@@ -246,6 +244,6 @@ uint32_t ms5611_calc_press(ms5611_t *ms5611, uint32_t raw_p, uint32_t raw_t, int
     }
 
     /* calculate pressure */
-    uint32_t p = (uint32_t) ((raw_p * sens / (1<<21)) - off) / (1<<15);
+    uint32_t p = (uint32_t) ((adc_press * sens / (1<<21)) - off) / (1<<15);
     return p;
 }
