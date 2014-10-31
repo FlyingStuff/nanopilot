@@ -140,7 +140,7 @@ int ms5611_prom_read(ms5611_t *ms5611)
     addr = MS5611_CMD_PROM_READ_BASE;
 
     /* read reserved 16 bit for CRC */
-    if (ms5611_command(ms5611, addr, &d, 3)) {
+    if (ms5611_command(ms5611, addr, &d, 2)) {
         return 1;   /* read failed */
     }
     crc = ms5611_crc4_update(0, d);
@@ -148,7 +148,7 @@ int ms5611_prom_read(ms5611_t *ms5611)
 
     /* read PROM memory */
     for (i = 0; i < 6; i++) {
-        if (ms5611_command(ms5611, addr, &d, 3)) {
+        if (ms5611_command(ms5611, addr, &d, 2)) {
             return 1;   /* read failed */
         }
         crc = ms5611_crc4_update(crc, d);
@@ -157,7 +157,7 @@ int ms5611_prom_read(ms5611_t *ms5611)
     }
 
     /* read CRC word */
-    if (ms5611_command(ms5611, addr, &crc_read, 3)) {
+    if (ms5611_command(ms5611, addr, &crc_read, 2)) {
         return 1;   /* read failed */
     }
     /* mask out CRC byte for calcualtion */
