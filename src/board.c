@@ -145,7 +145,18 @@ void panic_handler(const char *reason)
     palClearPad(GPIOB, GPIOB_LED_STATUS);
     palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
     palClearPad(GPIOB, GPIOB_LED_SDCARD);
+
+    static volatile uint32_t ipsr;
+    static volatile const char *msg;
+    msg = reason;
+    ipsr = __get_IPSR();
+
+
+#ifdef DEBUG
     while (1);
+#else
+    NVIC_SystemReset();
+#endif
 }
 
 static int error_level_cnt[2] = {0,0};
