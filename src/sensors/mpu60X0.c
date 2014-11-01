@@ -4,6 +4,8 @@
 #include "mpu60X0.h"
 #include "mpu60X0_registers.h"
 
+#define STANDARD_GRAVITY 9.80665f
+#define DEG2RAD(deg) (deg/180*M_PI)
 
 static uint8_t mpu60X0_reg_read(mpu60X0_t *dev, uint8_t reg)
 {
@@ -110,8 +112,14 @@ static int32_t read_word(const uint8_t *buf) // signed int16
 
 void mpu60X0_read(mpu60X0_t *dev, float *gyro, float *acc, float *temp)
 {
-    static const float gyro_res[] = {(1/131.f)/180*M_PI, (1/65.5f)/180*M_PI, (1/32.8f)/180*M_PI, (1/16.4f)/180*M_PI}; // rad/s/LSB
-    static const float acc_res[] = {1/16384.f, 1/8192.f, 1/4096.f, 1/2048.f}; // m/s^2 / LSB
+    static const float gyro_res[] = { DEG2RAD(1/131.f),
+                                      DEG2RAD(1/65.5f),
+                                      DEG2RAD(1/32.8f),
+                                      DEG2RAD(1/16.4f) }; // rad/s/LSB
+    static const float acc_res[] = { STANDARD_GRAVITY/16384.f,
+                                     STANDARD_GRAVITY/8192.f,
+                                     STANDARD_GRAVITY/4096.f,
+                                     STANDARD_GRAVITY/2048.f }; // m/s^2 / LSB
     uint8_t buf[1 + 6 + 2 + 6]; // interrupt status, accel, temp, gyro
     mpu60X0_reg_read_multi(dev, MPU60X0_RA_INT_STATUS, buf, sizeof(buf));
     if (acc) {
@@ -120,7 +128,7 @@ void mpu60X0_read(mpu60X0_t *dev, float *gyro, float *acc, float *temp)
         acc[2] = (float)read_word(&buf[5]) * acc_res[dev->config & 0x3];
     }
     if (temp) {
-        *temp = (float)read_word(&buf[7]) / 340 + 36.53;
+        *temp = (float)read_word(&buf[7]) / 340.0f + 36.53f;
     }
     if (gyro) {
         gyro[0] = (float)read_word(&buf[9]) * gyro_res[(dev->config >> 2) & 0x3];
