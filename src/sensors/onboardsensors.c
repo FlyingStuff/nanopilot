@@ -1,9 +1,11 @@
 #include <math.h>
 #include <ch.h>
 #include "mpu60X0.h"
+#include "hmc5883l.h"
+#include "ms5611.h"
+#include "exti.h"
 
 #include "imu.h"
-#include "exti.h"
 
 rate_gyro_sample_t mpu_gyro_sample;
 accelerometer_sample_t mpu_acc_sample;
@@ -79,8 +81,68 @@ static THD_FUNCTION(spi_sensors, arg)
     return 0;
 }
 
+
+static THD_WORKING_AREA(i2c_sensors_wa, 128);
+static THD_FUNCTION(i2c_sensors, arg)
+{
+    (void)arg;
+    static const I2CConfig i2c_cfg = {
+        .op_mode = OPMODE_I2C,
+        .clock_speed = 400000,
+        .duty_cycle = FAST_DUTY_CYCLE_2
+    };
+    I2CDriver *driver = &I2CD1;
+
+    i2cStart(driver, &i2c_cfg);
+
+    static ms5611_t barometer;
+
+    i2cAcquireBus(driver);
+    int init = ms5611_i2c_init(&barometer, driver, 0);
+    i2cReleaseBus(driver);
+    if (init != 0) {
+        // i2cflags_t flags = i2cGetErrors(driver);
+        // chprintf(out, "ms5611 init failed: %d, %u\r\n", init, (uint32_t)flags);
+        error_set(ERROR_LEVEL_WARNING);
+    }
+
+    while (1) {
+        /*
+         *  Barometer
+         */
+        uint32_t raw_t, raw_p, press;
+        int32_t temp, t;
+        i2cAcquireBus(driver);
+        t = ms5611_adc_start(&barometer, MS5611_ADC_TEMP, MS5611_OSR_4096);
+        i2cReleaseBus(driver);
+        if (t > 0) {
+            chThdSleepMilliseconds((t - 1)/1000 + 1);
+            i2cAcquireBus(driver);
+            ms5611_adc_read(&barometer, &raw_t);
+            i2cReleaseBus(driver);
+        }
+
+        i2cAcquireBus(driver);
+        t = ms5611_adc_start(&barometer, MS5611_ADC_PRESS, MS5611_OSR_4096);
+        i2cReleaseBus(driver);
+        if (t > 0) {
+            chThdSleepMilliseconds((t - 1)/1000 + 1);
+            i2cAcquireBus(driver);
+            ms5611_adc_read(&barometer, &raw_p);
+            i2cReleaseBus(driver);
+        }
+        press = ms5611_calc_press(&barometer, raw_p, raw_t, &temp);
+
+
+        chThdSleepMilliseconds(100);
+    }
+    return 0;
+}
+
+
 void onboard_sensors_start(void)
 {
     exti_setup();
     chThdCreateStatic(spi_sensors_wa, sizeof(spi_sensors_wa), LOWPRIO, spi_sensors, NULL);
+    chThdCreateStatic(i2c_sensors_wa, sizeof(i2c_sensors_wa), LOWPRIO, i2c_sensors, NULL);
 }
