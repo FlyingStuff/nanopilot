@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include "hmc5883l.h"
 
 #define HMC5883L_REG_CONFIG_A       0
@@ -52,7 +53,6 @@ static int hmc5883l_reg_read(hmc5883l_t *dev, uint8_t reg, uint8_t *data)
     return 0;
 }
 
-
 static int hmc5883l_reg_read_multi(hmc5883l_t *dev, uint8_t reg, uint8_t *data, uint8_t len)
 {
     uint8_t addr = HMC5883L_I2C_ADDR;
@@ -71,11 +71,11 @@ static int hmc5883l_reg_read_multi(hmc5883l_t *dev, uint8_t reg, uint8_t *data, 
 bool hmc5883l_ping(hmc5883l_t *dev)
 {
     uint8_t buf[4];
-    if (hmc5883l_reg_read_multi(dev, HMC5883L_REG_ID_A, buf)) {
+    if (hmc5883l_reg_read_multi(dev, HMC5883L_REG_ID_A, buf, 3)) {
         return false;
     }
     buf[3] = 0;
-    return strcmp("H43", buf) == 0;
+    return strcmp("H43", (const char *)buf) == 0;
 }
 
 /* Returns magnetic field vector {x,y,z} in Gauss. */
@@ -116,7 +116,7 @@ int hmc5883l_setup(hmc5883l_t *dev, uint8_t config)
         return 1;
     }
     // set continuous measurement mode
-    data = 0
+    data = 0;
     if (hmc5883l_reg_write(dev, HMC5883L_REG_MODE, data)) {
         return 1;
     }
