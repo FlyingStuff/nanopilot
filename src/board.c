@@ -159,6 +159,25 @@ void panic_handler(const char *reason)
 #endif
 }
 
+
+void status_led_on(void)
+{
+    palSetPad(GPIOB, GPIOB_LED_STATUS);
+}
+
+void status_led_off(void)
+{
+    palClearPad(GPIOB, GPIOB_LED_STATUS);
+}
+
+void status_led_toggle(void)
+{
+    chSysLock();
+    palTogglePad(GPIOB, GPIOB_LED_STATUS);
+    chSysUnlock();
+}
+
+
 static int error_level_cnt[2] = {0,0};
 
 void error_set(int level)

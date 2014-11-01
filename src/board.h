@@ -543,6 +543,10 @@ void board_sensor_pwr_en(bool en);
 void board_sdcard_pwr_en(bool en);
 void board_can_standby(bool en);
 
+void status_led_on(void);
+void status_led_off(void);
+void status_led_toggle(void);
+
 #define ERROR_LEVEL_NORMAL         0
 #define ERROR_LEVEL_WARNING        1
 #define ERROR_LEVEL_CRITICAL       2
