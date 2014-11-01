@@ -127,37 +127,63 @@ static const ShellConfig shell_cfg1 = {
 
 static void _stream_imu_values_sndfn(void *arg, const void *p, size_t len)
 {
-    chSequentialStreamWrite((BaseSequentialStream*)arg, (const uint8_t*)p, len);
+    if (len > 0) {
+        chSequentialStreamWrite((BaseSequentialStream*)arg, (const uint8_t*)p, len);
+    }
 }
+
+struct buffer_writer
+{
+    char *buffer;
+    uint32_t size;
+    uint32_t index;
+};
 
 static size_t _stream_imu_values_cmp_writer(cmp_ctx_t *ctx, const void *data, size_t count) {
-    char **writep = (char**)ctx->buf;
-    memcpy(*writep, data, count);
-    *writep += count;
-    return count;
+    struct buffer_writer *w = (struct buffer_writer*)ctx->buf;
+    if (count <= w->size - w->index) {
+        memcpy(w->buffer + w->index, data, count);
+        w->index += count;
+        return count;
+    }
+    return 0;
 }
 
+// not reentrant!
 void stream_imu_values(BaseSequentialStream *out)
 {
-    static char dtgrm[32] = {'\\', 'o', 0};
-    char *writep = &dtgrm[0];
-    cmp_ctx_t cmp;
-    cmp_init(&cmp, &writep, NULL, _stream_imu_values_cmp_writer);
+    static char dtgrm[100];
+    static struct buffer_writer writer = {.buffer = dtgrm, .size = sizeof(dtgrm), .index = 0};
+    static cmp_ctx_t cmp;
+    cmp_init(&cmp, &writer, NULL, _stream_imu_values_cmp_writer);
     while (1) {
         chSysLock();
         float gx = mpu_gyro_sample.rate[0];
         float gy = mpu_gyro_sample.rate[1];
         float gz = mpu_gyro_sample.rate[2];
+        float ax = mpu_acc_sample.acceleration[0];
+        float ay = mpu_acc_sample.acceleration[1];
+        float az = mpu_acc_sample.acceleration[2];
         chSysUnlock();
+        writer.index = 0;
         bool err = false;
-        err = err && !cmp_write_array(&cmp, 3);
-        err = err && !cmp_write_float(&cmp, gx);
-        err = err && !cmp_write_float(&cmp, gy);
-        err = err && !cmp_write_float(&cmp, gz);
+        err = err || !cmp_write_map(&cmp, 2);
+        const char *gyro_id = "gyro";
+        err = err || !cmp_write_str(&cmp, gyro_id, strlen(gyro_id));
+        err = err || !cmp_write_array(&cmp, 3);
+        err = err || !cmp_write_float(&cmp, gx);
+        err = err || !cmp_write_float(&cmp, gy);
+        err = err || !cmp_write_float(&cmp, gz);
+        const char *acc_id = "acc";
+        err = err || !cmp_write_str(&cmp, acc_id, strlen(acc_id));
+        err = err || !cmp_write_array(&cmp, 3);
+        err = err || !cmp_write_float(&cmp, ax);
+        err = err || !cmp_write_float(&cmp, ay);
+        err = err || !cmp_write_float(&cmp, az);
         if (!err) {
-            serial_datagram_send(dtgrm, writep - &dtgrm[0], _stream_imu_values_sndfn, out);
+            serial_datagram_send(dtgrm, writer.index, _stream_imu_values_sndfn, out);
         }
-        chThdSleepMilliseconds(1);
+        chThdSleepMilliseconds(10);
     }
 }
 
