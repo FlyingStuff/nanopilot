@@ -10,3 +10,6 @@
 [submodule "src/serial-datagram"]
 	path = src/serial-datagram
 	url = git@github.com:Stapelzeiger/serial-datagram.git
+[submodule "src/rcservo"]
+	path = src/rcservo
+	url = git@github.com:Stapelzeiger/rcservo.git
