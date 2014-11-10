@@ -82,7 +82,7 @@ static THD_FUNCTION(spi_sensors, arg)
 }
 
 
-static THD_WORKING_AREA(i2c_sensors_wa, 128);
+static THD_WORKING_AREA(i2c_sensors_wa, 256);
 static THD_FUNCTION(i2c_sensors, arg)
 {
     (void)arg;
