@@ -12,3 +12,4 @@ PROJSRC += src/sensors/onboardsensors.c
 PROJSRC += src/serial-datagram/serial_datagram.c
 PROJSRC += src/crc/crc32.c
 PROJSRC += src/cmp/cmp.c
+PROJSRC += src/sqrtpatch.c
