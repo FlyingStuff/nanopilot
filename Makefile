@@ -211,3 +211,22 @@ include $(RULESPATH)/rules.mk
 # TODO add targets for:
 # arm-none-eabi-objdump -D -g -h build/ins-board.elf > build/ins-board.lst
 # arm-none-eabi-nm --numeric-sort --print-size -S build/ins-board.elf > build/ins-board.sizemap
+
+
+.PHONY: packager
+packager:
+	python packager/packager.py
+
+CMakeLists.txt: package.yml
+	python packager/packager.py
+
+src/pkgsrc.mk: package.yml
+	python packager/packager.py
+
+.PHONY: tests
+tests: CMakeLists.txt
+	@mkdir -p build/tests
+	@cd build/tests; \
+	cmake ../..; \
+	make ; \
+	./tests;

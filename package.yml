@@ -1,0 +1,31 @@
+dependency-dir: ./src/
+
+source:
+    - src/cmp/cmp.c
+    - src/ahrs.c
+
+target.arm:
+    - src/board.c
+    - src/main.c
+    - src/usbcfg.c
+    - src/exti.c
+    - src/sensors/mpu60X0.c
+    - src/sensors/ms5611.c
+    - src/sensors/hmc5883l.c
+    - src/sensors/onboardsensors.c
+    - src/ahrs.c
+    - src/sqrtpatch.c
+
+depends:
+    - crc
+    - serial-datagram:
+        fork: stapelzeiger
+    - math:
+        fork: stapelzeiger
+    - rcservo
+
+tests:
+    - src/ahrs_test.cpp
+
+templates:
+    Makefile.include.jinja: src/pkgsrc.mk
