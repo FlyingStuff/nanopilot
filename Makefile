@@ -29,8 +29,9 @@ ifeq ($(USE_LDOPT),)
 endif
 
 # Enable this if you want link time optimizations (LTO)
+# don't use for debugging
 ifeq ($(USE_LTO),)
-  USE_LTO = yes
+  USE_LTO = no
 endif
 
 # If enabled, this option allows to compile the application in THUMB mode.
@@ -102,6 +103,7 @@ CSRC = $(PORTSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
        $(CHIBIOS)/os/various/chprintf.c \
+       $(CHIBIOS)/os/various/memstreams.c \
        $(CHIBIOS)/os/various/shell.c \
        $(PROJSRC)
 
@@ -196,7 +198,7 @@ UINCDIR =
 ULIBDIR =
 
 # List all user libraries here
-ULIBS =
+ULIBS = -lm
 
 #
 # End of user defines
@@ -205,3 +207,7 @@ ULIBS =
 RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
 -include tools.mk
+
+# TODO add targets for:
+# arm-none-eabi-objdump -D -g -h build/ins-board.elf > build/ins-board.lst
+# arm-none-eabi-nm --numeric-sort --print-size -S build/ins-board.elf > build/ins-board.sizemap
