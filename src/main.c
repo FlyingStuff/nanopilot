@@ -11,6 +11,7 @@
 #include "serial-datagram/serial_datagram.h"
 #include "cmp/cmp.h"
 
+BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
 
 
@@ -265,21 +266,24 @@ int main(void)
 
     chThdCreateStatic(led_task_wa, sizeof(led_task_wa), LOWPRIO, led_task, NULL);
 
+    sdStart(&UART_CONN1, NULL);
+    sdStart(&UART_CONN2, NULL);
+    sdStart(&UART_CONN3, NULL);
+    sdStart(&UART_CONN4, NULL);
+
+    stdout = (BaseSequentialStream*)&UART_CONN1;
+
+    // USB Serial Driver
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);
-
     usbDisconnectBus(serusbcfg.usbp);
-    chThdSleepMilliseconds(1000);
+    chThdSleepMilliseconds(100);
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
 
     onboard_sensors_start();
 
-    sdStart(&UART_CONN1, NULL);
-    // while (SDU1.config->usbp->state != USB_ACTIVE) {
-    //     chThdSleepMilliseconds(10);
-    // }
-    stream_imu_values((BaseSequentialStream*)&UART_CONN1);
+    stream_imu_values((BaseSequentialStream*)&UART_CONN2);
 
     shellInit();
     thread_t *shelltp = NULL;
