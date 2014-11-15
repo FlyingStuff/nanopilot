@@ -257,7 +257,51 @@ void stream_imu_values(BaseSequentialStream *out)
     }
 }
 
+#include <ff.h>
+static FATFS SDC_FS;
+bool fatfs_mounted = false;
 
+void sdcard_mount(void)
+{
+    if (palReadPad(GPIOC, GPIOC_SDCARD_DETECT)) {
+        chprintf(stdout, "no SD card detected\n");
+        return;
+    }
+    board_sdcard_pwr_en(true);
+    chprintf(stdout, "SD card detected\n");
+    sdcStart(&SDCD1, NULL);
+    if (sdcConnect(&SDCD1)) {
+        chprintf(stdout, "SD card: failed to connect\n");
+        return;
+    }
+    FRESULT err;
+    err = f_mount(&SDC_FS, "", 0);
+    if (err != FR_OK) {
+        chprintf(stdout, "SD card: mount failed\n");
+        sdcDisconnect(&SDCD1);
+        return;
+    }
+    fatfs_mounted = true;
+}
+
+
+void file_cat(const char *file_path)
+{
+    if (!fatfs_mounted) {
+        return;
+    }
+    static FIL f;
+    FRESULT res = f_open(&f, file_path, FA_READ);
+    if (res) {
+        chprintf(stdout, "error opening %s\n", file_path);
+        return;
+    }
+    static char line[80];
+    while (f_gets(line, sizeof(line), &f)) {
+        chprintf(stdout, line);
+    }
+    f_close(&f);
+}
 
 int main(void)
 {
@@ -273,6 +317,8 @@ int main(void)
 
     stdout = (BaseSequentialStream*)&UART_CONN1;
 
+    chprintf(stdout, "boot\n");
+
     // USB Serial Driver
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);
@@ -283,7 +329,10 @@ int main(void)
 
     onboard_sensors_start();
 
-    stream_imu_values((BaseSequentialStream*)&UART_CONN2);
+    sdcard_mount();
+    file_cat("/test.txt");
+
+    // stream_imu_values((BaseSequentialStream*)&UART_CONN2);
 
     shellInit();
     thread_t *shelltp = NULL;

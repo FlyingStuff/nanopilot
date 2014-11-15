@@ -40,9 +40,8 @@ void __early_init(void) {
 bool sdc_lld_is_card_inserted(SDCDriver *sdcp) {
 
     (void)sdcp;
-    return TRUE;
+    return !palReadPad(GPIOC, GPIOC_SDCARD_DETECT);
 }
-
 
 bool sdc_lld_is_write_protected(SDCDriver *sdcp) {
 
@@ -119,15 +118,23 @@ void board_sensor_pwr_en(bool en)
 
 void board_sdcard_pwr_en(bool en)
 {
-    (void)en;
-// GPIOC_SDIO_D0
-// GPIOC_SDIO_D1
-// GPIOC_SDIO_D2
-// GPIOC_SDIO_D3
-// GPIOC_SDIO_CK
-// GPIOD_SDIO_CMD
-
-// GPIOC_SDCARD_POWER_EN // high = disable
+    if (en) {
+        palClearPad(GPIOC, GPIOC_SDCARD_POWER_EN);
+        palSetPadMode(GPIOC, GPIOC_SDIO_D0, PAL_MODE_ALTERNATE(12) | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUDR_PULLUP);
+        palSetPadMode(GPIOC, GPIOC_SDIO_D1, PAL_MODE_ALTERNATE(12) | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUDR_PULLUP);
+        palSetPadMode(GPIOC, GPIOC_SDIO_D2, PAL_MODE_ALTERNATE(12) | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUDR_PULLUP);
+        palSetPadMode(GPIOC, GPIOC_SDIO_D3, PAL_MODE_ALTERNATE(12) | PAL_STM32_OSPEED_HIGHEST); // has external pullup
+        palSetPadMode(GPIOC, GPIOC_SDIO_CK, PAL_MODE_ALTERNATE(12) | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUDR_PULLUP);
+        palSetPadMode(GPIOD, GPIOD_SDIO_CMD, PAL_MODE_ALTERNATE(12) | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUDR_PULLUP);
+    } else {
+        palSetPadMode(GPIOC, GPIOC_SDIO_D0, PAL_MODE_INPUT_PULLDOWN);
+        palSetPadMode(GPIOC, GPIOC_SDIO_D1, PAL_MODE_INPUT_PULLDOWN);
+        palSetPadMode(GPIOC, GPIOC_SDIO_D2, PAL_MODE_INPUT_PULLDOWN);
+        palSetPadMode(GPIOC, GPIOC_SDIO_D3, PAL_MODE_INPUT_PULLDOWN);
+        palSetPadMode(GPIOC, GPIOC_SDIO_CK, PAL_MODE_INPUT_PULLDOWN);
+        palSetPadMode(GPIOD, GPIOD_SDIO_CMD, PAL_MODE_INPUT_PULLDOWN);
+        palSetPad(GPIOC, GPIOC_SDCARD_POWER_EN);
+    }
 }
 
 
@@ -151,7 +158,8 @@ void panic_handler(const char *reason)
     msg = reason;
     ipsr = __get_IPSR();
 
-
+    (void)msg;
+    (void)ipsr;
 #ifdef DEBUG
     while (1);
 #else
