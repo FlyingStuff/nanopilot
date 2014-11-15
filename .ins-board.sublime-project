@@ -30,6 +30,7 @@
                     "ChibiOS-RT/os/rt/ports/ARMCMx/compilers/GCC",
                     "ChibiOS-RT/test/rt",
                     "ChibiOS-RT/os/various",
+                    "ChibiOS-RT/os/ext/fatfs/src/",
                     "./src"
                 ]
             }
