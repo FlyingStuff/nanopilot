@@ -282,6 +282,8 @@ void sdcard_mount(void)
         return;
     }
     fatfs_mounted = true;
+    palSetPad(GPIOB, GPIOB_LED_SDCARD);
+    chprintf(stdout, "SD card mounted\n");
 }
 
 
@@ -348,11 +350,5 @@ int main(void)
             }
         }
         chThdSleepMilliseconds(500);
-
-        if (palReadPad(GPIOC, GPIOC_SDCARD_DETECT)) {
-            palClearPad(GPIOB, GPIOB_LED_SDCARD);
-        } else {
-            palSetPad(GPIOB, GPIOB_LED_SDCARD);
-        }
     }
 }
