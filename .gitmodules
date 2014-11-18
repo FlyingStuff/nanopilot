@@ -10,3 +10,9 @@
 [submodule "src/serial-datagram"]
 	path = src/serial-datagram
 	url = git@github.com:Stapelzeiger/serial-datagram.git
+[submodule "src/test-runner"]
+	path = src/test-runner
+	url = git@github.com:cvra/test-runner.git
+[submodule "packager"]
+	path = packager
+	url = git@github.com:cvra/packager.git

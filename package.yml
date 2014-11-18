@@ -13,7 +13,6 @@ target.arm:
     - src/sensors/ms5611.c
     - src/sensors/hmc5883l.c
     - src/sensors/onboardsensors.c
-    - src/ahrs.c
     - src/sqrtpatch.c
 
 depends:
@@ -24,8 +23,7 @@ depends:
         fork: stapelzeiger
     - rcservo
 
-tests:
-    - src/ahrs_test.cpp
+#tests:
 
 templates:
-    Makefile.include.jinja: src/pkgsrc.mk
+    Makefile.include.jinja: src/src.mk
