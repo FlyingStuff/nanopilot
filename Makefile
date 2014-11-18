@@ -107,7 +107,7 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/various/memstreams.c \
        $(CHIBIOS)/os/various/shell.c \
        $(FATFSSRC) \
-       $(PROJSRC)
+       $(PROJCSRC)
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -138,7 +138,7 @@ ASMSRC = $(PORTASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
-         $(FATFSINC) $(CHIBIOS)/os/various
+         $(FATFSINC) $(CHIBIOS)/os/various $(PROJINC)
 
 #
 # Project, sources and paths
@@ -206,10 +206,31 @@ ULIBS = -lm
 # End of user defines
 ##############################################################################
 
+GLOBAL_SRC_DEP = Makefile src/src.mk
+
 RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
 -include tools.mk
 
+
 # TODO add targets for:
 # arm-none-eabi-objdump -D -g -h build/ins-board.elf > build/ins-board.lst
 # arm-none-eabi-nm --numeric-sort --print-size -S build/ins-board.elf > build/ins-board.sizemap
+
+.PHONY: packager
+packager:
+	python packager/packager.py
+
+CMakeLists.txt: package.yml
+	python packager/packager.py
+
+src/src.mk: package.yml
+	python packager/packager.py
+
+.PHONY: tests
+tests: CMakeLists.txt
+	@mkdir -p build/tests
+	@cd build/tests; \
+	cmake ../..; \
+	make ; \
+	./tests;
