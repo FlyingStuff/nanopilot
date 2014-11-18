@@ -25,7 +25,7 @@ void cmp_mem_access_init(cmp_ctx_t *cmp, cmp_mem_access_t *m, void *buf, size_t 
 // initialize cmp (read only memory access)
 void cmp_mem_access_ro_init(cmp_ctx_t *cmp, cmp_mem_access_t *m, const void *buf, size_t size);
 
-// get current read/write position. this can be used to determine the lenght of
+// get current read/write position. this can be used to determine the length of
 // the buffer written by MessagePack
 size_t cmp_mem_access_get_pos(cmp_mem_access_t *m);
 
