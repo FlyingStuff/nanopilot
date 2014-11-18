@@ -2,6 +2,7 @@ dependency-dir: ./src/
 
 source:
     - src/cmp/cmp.c
+    - src/cmp_mem_access.c
     - src/ahrs.c
 
 target.arm:
@@ -25,7 +26,8 @@ depends:
     - rcservo:
         fork: stapelzeiger
 
-#tests:
+tests:
+    - src/cmp_mem_access_test.cpp
 
 templates:
     Makefile.include.jinja: src/src.mk
