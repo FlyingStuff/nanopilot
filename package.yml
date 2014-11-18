@@ -14,6 +14,7 @@ target.arm:
     - src/sensors/hmc5883l.c
     - src/sensors/onboardsensors.c
     - src/sqrtpatch.c
+    - src/shell_cmds.c
 
 depends:
     - crc
@@ -21,7 +22,8 @@ depends:
         fork: stapelzeiger
     - math:
         fork: stapelzeiger
-    - rcservo
+    - rcservo:
+        fork: stapelzeiger
 
 #tests:
 
