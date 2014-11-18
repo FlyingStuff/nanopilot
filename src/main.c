@@ -9,6 +9,7 @@
 #include "sensors/onboardsensors.h"
 #include "serial-datagram/serial_datagram.h"
 #include "cmp/cmp.h"
+#include "cmp_mem_access.h"
 
 BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
@@ -67,30 +68,12 @@ static void _stream_imu_values_sndfn(void *arg, const void *p, size_t len)
     }
 }
 
-struct buffer_writer
-{
-    char *buffer;
-    uint32_t size;
-    uint32_t index;
-};
-
-static size_t _stream_imu_values_cmp_writer(cmp_ctx_t *ctx, const void *data, size_t count) {
-    struct buffer_writer *w = (struct buffer_writer*)ctx->buf;
-    if (count <= w->size - w->index) {
-        memcpy(w->buffer + w->index, data, count);
-        w->index += count;
-        return count;
-    }
-    return 0;
-}
-
 // not reentrant!
 void stream_imu_values(BaseSequentialStream *out)
 {
     static char dtgrm[100];
-    static struct buffer_writer writer = {.buffer = dtgrm, .size = sizeof(dtgrm), .index = 0};
+    static cmp_mem_access_t mem;
     static cmp_ctx_t cmp;
-    cmp_init(&cmp, &writer, NULL, _stream_imu_values_cmp_writer);
     while (1) {
         chSysLock();
         float gx = mpu_gyro_sample.rate[0];
@@ -100,7 +83,7 @@ void stream_imu_values(BaseSequentialStream *out)
         float ay = mpu_acc_sample.acceleration[1];
         float az = mpu_acc_sample.acceleration[2];
         chSysUnlock();
-        writer.index = 0;
+        cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
         bool err = false;
         err = err || !cmp_write_map(&cmp, 2);
         const char *gyro_id = "gyro";
@@ -116,7 +99,7 @@ void stream_imu_values(BaseSequentialStream *out)
         err = err || !cmp_write_float(&cmp, ay);
         err = err || !cmp_write_float(&cmp, az);
         if (!err) {
-            serial_datagram_send(dtgrm, writer.index, _stream_imu_values_sndfn, out);
+            serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
         }
         chThdSleepMilliseconds(10);
     }

@@ -6,6 +6,7 @@
 #define CMP_MEM_ACCESS_H
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <cmp/cmp.h>
 
