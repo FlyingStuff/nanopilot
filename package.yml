@@ -3,7 +3,6 @@ dependency-dir: ./src/
 source:
     - src/cmp/cmp.c
     - src/cmp_mem_access.c
-    - src/ahrs.c
 
 target.arm:
     - src/board.c
