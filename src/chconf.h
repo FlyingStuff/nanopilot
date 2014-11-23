@@ -503,6 +503,10 @@ void panic_handler(const char *reason);
 /* Port-specific settings (override port settings defaulted in chcore.h).    */
 /*===========================================================================*/
 
+
+// chprintf float enable
+#define CHPRINTF_USE_FLOAT true
+
 #endif  /* _CHCONF_H_ */
 
 /** @} */
