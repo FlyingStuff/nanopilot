@@ -1,27 +1,27 @@
 [submodule "ChibiOS-RT"]
 	path = ChibiOS-RT
-	url = git@github.com:Stapelzeiger/ChibiOS-RT.git
+	url = https://github.com/Stapelzeiger/ChibiOS-RT.git
 [submodule "src/cmp"]
 	path = src/cmp
-	url = git@github.com:camgunz/cmp.git
+	url = https://github.com/camgunz/cmp.git
 [submodule "src/crc"]
 	path = src/crc
-	url = git@github.com:nuft/CRC.git
+	url = https://github.com/nuft/CRC.git
 [submodule "src/serial-datagram"]
 	path = src/serial-datagram
-	url = git@github.com:Stapelzeiger/serial-datagram.git
+	url = https://github.com/Stapelzeiger/serial-datagram.git
 [submodule "src/rcservo"]
 	path = src/rcservo
-	url = git@github.com:Stapelzeiger/rcservo.git
+	url = https://github.com/Stapelzeiger/rcservo.git
 [submodule "src/test-runner"]
 	path = src/test-runner
-	url = git@github.com:cvra/test-runner.git
+	url = https://github.com/cvra/test-runner.git
 [submodule "packager"]
 	path = packager
-	url = git@github.com:cvra/packager.git
+	url = https://github.com/cvra/packager.git
 [submodule "src/math"]
 	path = src/math
-	url = git@github.com:Stapelzeiger/math.git
+	url = https://github.com/Stapelzeiger/math.git
 [submodule "src/hott"]
 	path = src/hott
-	url = git@github.com:Stapelzeiger/HoTT.git
+	url = https://github.com/Stapelzeiger/HoTT.git
