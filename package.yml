@@ -15,6 +15,7 @@ target.arm:
     - src/sensors/onboardsensors.c
     - src/sqrtpatch.c
     - src/shell_cmds.c
+    - src/sumd_input.c
 
 depends:
     - crc
@@ -23,6 +24,8 @@ depends:
     - math:
         fork: stapelzeiger
     - rcservo:
+        fork: stapelzeiger
+    - hott:
         fork: stapelzeiger
 
 tests:

@@ -6,6 +6,7 @@
 #include <usbcfg.h>
 
 #include "shell_cmds.h"
+#include "sumd_input.h"
 #include "sensors/onboardsensors.h"
 #include "serial-datagram/serial_datagram.h"
 #include "cmp/cmp.h"
@@ -186,6 +187,8 @@ int main(void)
     file_cat("/test.txt");
 
     // stream_imu_values((BaseSequentialStream*)&UART_CONN2);
+
+    sumd_input_start((BaseSequentialStream*)&UART_CONN2);
 
     shell_run((BaseSequentialStream*)&SDU1);
 

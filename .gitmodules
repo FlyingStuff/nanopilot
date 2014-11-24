@@ -22,3 +22,6 @@
 [submodule "src/math"]
 	path = src/math
 	url = git@github.com:Stapelzeiger/math.git
+[submodule "src/hott"]
+	path = src/hott
+	url = git@github.com:Stapelzeiger/HoTT.git
