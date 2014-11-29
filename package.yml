@@ -2,7 +2,6 @@ dependency-dir: ./src/
 
 source:
     - src/cmp/cmp.c
-    - src/cmp_mem_access.c
 
 target.arm:
     - src/board.c
@@ -27,9 +26,10 @@ depends:
         fork: stapelzeiger
     - hott:
         fork: stapelzeiger
+    - cmp_mem_access:
+        fork: stapelzeiger
 
-tests:
-    - src/cmp_mem_access_test.cpp
+#tests:
 
 templates:
     Makefile.include.jinja: src/src.mk

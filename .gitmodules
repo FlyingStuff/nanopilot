@@ -25,3 +25,6 @@
 [submodule "src/hott"]
 	path = src/hott
 	url = https://github.com/Stapelzeiger/HoTT.git
+[submodule "src/cmp_mem_access"]
+	path = src/cmp_mem_access
+	url = https://github.com/Stapelzeiger/cmp_mem_access.git
