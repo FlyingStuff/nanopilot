@@ -10,7 +10,7 @@
 #include "sensors/onboardsensors.h"
 #include "serial-datagram/serial_datagram.h"
 #include "cmp/cmp.h"
-#include "cmp_mem_access.h"
+#include "cmp_mem_access/cmp_mem_access.h"
 
 BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
