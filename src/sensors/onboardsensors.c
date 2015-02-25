@@ -4,6 +4,8 @@
 #include "hmc5883l.h"
 #include "ms5611.h"
 #include "exti.h"
+#include "parameter/parameter.h"
+#include "main.h"
 
 #include "imu.h"
 
@@ -12,15 +14,23 @@ accelerometer_sample_t mpu_acc_sample;
 
 #define SENSOR_INTERRUPT_EVENT 1
 
-static THD_WORKING_AREA(spi_sensors_wa, 128);
-static THD_FUNCTION(spi_sensors, arg)
+
+static parameter_namespace_t sensor_param;
+static parameter_namespace_t mpu6000_param;
+static parameter_t mpu6000_gyro_full_scale;
+static parameter_t mpu6000_acc_full_scale;
+
+
+void onboardsensors_declare_parameters(void)
 {
-    (void)arg;
-    chRegSetThreadName("onboard-sensors-spi");
-    static event_listener_t sensor_int;
-    chEvtRegisterMaskWithFlags(&exti_events, &sensor_int,
-                               (eventmask_t)SENSOR_INTERRUPT_EVENT,
-                               (eventflags_t)EXTI_EVENT_MPU6000_INT);
+    parameter_namespace_declare(&sensor_param, &parameters, "sensors");
+    parameter_namespace_declare(&mpu6000_param, &sensor_param, "mpu6000");
+    parameter_scalar_declare_with_default(&mpu6000_gyro_full_scale, &mpu6000_param, "gyro_full_scale", 500); // [deg/s]
+    parameter_scalar_declare_with_default(&mpu6000_acc_full_scale, &mpu6000_param, "acc_full_scale", 2); // [g]
+}
+
+static int mpu6000_init(mpu60X0_t *dev, rate_gyro_t *gyro, accelerometer_t *acc)
+{
     /*
      * SPI1 configuration structure for MPU6000.
      * SPI1 is on APB2 @ 84MHz / 128 = 656.25kHz
@@ -33,26 +43,49 @@ static THD_FUNCTION(spi_sensors, arg)
         .cr1 = SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA
     };
 
-    static mpu60X0_t mpu6000;
-    mpu60X0_init_using_spi(&mpu6000, &SPID1);
-
     spiStart(&SPID1, &spi_cfg);
-    if (!mpu60X0_ping(&mpu6000)) {
-        error_set(ERROR_LEVEL_CRITICAL);
-        return 0;
+    if (!mpu60X0_ping(dev)) {
+        return -1;
     }
 
-    mpu60X0_setup(&mpu6000, MPU60X0_SAMPLE_RATE_DIV(0) | MPU60X0_ACC_FULL_RANGE_2G
-        | MPU60X0_GYRO_FULL_RANGE_500DPS | MPU60X0_LOW_PASS_FILTER_6);
+    int config = MPU60X0_LOW_PASS_FILTER_6 | MPU60X0_SAMPLE_RATE_DIV(0);
+    float afs = parameter_scalar_get(&mpu6000_acc_full_scale);
+    float gfs = parameter_scalar_get(&mpu6000_gyro_full_scale);
+    float afs_mps, gfs_radps;
+    if (afs <= 2) {
+        afs_mps = 2*9.81;
+        config |= MPU60X0_ACC_FULL_RANGE_2G;
+    } else if (afs <= 4) {
+        afs_mps = 4*9.81;
+        config |= MPU60X0_ACC_FULL_RANGE_4G;
+    } else if (afs <= 8) {
+        afs_mps = 8*9.81;
+        config |= MPU60X0_ACC_FULL_RANGE_8G;
+    } else {
+        afs_mps = 16*9.81;
+        config |= MPU60X0_ACC_FULL_RANGE_16G;
+    }
+    if (gfs <= 250) {
+        gfs_radps = 250*M_PI/360;
+        config |= MPU60X0_GYRO_FULL_RANGE_250DPS;
+    } else if (gfs <= 500) {
+        gfs_radps = 500*M_PI/360;
+        config |= MPU60X0_GYRO_FULL_RANGE_500DPS;
+    } else if (gfs <= 1000) {
+        gfs_radps = 1000*M_PI/360;
+        config |= MPU60X0_GYRO_FULL_RANGE_1000DPS;
+    } else {
+        gfs_radps = 2000*M_PI/360;
+        config |= MPU60X0_GYRO_FULL_RANGE_2000DPS;
+    }
+    acc->full_scale_range[0] = afs_mps;
+    acc->full_scale_range[1] = afs_mps;
+    acc->full_scale_range[2] = afs_mps;
+    gyro->full_scale_range[0] = gfs_radps;
+    gyro->full_scale_range[1] = gfs_radps;
+    gyro->full_scale_range[2] = gfs_radps;
 
-    static rate_gyro_t mpu_gyro = {
-        .device = "MPU6000", .full_scale_range = {500*M_PI/360, 500*M_PI/360, 500*M_PI/360},
-        .noise_stddev = {NAN, NAN, NAN}, .update_rate = 8000, .health = SENSOR_HEALTH_OK };
-    static accelerometer_t mpu_acc = {
-        .device = "MPU6000", .full_scale_range = {2*9.81, 2*9.81, 2*9.81},
-        .noise_stddev = {NAN, NAN, NAN}, .update_rate = 8000, .health = SENSOR_HEALTH_OK };;
-    mpu_gyro_sample.sensor = &mpu_gyro;
-    mpu_acc_sample.sensor = &mpu_acc;
+    mpu60X0_setup(dev, config);
 
     /* speed up SPI for sensor register reads (max 20MHz)
      * APB2 @ 84MHz / 8 = 10.5MHz
@@ -60,10 +93,41 @@ static THD_FUNCTION(spi_sensors, arg)
     spi_cfg.cr1 = SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA;
     spiStart(&SPID1, &spi_cfg);
     // check that the sensor still pings
-    if (!mpu60X0_ping(&mpu6000)) {
+    if (!mpu60X0_ping(dev)) {
+        return -1;
+    }
+    return 0;
+}
+
+
+static THD_WORKING_AREA(spi_sensors_wa, 128);
+static THD_FUNCTION(spi_sensors, arg)
+{
+    (void)arg;
+    chRegSetThreadName("onboard-sensors-spi");
+    static event_listener_t sensor_int;
+    chEvtRegisterMaskWithFlags(&exti_events, &sensor_int,
+                               (eventmask_t)SENSOR_INTERRUPT_EVENT,
+                               (eventflags_t)EXTI_EVENT_MPU6000_INT);
+
+    static mpu60X0_t mpu6000;
+    mpu60X0_init_using_spi(&mpu6000, &SPID1);
+
+    static rate_gyro_t mpu_gyro = {
+        .device = "MPU6000", .noise_stddev = {NAN, NAN, NAN},
+        .update_rate = 1000,.health = SENSOR_HEALTH_OK };
+    static accelerometer_t mpu_acc = {
+        .device = "MPU6000", .noise_stddev = {NAN, NAN, NAN},
+        .update_rate = 1000, .health = SENSOR_HEALTH_OK };
+
+    mpu_gyro_sample.sensor = &mpu_gyro;
+    mpu_acc_sample.sensor = &mpu_acc;
+
+    if (mpu6000_init(&mpu6000, &mpu_gyro, &mpu_acc) != 0) {
         error_set(ERROR_LEVEL_CRITICAL);
         return 0;
     }
+
     while (1) {
         // timestamp_t timestamp;
         float gyro[3], acc[3], temp;

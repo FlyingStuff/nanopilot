@@ -11,10 +11,13 @@
 #include "serial-datagram/serial_datagram.h"
 #include "cmp/cmp.h"
 #include "cmp_mem_access/cmp_mem_access.h"
+#include "parameter/parameter.h"
 
 BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
 
+
+parameter_namespace_t parameters;
 
 /*
  *  Heartbeat, Error LED thread
@@ -181,11 +184,14 @@ int main(void)
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
 
-    onboard_sensors_start();
+
+    parameter_namespace_declare(&parameters, NULL, NULL); // root namespace
+    onboardsensors_declare_parameters();
 
     sdcard_mount();
     file_cat("/test.txt");
 
+    onboard_sensors_start();
     // stream_imu_values((BaseSequentialStream*)&UART_CONN2);
 
     sumd_input_start((BaseSequentialStream*)&UART_CONN2);

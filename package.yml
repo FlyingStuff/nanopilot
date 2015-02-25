@@ -15,6 +15,7 @@ target.arm:
     - src/sqrtpatch.c
     - src/shell_cmds.c
     - src/sumd_input.c
+    - src/parameter_print.c
 
 depends:
     - crc
@@ -28,6 +29,7 @@ depends:
         fork: stapelzeiger
     - cmp_mem_access:
         fork: stapelzeiger
+    - parameter
 
 #tests:
 

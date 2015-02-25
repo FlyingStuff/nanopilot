@@ -28,3 +28,6 @@
 [submodule "src/cmp_mem_access"]
 	path = src/cmp_mem_access
 	url = https://github.com/Stapelzeiger/cmp_mem_access.git
+[submodule "src/parameter"]
+	path = src/parameter
+	url = https://github.com/Stapelzeiger/parameter

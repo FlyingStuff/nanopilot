@@ -2,10 +2,13 @@
 #include <hal.h>
 #include <chprintf.h>
 #include <shell.h>
+#include <stdlib.h>
 
 #include "sensors/onboardsensors.h"
 #include "sensors/ms5611.h"
 #include "serial-datagram/serial_datagram.h"
+#include "parameter_print.h"
+#include "main.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 static void cmd_mem(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -42,6 +45,28 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
     } while (tp != NULL);
 }
 
+static void cmd_parameter_list(BaseSequentialStream *stream, int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+    parameter_print(stream, &parameters);
+}
+
+static void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv[]) {
+    if (argc < 3) {
+        chprintf(stream, "usage: parameter_set name value\n");
+        return;
+    }
+    parameter_t *p = parameter_find(&parameters, argv[1]);
+    if (p == NULL) {
+        chprintf(stream, "parameter doesn't exist\n");
+        return;
+    }
+    if (p->type == _PARAM_TYPE_SCALAR) {
+        parameter_scalar_set(p, strtof(argv[2], NULL));
+    } else {
+        chprintf(stream, "unsupported type %d\n", p->type);
+    }
+}
 
 static void cmd_gyro(BaseSequentialStream *chp, int argc, char *argv[])
 {
@@ -130,6 +155,8 @@ static void cmd_barometer(BaseSequentialStream *chp, int argc, char *argv[])
 static const ShellCommand commands[] = {
   {"mem", cmd_mem},
   {"threads", cmd_threads},
+  {"parameter_list", cmd_parameter_list},
+  {"parameter_set", cmd_parameter_set},
   {"gyro", cmd_gyro},
   {"baro", cmd_barometer},
   {NULL, NULL}
