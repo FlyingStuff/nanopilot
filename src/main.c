@@ -174,7 +174,7 @@ int main(void)
 
     stdout = (BaseSequentialStream*)&UART_CONN1;
 
-    chprintf(stdout, "boot\n");
+    chprintf(stdout, "\nboot\n");
 
     // USB Serial Driver
     sduObjectInit(&SDU1);
@@ -196,6 +196,9 @@ int main(void)
 
     sumd_input_start((BaseSequentialStream*)&UART_CONN2);
 
+    while (SDU1.config->usbp->state != USB_ACTIVE) {
+            chThdSleepMilliseconds(100);
+    }
     shell_run((BaseSequentialStream*)&SDU1);
 
     while (true) {
