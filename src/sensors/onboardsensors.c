@@ -100,7 +100,7 @@ static int mpu6000_init(mpu60X0_t *dev, rate_gyro_t *gyro, accelerometer_t *acc)
 }
 
 
-static THD_WORKING_AREA(spi_sensors_wa, 128);
+static THD_WORKING_AREA(spi_sensors_wa, 256);
 static THD_FUNCTION(spi_sensors, arg)
 {
     (void)arg;
