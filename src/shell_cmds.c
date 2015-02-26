@@ -52,17 +52,17 @@ static void cmd_parameter_list(BaseSequentialStream *stream, int argc, char *arg
 }
 
 static void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv[]) {
-    if (argc < 3) {
+    if (argc < 2) {
         chprintf(stream, "usage: parameter_set name value\n");
         return;
     }
-    parameter_t *p = parameter_find(&parameters, argv[1]);
+    parameter_t *p = parameter_find(&parameters, argv[0]);
     if (p == NULL) {
         chprintf(stream, "parameter doesn't exist\n");
         return;
     }
     if (p->type == _PARAM_TYPE_SCALAR) {
-        parameter_scalar_set(p, strtof(argv[2], NULL));
+        parameter_scalar_set(p, strtof(argv[1], NULL));
     } else {
         chprintf(stream, "unsupported type %d\n", p->type);
     }
