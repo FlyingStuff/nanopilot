@@ -81,7 +81,7 @@ endif
 PROJECT = ins-board
 
 # Imported source files and paths
-CHIBIOS = ChibiOS-RT
+CHIBIOS = ChibiOS
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
@@ -104,8 +104,8 @@ CSRC = $(PORTSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
        $(CHIBIOS)/os/various/chprintf.c \
-       $(CHIBIOS)/os/various/memstreams.c \
-       $(CHIBIOS)/os/various/shell.c \
+       $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
+       $(CHIBIOS)/os/hal/lib/streams/shell.c \
        $(FATFSSRC) \
        $(PROJCSRC)
 
@@ -138,7 +138,8 @@ ASMSRC = $(PORTASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
-         $(FATFSINC) $(CHIBIOS)/os/various $(PROJINC)
+         $(FATFSINC) $(CHIBIOS)/os/various $(PROJINC) \
+         $(CHIBIOS)/os/hal/lib/streams
 
 #
 # Project, sources and paths
@@ -206,7 +207,7 @@ ULIBS = -lm
 # End of user defines
 ##############################################################################
 
-GLOBAL_SRC_DEP = Makefile src/src.mk
+GLOBAL_SRC_DEP = src/src.mk
 
 RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
