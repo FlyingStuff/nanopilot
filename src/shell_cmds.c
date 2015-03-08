@@ -152,7 +152,7 @@ static void cmd_barometer(BaseSequentialStream *chp, int argc, char *argv[])
     i2cStop(driver);
 }
 
-static const ShellCommand commands[] = {
+const ShellCommand shell_commands[] = {
   {"mem", cmd_mem},
   {"threads", cmd_threads},
   {"parameter_list", cmd_parameter_list},
@@ -162,17 +162,3 @@ static const ShellCommand commands[] = {
   {NULL, NULL}
 };
 
-static ShellConfig shell_cfg;
-static THD_WORKING_AREA(shell_wa, 256);
-
-void shell_run(BaseSequentialStream* dev)
-{
-    static bool shell_running = false;
-    if (!shell_running) {
-        shell_running = true;
-        shellInit();
-        shell_cfg.sc_channel = dev;
-        shell_cfg.sc_commands = commands;
-        shellCreateStatic(&shell_cfg, shell_wa, sizeof(shell_wa), NORMALPRIO);
-    }
-}

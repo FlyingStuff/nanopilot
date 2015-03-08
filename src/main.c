@@ -210,12 +210,25 @@ int main(void)
 
     sumd_input_start((BaseSequentialStream*)&UART_CONN2);
 
-    while (SDU1.config->usbp->state != USB_ACTIVE) {
-            chThdSleepMilliseconds(100);
-    }
-    shell_run((BaseSequentialStream*)&SDU1);
+    // while (SDU1.config->usbp->state != USB_ACTIVE) {
+    //         chThdSleepMilliseconds(100);
+    // }
 
+    shellInit();
+    static thread_t *shelltp = NULL;
+    static ShellConfig shell_cfg;
+    shell_cfg.sc_channel = (BaseSequentialStream*)&SDU1;
+    shell_cfg.sc_commands = shell_commands;
     while (true) {
+        if (!shelltp) {
+            if (SDU1.config->usbp->state == USB_ACTIVE) {
+                file_cat((BaseSequentialStream*)&SDU1, "/banner.txt");
+                shelltp = shellCreate(&shell_cfg, THD_WORKING_AREA_SIZE(2048), NORMALPRIO);
+            }
+        } else if (chThdTerminatedX(shelltp)) {
+            chThdRelease(shelltp);
+            shelltp = NULL;
+        }
         chThdSleepMilliseconds(500);
     }
 }

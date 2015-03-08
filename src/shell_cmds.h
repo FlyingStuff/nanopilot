@@ -2,12 +2,13 @@
 #define SHELL_CMDS_H
 
 #include <ch.h>
+#include <shell.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void shell_run(BaseSequentialStream* dev);
+extern const ShellCommand shell_commands[];
 
 #ifdef __cplusplus
 }
