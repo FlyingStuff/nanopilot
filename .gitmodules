@@ -1,6 +1,3 @@
-[submodule "ChibiOS-RT"]
-	path = ChibiOS-RT
-	url = https://github.com/Stapelzeiger/ChibiOS-RT.git
 [submodule "src/cmp"]
 	path = src/cmp
 	url = https://github.com/camgunz/cmp.git
