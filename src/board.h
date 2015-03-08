@@ -547,14 +547,6 @@ void status_led_on(void);
 void status_led_off(void);
 void status_led_toggle(void);
 
-#define ERROR_LEVEL_NORMAL         0
-#define ERROR_LEVEL_WARNING        1
-#define ERROR_LEVEL_CRITICAL       2
-void error_set(int level);
-void error_clear(int level);
-int error_level_get(void);
-
-bool safemode_active(void);
 
 #ifdef __cplusplus
 }

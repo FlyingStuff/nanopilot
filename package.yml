@@ -5,6 +5,7 @@ source:
 
 target.arm:
     - src/board.c
+    - src/error.c
     - src/main.c
     - src/usbcfg.c
     - src/exti.c

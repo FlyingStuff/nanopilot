@@ -1,5 +1,6 @@
 #include <math.h>
 #include <ch.h>
+#include "error.h"
 #include "mpu60X0.h"
 #include "hmc5883l.h"
 #include "ms5611.h"

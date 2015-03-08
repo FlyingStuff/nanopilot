@@ -1,5 +1,6 @@
 
 #include "hal.h"
+#include "error.h"
 
 #if HAL_USE_PAL
 /**
@@ -54,6 +55,7 @@ bool sdc_lld_is_write_protected(SDCDriver *sdcp) {
 void board_init(void) {
     board_sensor_pwr_en(true);
     board_io_pwr_en(true);
+    error_init();
 }
 
 
@@ -145,29 +147,6 @@ void board_can_standby(bool en)
 }
 
 
-void panic_handler(const char *reason)
-{
-    (void)reason;
-    palSetPad(GPIOA, GPIOA_LED_ERROR);
-    palClearPad(GPIOB, GPIOB_LED_STATUS);
-    palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-    palClearPad(GPIOB, GPIOB_LED_SDCARD);
-
-    static volatile uint32_t ipsr;
-    static volatile const char *msg;
-    msg = reason;
-    ipsr = __get_IPSR();
-
-    (void)msg;
-    (void)ipsr;
-#ifdef DEBUG
-    while (1);
-#else
-    NVIC_SystemReset();
-#endif
-}
-
-
 void status_led_on(void)
 {
     palSetPad(GPIOB, GPIOB_LED_STATUS);
@@ -183,45 +162,4 @@ void status_led_toggle(void)
     chSysLock();
     palTogglePad(GPIOB, GPIOB_LED_STATUS);
     chSysUnlock();
-}
-
-
-static int error_level_cnt[2] = {0,0};
-
-void error_set(int level)
-{
-    if (level > ERROR_LEVEL_NORMAL && level <= ERROR_LEVEL_CRITICAL) {
-        chSysLock();
-        error_level_cnt[level - 1]++;
-        chSysUnlock();
-    }
-}
-
-void error_clear(int level)
-{
-    if (level > ERROR_LEVEL_NORMAL && level <= ERROR_LEVEL_CRITICAL) {
-        chSysLock();
-        if (error_level_cnt[level - 1] > 0) {
-            error_level_cnt[level - 1]--;
-        }
-        chSysUnlock();
-    }
-}
-
-int error_level_get(void)
-{
-    int lvl = ERROR_LEVEL_NORMAL;
-    chSysLock();
-    if (error_level_cnt[ERROR_LEVEL_CRITICAL - 1]) {
-        lvl = ERROR_LEVEL_CRITICAL;
-    } else if (error_level_cnt[ERROR_LEVEL_WARNING - 1]) {
-        lvl = ERROR_LEVEL_WARNING;
-    }
-    chSysUnlock();
-    return lvl;
-}
-
-bool safemode_active(void)
-{
-    return false;
 }
