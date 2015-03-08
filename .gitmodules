@@ -28,3 +28,6 @@
 [submodule "ChibiOS"]
 	path = ChibiOS
 	url = https://github.com/Stapelzeiger/ChibiOS.git
+[submodule "src/parameter"]
+	path = src/parameter
+	url = https://github.com/Stapelzeiger/parameter

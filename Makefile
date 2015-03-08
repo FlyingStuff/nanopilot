@@ -106,6 +106,7 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/various/chprintf.c \
        $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
        $(CHIBIOS)/os/hal/lib/streams/shell.c \
+       $(CHIBIOS)/os/various/syscalls.c \
        $(FATFSSRC) \
        $(PROJCSRC)
 

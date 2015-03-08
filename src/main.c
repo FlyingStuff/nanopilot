@@ -12,9 +12,12 @@
 #include "cmp/cmp.h"
 #include "cmp_mem_access/cmp_mem_access.h"
 #include "error.h"
+#include "parameter/parameter.h"
 
 BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
+
+parameter_namespace_t parameters;
 
 
 /*
@@ -172,7 +175,7 @@ int main(void)
 
     stdout = (BaseSequentialStream*)&UART_CONN1;
 
-    chprintf(stdout, "boot\n");
+    chprintf(stdout, "\nboot\n");
 
     // USB Serial Driver
     sduObjectInit(&SDU1);
@@ -182,15 +185,21 @@ int main(void)
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
 
-    onboard_sensors_start();
+
+    parameter_namespace_declare(&parameters, NULL, NULL); // root namespace
+    onboardsensors_declare_parameters();
 
     sdcard_mount();
     file_cat("/test.txt");
 
+    onboard_sensors_start();
     // stream_imu_values((BaseSequentialStream*)&UART_CONN2);
 
     sumd_input_start((BaseSequentialStream*)&UART_CONN2);
 
+    while (SDU1.config->usbp->state != USB_ACTIVE) {
+            chThdSleepMilliseconds(100);
+    }
     shell_run((BaseSequentialStream*)&SDU1);
 
     while (true) {
