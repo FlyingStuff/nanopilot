@@ -3,7 +3,7 @@
 
 FATFSSRC = ${CHIBIOS}/os/various/fatfs_bindings/fatfs_diskio.c \
            ${CHIBIOS}/os/various/fatfs_bindings/fatfs_syscall.c \
-           src/fatfs/src/ff.c
-           #src/fatfs/src/option/unicode.c
+           src/fatfs/src/ff.c \
+           src/fatfs/src/option/unicode.c
 
 FATFSINC = src/fatfs/src
