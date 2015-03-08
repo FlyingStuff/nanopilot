@@ -116,46 +116,59 @@ void stream_imu_values(BaseSequentialStream *out)
 static FATFS SDC_FS;
 bool fatfs_mounted = false;
 
-void sdcard_mount(void)
+bool sdcard_mount(void)
 {
     if (palReadPad(GPIOC, GPIOC_SDCARD_DETECT)) {
         chprintf(stdout, "no SD card detected\n");
-        return;
+        return false;
     }
     board_sdcard_pwr_en(true);
     chprintf(stdout, "SD card detected\n");
     sdcStart(&SDCD1, NULL);
     if (sdcConnect(&SDCD1)) {
         chprintf(stdout, "SD card: failed to connect\n");
-        return;
+        return false;
     }
     FRESULT err;
     err = f_mount(&SDC_FS, "", 0);
     if (err != FR_OK) {
         chprintf(stdout, "SD card: mount failed\n");
         sdcDisconnect(&SDCD1);
-        return;
+        return false;
     }
     fatfs_mounted = true;
     palSetPad(GPIOB, GPIOB_LED_SDCARD);
     chprintf(stdout, "SD card mounted\n");
+    return true;
 }
 
-
-void file_cat(const char *file_path)
+void sdcard_unmount(void)
 {
+    f_mount(NULL, "", 0); // unmount
+    palClearPad(GPIOB, GPIOB_LED_SDCARD);
+    sdcDisconnect(&SDCD1);
+    fatfs_mounted = false;
+}
+
+void file_cat(BaseSequentialStream *out, const char *file_path)
+{
+    if (palReadPad(GPIOC, GPIOC_SDCARD_DETECT)) {
+        sdcard_unmount();
+    }
     if (!fatfs_mounted) {
-        return;
+        if (!sdcard_mount()) {
+            return;
+        }
     }
     static FIL f;
     FRESULT res = f_open(&f, file_path, FA_READ);
     if (res) {
-        chprintf(stdout, "error opening %s\n", file_path);
+        chprintf(out, "error %d opening %s\n", res, file_path);
         return;
     }
     static char line[80];
     while (f_gets(line, sizeof(line), &f)) {
-        chprintf(stdout, line);
+        chprintf(out, line);
     }
     f_close(&f);
 }
@@ -190,7 +203,7 @@ int main(void)
     onboardsensors_declare_parameters();
 
     sdcard_mount();
-    file_cat("/test.txt");
+    file_cat(stdout, "/test.txt");
 
     onboard_sensors_start();
     // stream_imu_values((BaseSequentialStream*)&UART_CONN2);
