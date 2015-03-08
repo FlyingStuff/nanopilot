@@ -31,7 +31,7 @@
                     "ChibiOS/test/rt",
                     "ChibiOS/os/various",
                     "ChibiOS/os/hal/lib/streams",
-                    "ChibiOS/os/ext/fatfs/src/",
+                    "src/fatfs/src/",
                     "./src"
                 ]
             }
