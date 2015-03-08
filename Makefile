@@ -88,7 +88,7 @@ include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_stm32f4xx.mk
 include $(CHIBIOS)/test/rt/test.mk
-include $(CHIBIOS)/os/various/fatfs_bindings/fatfs.mk
+include src/fatfs/fatfs.mk
 include src/src.mk
 
 # Define linker script file here
