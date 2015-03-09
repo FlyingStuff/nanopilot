@@ -47,24 +47,28 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
 }
 
 static void cmd_safemode(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)chp;
     (void)argc;
     (void)argv;
     reboot_in_safemode();
 }
 
 static void cmd_reboot(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)chp;
     (void)argc;
     (void)argv;
     NVIC_SystemReset();
 }
 
 static void cmd_bootloader(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)chp;
     (void)argc;
     (void)argv;
     reboot_st_bootloader();
 }
 
 static void cmd_panic(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)chp;
     (void)argc;
     (void)argv;
     chSysHalt("panic test shell command");
