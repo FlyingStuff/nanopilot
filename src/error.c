@@ -50,8 +50,7 @@ int error_level_get(void)
  */
 
 #define SAFEMODE_MAGIC_VALUE 0xdb3c9869254dc8bc // random value
-// todo section noinit
-static uint64_t safemode_magic_value;
+static __attribute__((section(".noinit"))) uint64_t safemode_magic_value;
 
 static bool safemode;
 
@@ -81,10 +80,9 @@ void reboot_in_safemode(void)
  * Panic handling
  */
 
-#define PANIC_CRC_INIT 0x1aaadc37
-// todo section noinit
-static char panic_buffer[200];
-static uint32_t panic_buffer_crc;
+#define PANIC_CRC_INIT 0x1aaadc37 // random value
+static __attribute__((section(".noinit"))) char panic_buffer[200];
+static __attribute__((section(".noinit"))) uint32_t panic_buffer_crc;
 
 static bool panic_buffer_crc_matched;
 
