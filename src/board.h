@@ -547,6 +547,7 @@ void status_led_on(void);
 void status_led_off(void);
 void status_led_toggle(void);
 
+void reboot_st_bootloader(void);
 
 #ifdef __cplusplus
 }
