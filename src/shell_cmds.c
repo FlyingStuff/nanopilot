@@ -8,6 +8,7 @@
 #include "sensors/ms5611.h"
 #include "serial-datagram/serial_datagram.h"
 #include "parameter_print.h"
+#include "error.h"
 #include "main.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
@@ -43,6 +44,36 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
                  states[tp->p_state], tp->p_name);
         tp = chRegNextThread(tp);
     } while (tp != NULL);
+}
+
+static void cmd_safemode(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+    reboot_in_safemode();
+}
+
+static void cmd_reboot(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+    NVIC_SystemReset();
+}
+
+static void cmd_bootloader(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+    reboot_st_bootloader();
+}
+
+static void cmd_panic(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+    chSysHalt("panic test shell command");
+}
+
+static void cmd_panic_get(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+    chprintf(chp, "panic was: %s\n", get_panic_message());
 }
 
 static void cmd_parameter_list(BaseSequentialStream *stream, int argc, char *argv[]) {
@@ -155,6 +186,11 @@ static void cmd_barometer(BaseSequentialStream *chp, int argc, char *argv[])
 const ShellCommand shell_commands[] = {
   {"mem", cmd_mem},
   {"threads", cmd_threads},
+  {"safemode", cmd_safemode},
+  {"reboot", cmd_reboot},
+  {"bootloader", cmd_bootloader},
+  {"panic", cmd_panic},
+  {"panic_get", cmd_panic_get},
   {"parameter_list", cmd_parameter_list},
   {"parameter_set", cmd_parameter_set},
   {"gyro", cmd_gyro},
