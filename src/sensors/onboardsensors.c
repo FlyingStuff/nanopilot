@@ -7,14 +7,17 @@
 #include "exti.h"
 #include "parameter/parameter.h"
 #include "main.h"
-
 #include "imu.h"
+
+#include "onboardsensors.h"
 
 rate_gyro_sample_t mpu_gyro_sample;
 accelerometer_sample_t mpu_acc_sample;
 
-#define SENSOR_INTERRUPT_EVENT 1
+event_source_t sensor_events;
 
+
+#define SENSOR_INTERRUPT_EVENT 1 // internal thread wakeup event mask
 
 static parameter_namespace_t sensor_param;
 static parameter_namespace_t mpu6000_param;
@@ -26,8 +29,8 @@ void onboardsensors_declare_parameters(void)
 {
     parameter_namespace_declare(&sensor_param, &parameters, "sensors");
     parameter_namespace_declare(&mpu6000_param, &sensor_param, "mpu6000");
-    parameter_scalar_declare_with_default(&mpu6000_gyro_full_scale, &mpu6000_param, "gyro_full_scale", 500); // [deg/s]
-    parameter_scalar_declare_with_default(&mpu6000_acc_full_scale, &mpu6000_param, "acc_full_scale", 2); // [g]
+    parameter_scalar_declare_with_default(&mpu6000_gyro_full_scale, &mpu6000_param, "gyro_full_scale", 2000); // [deg/s]
+    parameter_scalar_declare_with_default(&mpu6000_acc_full_scale, &mpu6000_param, "acc_full_scale", 16); // [g]
 }
 
 static int mpu6000_init(mpu60X0_t *dev, rate_gyro_t *gyro, accelerometer_t *acc)
@@ -142,6 +145,7 @@ static THD_FUNCTION(spi_sensors, arg)
         mpu_acc_sample.acceleration[1] = acc[1];
         mpu_acc_sample.acceleration[2] = acc[2];
         chSysUnlock();
+        chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MPU6000);
     }
     return 0;
 }
@@ -207,6 +211,7 @@ static THD_FUNCTION(i2c_sensors, arg)
 
 void onboard_sensors_start(void)
 {
+    chEvtObjectInit(&sensor_events);
     exti_setup();
     chThdCreateStatic(spi_sensors_wa, sizeof(spi_sensors_wa), LOWPRIO, spi_sensors, NULL);
     chThdCreateStatic(i2c_sensors_wa, sizeof(i2c_sensors_wa), LOWPRIO, i2c_sensors, NULL);
