@@ -13,6 +13,7 @@
 #include "cmp_mem_access/cmp_mem_access.h"
 #include "error.h"
 #include "parameter/parameter.h"
+#include "sdlog.h"
 
 BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
@@ -218,6 +219,7 @@ int main(void)
 
     sumd_input_start((BaseSequentialStream*)&UART_CONN2);
 
+    sdlog_start();
 
     while (1) {
         chThdSleepMilliseconds(100);
