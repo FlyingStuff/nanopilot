@@ -8,6 +8,7 @@
 #include "sensors/ms5611.h"
 #include "serial-datagram/serial_datagram.h"
 #include "parameter_print.h"
+#include "git_revision.h"
 #include "error.h"
 #include "main.h"
 
@@ -44,6 +45,16 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
                  states[tp->p_state], tp->p_name);
         tp = chRegNextThread(tp);
     } while (tp != NULL);
+}
+
+static void cmd_version(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)chp;
+    (void)argc;
+    (void)argv;
+    chprintf(chp, "git version: %s\n", build_git_version);
+    chprintf(chp, "full sha:    %s\n", build_git_sha);
+    chprintf(chp, "build date:  %s\n", build_date);
+    chprintf(chp, "compiler:    %s\n", PORT_COMPILER_NAME);
 }
 
 static void cmd_safemode(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -190,6 +201,7 @@ static void cmd_barometer(BaseSequentialStream *chp, int argc, char *argv[])
 const ShellCommand shell_commands[] = {
   {"mem", cmd_mem},
   {"threads", cmd_threads},
+  {"version", cmd_version},
   {"safemode", cmd_safemode},
   {"reboot", cmd_reboot},
   {"bootloader", cmd_bootloader},

@@ -108,7 +108,8 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/hal/lib/streams/shell.c \
        $(CHIBIOS)/os/various/syscalls.c \
        $(FATFSSRC) \
-       $(PROJCSRC)
+       $(PROJCSRC) \
+       src/git_revision.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -214,6 +215,9 @@ RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
 -include tools.mk
 
+.PHONY: FORCE
+src/git_revision.c: FORCE
+	@ ./git_revision.sh
 
 # TODO add targets for:
 # arm-none-eabi-objdump -D -g -h build/ins-board.elf > build/ins-board.lst

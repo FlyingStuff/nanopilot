@@ -3,4 +3,5 @@
 .dep
 build
 src/src.mk
+src/git_revision.c
 CMakeLists.txt
