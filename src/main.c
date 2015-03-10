@@ -116,30 +116,22 @@ void stream_imu_values(BaseSequentialStream *out)
 static FATFS SDC_FS;
 bool fatfs_mounted = false;
 
-bool sdcard_mount(void)
+void sdcard_mount(void)
 {
-    if (palReadPad(GPIOC, GPIOC_SDCARD_DETECT)) {
-        chprintf(stdout, "no SD card detected\n");
-        return false;
-    }
-    board_sdcard_pwr_en(true);
-    chprintf(stdout, "SD card detected\n");
-    sdcStart(&SDCD1, NULL);
     if (sdcConnect(&SDCD1)) {
         chprintf(stdout, "SD card: failed to connect\n");
-        return false;
+        return;
     }
     FRESULT err;
     err = f_mount(&SDC_FS, "", 0);
     if (err != FR_OK) {
         chprintf(stdout, "SD card: mount failed\n");
         sdcDisconnect(&SDCD1);
-        return false;
+        return;
     }
     fatfs_mounted = true;
     palSetPad(GPIOB, GPIOB_LED_SDCARD);
     chprintf(stdout, "SD card mounted\n");
-    return true;
 }
 
 void sdcard_unmount(void)
@@ -150,16 +142,21 @@ void sdcard_unmount(void)
     fatfs_mounted = false;
 }
 
-void file_cat(BaseSequentialStream *out, const char *file_path)
+void sdcard_automount(void)
 {
     if (palReadPad(GPIOC, GPIOC_SDCARD_DETECT)) {
-        sdcard_unmount();
-    }
-    if (!fatfs_mounted) {
-        if (!sdcard_mount()) {
-            return;
+        if (fatfs_mounted) {
+            sdcard_unmount();
+        }
+    } else {
+        if (!fatfs_mounted) {
+            sdcard_mount();
         }
     }
+}
+
+void file_cat(BaseSequentialStream *out, const char *file_path)
+{
     static FIL f;
     FRESULT res = f_open(&f, file_path, FA_READ);
     if (res) {
@@ -188,7 +185,15 @@ int main(void)
 
     stdout = (BaseSequentialStream*)&UART_CONN1;
 
-    chprintf(stdout, "\nboot\n");
+    const char *panic_msg = get_panic_message();
+    if (panic_msg != NULL) {
+        chprintf(stdout, "\n> reboot after panic:\n%s\n", panic_msg);
+    } else {
+        chprintf(stdout, "\n> boot\n");
+    }
+    if (safemode_active()) {
+        chprintf(stdout, "> safemode active\n");
+    }
 
     // USB Serial Driver
     sduObjectInit(&SDU1);
@@ -202,6 +207,9 @@ int main(void)
     parameter_namespace_declare(&parameters, NULL, NULL); // root namespace
     onboardsensors_declare_parameters();
 
+    board_sdcard_pwr_en(true);
+    chThdSleepMilliseconds(100);
+    sdcStart(&SDCD1, NULL);
     sdcard_mount();
     file_cat(stdout, "/test.txt");
 
@@ -210,9 +218,11 @@ int main(void)
 
     sumd_input_start((BaseSequentialStream*)&UART_CONN2);
 
-    // while (SDU1.config->usbp->state != USB_ACTIVE) {
-    //         chThdSleepMilliseconds(100);
-    // }
+
+    while (1) {
+        chThdSleepMilliseconds(100);
+        sdcard_automount();
+    }
 
     shellInit();
     static thread_t *shelltp = NULL;
