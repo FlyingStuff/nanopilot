@@ -5,6 +5,7 @@
 #include <string.h>
 #include <usbcfg.h>
 
+#include "git_revision.h"
 #include "shell_cmds.h"
 #include "sumd_input.h"
 #include "sensors/onboardsensors.h"
@@ -192,6 +193,7 @@ int main(void)
     } else {
         chprintf(stdout, "\n> boot\n");
     }
+    chprintf(stdout, "> version: %s\n", build_git_version);
     if (safemode_active()) {
         chprintf(stdout, "> safemode active\n");
     }
