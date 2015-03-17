@@ -215,9 +215,7 @@ RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
 -include tools.mk
 
-.PHONY: FORCE
-src/git_revision.c: FORCE
-	@ ./git_revision.sh
+$(shell ./git_revision.sh)
 
 # TODO add targets for:
 # arm-none-eabi-objdump -D -g -h build/ins-board.elf > build/ins-board.lst
