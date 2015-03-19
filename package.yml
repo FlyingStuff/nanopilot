@@ -18,6 +18,7 @@ target.arm:
     - src/sumd_input.c
     - src/parameter_print.c
     - src/sdlog.c
+    - src/stream.c
 
 depends:
     - crc
