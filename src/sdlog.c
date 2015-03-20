@@ -6,6 +6,7 @@
 #include "main.h"
 #include "sensors/onboardsensors.h"
 #include "sumd_input.h"
+#include "git_revision.h"
 
 #include "sdlog.h"
 
@@ -20,17 +21,34 @@ static THD_FUNCTION(sdlog, arg)
     chEvtRegisterMaskWithFlags(&sensor_events, &sensor_listener,
                                (eventmask_t)EVENT_MASK_MPU6000,
                                (eventflags_t)SENSOR_EVENT_MPU6000);
+    static uint8_t writebuf[200];
+    static MemoryStream writebuf_stream;
     bool error = false;
     UINT _bytes_written;
 
+    FRESULT res;
+
+    static FIL version_fd;
+    res = f_open(&version_fd, "/log/version", FA_WRITE | FA_CREATE_ALWAYS);
+    if (res) {
+        chprintf(stdout, "error %d opening %s\n", res, "/log/version");
+        return -1;
+    }
+    msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
+            chprintf((BaseSequentialStream*)&writebuf_stream,
+                      "git version: %s\n"
+                      "compiler:    %s\n"
+                      "built:       %s\n", build_git_version, PORT_COMPILER_NAME, build_date);
+    error = error || f_write(&version_fd, writebuf, writebuf_stream.eos, &_bytes_written);
+
     static FIL mpu6000_fd;
-    FRESULT res = f_open(&mpu6000_fd, "/log/mpu6000.csv", FA_WRITE | FA_CREATE_ALWAYS);
+    res = f_open(&mpu6000_fd, "/log/mpu6000.csv", FA_WRITE | FA_CREATE_ALWAYS);
     if (res) {
         chprintf(stdout, "error %d opening %s\n", res, "/log/mpu6000.csv");
         return -1;
     }
     const char *mpu_descr = "time,gyro_x,gyro_y,gyro_z,acc_x,acc_y,acc_z\n";
-    error = error || f_write(&mpu6000_fd, mpu_descr, strlen(mpu_descr), &_bytes_written);
+    error |= error || f_write(&mpu6000_fd, mpu_descr, strlen(mpu_descr), &_bytes_written);
     static FIL rc_fd;
     res = f_open(&rc_fd, "/log/rc.csv", FA_WRITE | FA_CREATE_ALWAYS);
     if (res) {
@@ -38,11 +56,9 @@ static THD_FUNCTION(sdlog, arg)
         return -1;
     }
     const char *rc_descr = "time,signal,ch1,ch2,ch3,ch4,ch5\n";
-    error = error || f_write(&rc_fd, rc_descr, strlen(rc_descr), &_bytes_written);
+    error |= error || f_write(&rc_fd, rc_descr, strlen(rc_descr), &_bytes_written);
 
     while (!error) {
-        static uint8_t writebuf[200];
-        static MemoryStream writebuf_stream;
         eventmask_t events = chEvtWaitAny(EVENT_MASK_MPU6000);
         float t = (float)chVTGetSystemTimeX() / CH_CFG_ST_FREQUENCY;
 
