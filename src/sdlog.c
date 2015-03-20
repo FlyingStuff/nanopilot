@@ -43,6 +43,7 @@ static THD_FUNCTION(sdlog, arg)
                       PORT_COMPILER_NAME,
                       build_date);
     error = error || f_write(&version_fd, writebuf, writebuf_stream.eos, &_bytes_written);
+    f_close(&version_fd);
 
     static FIL mpu6000_fd;
     res = f_open(&mpu6000_fd, "/log/mpu6000.csv", FA_WRITE | FA_CREATE_ALWAYS);
