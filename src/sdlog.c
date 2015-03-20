@@ -79,7 +79,7 @@ static THD_FUNCTION(sdlog, arg)
             sumd_input_get(&rc_in);
             msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
             chprintf((BaseSequentialStream*)&writebuf_stream,
-                      "%f,%d,%d,%d,%d,%d,%d\n", t, !rc_in.no_signal, rc_in.channel[0], rc_in.channel[1], rc_in.channel[2], rc_in.channel[3], rc_in.channel[4]);
+                      "%f,%d,%f,%f,%f,%f,%f\n", t, !rc_in.no_signal, rc_in.channel[0], rc_in.channel[1], rc_in.channel[2], rc_in.channel[3], rc_in.channel[4]);
             UINT _bytes_written;
             int ret = f_write(&rc_fd, writebuf, writebuf_stream.eos, &_bytes_written);
             if (ret != 0) {
