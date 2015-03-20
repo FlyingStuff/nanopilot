@@ -36,9 +36,12 @@ static THD_FUNCTION(sdlog, arg)
     }
     msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
             chprintf((BaseSequentialStream*)&writebuf_stream,
-                      "git version: %s\n"
+                      "git version: %s (%s)\n"
                       "compiler:    %s\n"
-                      "built:       %s\n", build_git_version, PORT_COMPILER_NAME, build_date);
+                      "built:       %s\n",
+                      build_git_version, build_git_branch,
+                      PORT_COMPILER_NAME,
+                      build_date);
     error = error || f_write(&version_fd, writebuf, writebuf_stream.eos, &_bytes_written);
 
     static FIL mpu6000_fd;
