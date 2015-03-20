@@ -14,6 +14,7 @@ void sumd_input_get(struct rc_input_s *rc_in)
 static THD_WORKING_AREA(sumd_input_task_wa, 128);
 static THD_FUNCTION(sumd_input_task, arg)
 {
+    chRegSetThreadName("rc sumd input");
     BaseSequentialStream *input = (BaseSequentialStream*)arg;
     struct sumd_receiver_s rc;
     sumd_receiver_init(&rc);
