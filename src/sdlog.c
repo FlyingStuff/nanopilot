@@ -5,6 +5,7 @@
 #include <ff.h>
 #include "main.h"
 #include "sensors/onboardsensors.h"
+#include "sumd_input.h"
 
 #include "sdlog.h"
 
@@ -30,6 +31,14 @@ static THD_FUNCTION(sdlog, arg)
     }
     const char *mpu_descr = "time,gyro_x,gyro_y,gyro_z,acc_x,acc_y,acc_z\n";
     error = error || f_write(&mpu6000_fd, mpu_descr, strlen(mpu_descr), &_bytes_written);
+    static FIL rc_fd;
+    res = f_open(&rc_fd, "/log/rc.csv", FA_WRITE | FA_CREATE_ALWAYS);
+    if (res) {
+        chprintf(stdout, "error %d opening %s\n", res, "/log/rc.csv");
+        return -1;
+    }
+    const char *rc_descr = "time,signal,ch1,ch2,ch3,ch4,ch5\n";
+    error = error || f_write(&rc_fd, rc_descr, strlen(rc_descr), &_bytes_written);
 
     while (!error) {
         static uint8_t writebuf[200];
@@ -62,6 +71,24 @@ static THD_FUNCTION(sdlog, arg)
             sync_needed++;
             if (sync_needed == 100) {
                 f_sync(&mpu6000_fd);
+                sync_needed = 0;
+            }
+        }
+        if (true) {
+            static struct rc_input_s rc_in;
+            sumd_input_get(&rc_in);
+            msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
+            chprintf((BaseSequentialStream*)&writebuf_stream,
+                      "%f,%d,%d,%d,%d,%d,%d\n", t, !rc_in.no_signal, rc_in.channel[0], rc_in.channel[1], rc_in.channel[2], rc_in.channel[3], rc_in.channel[4]);
+            UINT _bytes_written;
+            int ret = f_write(&rc_fd, writebuf, writebuf_stream.eos, &_bytes_written);
+            if (ret != 0) {
+                chprintf(stdout, "write failed %d\n", ret);
+            }
+            static int sync_needed = 0;
+            sync_needed++;
+            if (sync_needed == 100) {
+                f_sync(&rc_fd);
                 sync_needed = 0;
             }
         }
