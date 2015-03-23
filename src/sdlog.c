@@ -28,8 +28,16 @@ static THD_FUNCTION(sdlog, arg)
         chprintf(stdout, "error %d opening %s\n", res, "/log/mpu6000.csv");
         return -1;
     }
-    const char *mpu_descr = "time,gyro_x,gyro_y,gyro_z,acc_x,acc_y,acc_z\n";
-    error = error || f_write(&mpu6000_fd, mpu_descr, strlen(mpu_descr), &_bytes_written);
+    const char *mpu_descr = "time,gyro_x,gyro_y,gyro_z,acc_x,acc_y,acc_z,temp\n";
+    error |= error || f_write(&mpu6000_fd, mpu_descr, strlen(mpu_descr), &_bytes_written);
+    static FIL rc_fd;
+    res = f_open(&rc_fd, "/log/rc.csv", FA_WRITE | FA_CREATE_ALWAYS);
+    if (res) {
+        chprintf(stdout, "error %d opening %s\n", res, "/log/rc.csv");
+        return -1;
+    }
+    const char *rc_descr = "time,signal,ch1,ch2,ch3,ch4,ch5\n";
+    error |= error || f_write(&rc_fd, rc_descr, strlen(rc_descr), &_bytes_written);
 
     while (!error) {
         static uint8_t writebuf[200];
@@ -45,10 +53,11 @@ static THD_FUNCTION(sdlog, arg)
             float ax = mpu_acc_sample.acceleration[0];
             float ay = mpu_acc_sample.acceleration[1];
             float az = mpu_acc_sample.acceleration[2];
+            float temp = mpu_temp;
             chSysUnlock();
             msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
             chprintf((BaseSequentialStream*)&writebuf_stream,
-                      "%f,%f,%f,%f,%f,%f,%f\n", t, gx, gy, gz, ax, ay, az);
+                      "%f,%f,%f,%f,%f,%f,%f,%f\n", t, gx, gy, gz, ax, ay, az, temp);
             UINT _bytes_written;
             int ret = f_write(&mpu6000_fd, writebuf, writebuf_stream.eos, &_bytes_written);
             if (ret != 0) {

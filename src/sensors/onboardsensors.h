@@ -6,6 +6,7 @@
 
 extern rate_gyro_sample_t mpu_gyro_sample;
 extern accelerometer_sample_t mpu_acc_sample;
+extern float mpu_temp;
 
 #define SENSOR_EVENT_HMC5883L       1
 #define SENSOR_EVENT_MPU6000        2

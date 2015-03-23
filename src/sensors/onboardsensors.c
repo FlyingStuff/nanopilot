@@ -13,6 +13,7 @@
 
 rate_gyro_sample_t mpu_gyro_sample;
 accelerometer_sample_t mpu_acc_sample;
+float mpu_temp;
 
 event_source_t sensor_events;
 
@@ -144,6 +145,7 @@ static THD_FUNCTION(spi_sensors, arg)
         mpu_acc_sample.acceleration[0] = acc[0];
         mpu_acc_sample.acceleration[1] = acc[1];
         mpu_acc_sample.acceleration[2] = acc[2];
+        mpu_temp = temp;
         chSysUnlock();
         chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MPU6000);
     }
