@@ -14,12 +14,12 @@ void sumd_input_get(struct rc_input_s *rc_in)
 static THD_WORKING_AREA(sumd_input_task_wa, 128);
 static THD_FUNCTION(sumd_input_task, arg)
 {
+    chRegSetThreadName("rc sumd input");
     BaseSequentialStream *input = (BaseSequentialStream*)arg;
     struct sumd_receiver_s rc;
     sumd_receiver_init(&rc);
     while (1) {
         char c = chSequentialStreamGet(input);
-        status_led_toggle();
         int ret = sumd_receive(&rc, c);
         if (ret == SUMD_RECEIVE_COMPLETE) {
             chSysLock();
@@ -34,6 +34,11 @@ static THD_FUNCTION(sumd_input_task, arg)
                 in.channel[i] = ((float)rc.channel[i] - SUMD_POS_NEUTRAL) / (SUMD_POS_HIGH - SUMD_POS_NEUTRAL);
             }
             chSysUnlock();
+            if (in.no_signal) {
+                status_led_off();
+            } else {
+                status_led_on();
+            }
         }
     }
     return 0;

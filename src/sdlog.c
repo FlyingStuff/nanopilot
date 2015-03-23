@@ -5,6 +5,8 @@
 #include <ff.h>
 #include "main.h"
 #include "sensors/onboardsensors.h"
+#include "sumd_input.h"
+#include "git_revision.h"
 
 #include "sdlog.h"
 
@@ -19,11 +21,32 @@ static THD_FUNCTION(sdlog, arg)
     chEvtRegisterMaskWithFlags(&sensor_events, &sensor_listener,
                                (eventmask_t)EVENT_MASK_MPU6000,
                                (eventflags_t)SENSOR_EVENT_MPU6000);
+    static uint8_t writebuf[200];
+    static MemoryStream writebuf_stream;
     bool error = false;
     UINT _bytes_written;
 
+    FRESULT res;
+
+    static FIL version_fd;
+    res = f_open(&version_fd, "/log/version", FA_WRITE | FA_CREATE_ALWAYS);
+    if (res) {
+        chprintf(stdout, "error %d opening %s\n", res, "/log/version");
+        return -1;
+    }
+    msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
+            chprintf((BaseSequentialStream*)&writebuf_stream,
+                      "git version: %s (%s)\n"
+                      "compiler:    %s\n"
+                      "built:       %s\n",
+                      build_git_version, build_git_branch,
+                      PORT_COMPILER_NAME,
+                      build_date);
+    error = error || f_write(&version_fd, writebuf, writebuf_stream.eos, &_bytes_written);
+    f_close(&version_fd);
+
     static FIL mpu6000_fd;
-    FRESULT res = f_open(&mpu6000_fd, "/log/mpu6000.csv", FA_WRITE | FA_CREATE_ALWAYS);
+    res = f_open(&mpu6000_fd, "/log/mpu6000.csv", FA_WRITE | FA_CREATE_ALWAYS);
     if (res) {
         chprintf(stdout, "error %d opening %s\n", res, "/log/mpu6000.csv");
         return -1;
@@ -40,8 +63,6 @@ static THD_FUNCTION(sdlog, arg)
     error |= error || f_write(&rc_fd, rc_descr, strlen(rc_descr), &_bytes_written);
 
     while (!error) {
-        static uint8_t writebuf[200];
-        static MemoryStream writebuf_stream;
         eventmask_t events = chEvtWaitAny(EVENT_MASK_MPU6000);
         float t = (float)chVTGetSystemTimeX() / CH_CFG_ST_FREQUENCY;
 
@@ -71,6 +92,24 @@ static THD_FUNCTION(sdlog, arg)
             sync_needed++;
             if (sync_needed == 100) {
                 f_sync(&mpu6000_fd);
+                sync_needed = 0;
+            }
+        }
+        if (false) {
+            static struct rc_input_s rc_in;
+            sumd_input_get(&rc_in);
+            msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
+            chprintf((BaseSequentialStream*)&writebuf_stream,
+                      "%f,%d,%f,%f,%f,%f,%f\n", t, !rc_in.no_signal, rc_in.channel[0], rc_in.channel[1], rc_in.channel[2], rc_in.channel[3], rc_in.channel[4]);
+            UINT _bytes_written;
+            int ret = f_write(&rc_fd, writebuf, writebuf_stream.eos, &_bytes_written);
+            if (ret != 0) {
+                chprintf(stdout, "write failed %d\n", ret);
+            }
+            static int sync_needed = 0;
+            sync_needed++;
+            if (sync_needed == 100) {
+                f_sync(&rc_fd);
                 sync_needed = 0;
             }
         }

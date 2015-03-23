@@ -179,10 +179,10 @@ int main(void)
     sdlog_start();
     stream_start((BaseSequentialStream*)&UART_CONN4);
 
-    while (1) {
-        chThdSleepMilliseconds(100);
-        sdcard_automount();
-    }
+    // while (1) {
+    //     chThdSleepMilliseconds(100);
+    //     sdcard_automount();
+    // }
 
     shellInit();
     static thread_t *shelltp = NULL;

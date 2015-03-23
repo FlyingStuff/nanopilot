@@ -7,6 +7,7 @@ extern "C" {
 
 extern const char * build_git_version;
 extern const char * build_git_sha;
+extern const char * build_git_branch;
 extern const char * build_date;
 
 #ifdef __cplusplus
