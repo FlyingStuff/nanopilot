@@ -94,7 +94,7 @@ static THD_FUNCTION(sdlog, arg)
                 sync_needed = 0;
             }
         }
-        if (true) {
+        if (false) {
             static struct rc_input_s rc_in;
             sumd_input_get(&rc_in);
             msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
