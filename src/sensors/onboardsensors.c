@@ -233,7 +233,9 @@ static THD_FUNCTION(i2c_sensors, arg)
     }
 
     h3lis331dl_acc_sample.sensor = NULL; // todo
+    i2cAcquireBus(i2c_driver);
     h3lis331dl_setup(&high_g_acc, H3LIS331DL_CONFIG_ODR_400HZ | H3LIS331DL_CONFIG_FS_400G);
+    i2cReleaseBus(i2c_driver);
 
     // Magnetometer setup
 
@@ -242,7 +244,9 @@ static THD_FUNCTION(i2c_sensors, arg)
     if (!hmc5883l_ping(&magnetometer)) {
         error_set(ERROR_LEVEL_WARNING);
     }
+    i2cAcquireBus(i2c_driver);
     hmc5883l_setup(&magnetometer, HMC5883L_SAMPLE_AVG_8 | HMC5883L_GAIN_230 | HMC5883L_RATE_HZ_75);
+    i2cReleaseBus(i2c_driver);
 
     // Event setup
 
@@ -259,7 +263,9 @@ static THD_FUNCTION(i2c_sensors, arg)
         eventmask_t events = chEvtWaitAny(HMC5883L_INTERRUPT_EVENT | H3LIS331DL_INTERRUPT_EVENT);
         if (events & H3LIS331DL_INTERRUPT_EVENT) {
             static float acc[3];
+            i2cAcquireBus(i2c_driver);
             h3lis331dl_read(&high_g_acc, acc);
+            i2cReleaseBus(i2c_driver);
             chSysLock();
             h3lis331dl_acc_sample.acceleration[0] = acc[0];
             h3lis331dl_acc_sample.acceleration[1] = acc[1];
@@ -269,7 +275,9 @@ static THD_FUNCTION(i2c_sensors, arg)
         }
         if (events & HMC5883L_INTERRUPT_EVENT) {
             static float mag[3];
+            i2cAcquireBus(i2c_driver);
             hmc5883l_read(&magnetometer, mag);
+            i2cReleaseBus(i2c_driver);
             chSysLock();
             magnetic_field[0] = mag[0];
             magnetic_field[1] = mag[1];
