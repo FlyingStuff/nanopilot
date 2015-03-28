@@ -32,12 +32,12 @@ void h3lis331dl_init_using_i2c(h3lis331dl_t *dev, I2CDriver *i2c_driver, uint8_t
 void h3lis331dl_setup(h3lis331dl_t *dev, uint32_t config);
 
 /*
- * returns acceleration in mg
+ * reads acceleration in mg
  */
 int h3lis331dl_read_int(h3lis331dl_t *dev, int32_t *acc);
 
 /*
- * returns acceleration in m/s^2
+ * reads acceleration in m/s^2
  */
 int h3lis331dl_read(h3lis331dl_t *dev, float *acc);
 
