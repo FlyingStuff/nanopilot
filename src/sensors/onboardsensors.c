@@ -235,9 +235,11 @@ static THD_FUNCTION(i2c_sensors, arg)
 
     static h3lis331dl_t high_g_acc;
     h3lis331dl_init_using_i2c(&high_g_acc, i2c_driver, H3LIS331DL_ADDR_SA0_HIGH);
+    i2cAcquireBus(i2c_driver);
     if (!h3lis331dl_ping(&high_g_acc)) {
         error_set(ERROR_LEVEL_WARNING);
     }
+    i2cReleaseBus(i2c_driver);
 
     h3lis331dl_acc_sample.sensor = NULL; // todo
     i2cAcquireBus(i2c_driver);
@@ -248,9 +250,12 @@ static THD_FUNCTION(i2c_sensors, arg)
 
     static hmc5883l_t magnetometer;
     hmc5883l_init(&magnetometer, i2c_driver);
+    i2cAcquireBus(i2c_driver);
     if (!hmc5883l_ping(&magnetometer)) {
         error_set(ERROR_LEVEL_WARNING);
     }
+    i2cReleaseBus(i2c_driver);
+
     i2cAcquireBus(i2c_driver);
     hmc5883l_setup(&magnetometer, HMC5883L_SAMPLE_AVG_8 | HMC5883L_GAIN_230 | HMC5883L_RATE_HZ_75);
     i2cReleaseBus(i2c_driver);
