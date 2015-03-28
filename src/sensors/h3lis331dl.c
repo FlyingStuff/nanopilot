@@ -199,9 +199,9 @@ int h3lis331dl_read_int(h3lis331dl_t *dev, int32_t *acc)
     if (i2c_reg_read_multi(dev, H3LIS331DL_REG_STATUS_REG, buf, sizeof(buf))) {
         return -1;
     }
-    acc[0] =  dev->sensitivity * read_word(&buf[1]);
-    acc[1] =  dev->sensitivity * read_word(&buf[1+2]);
-    acc[2] =  dev->sensitivity * read_word(&buf[1+4]);
+    acc[0] =  (int32_t)dev->sensitivity * read_word(&buf[1]) / 16;
+    acc[1] =  (int32_t)dev->sensitivity * read_word(&buf[1+2]) / 16;
+    acc[2] =  (int32_t)dev->sensitivity * read_word(&buf[1+4]) / 16;
     return 0;
 }
 
