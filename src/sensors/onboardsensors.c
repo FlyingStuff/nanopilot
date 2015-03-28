@@ -16,6 +16,7 @@ rate_gyro_sample_t mpu_gyro_sample;
 accelerometer_sample_t mpu_acc_sample;
 float mpu_temp;
 accelerometer_sample_t h3lis331dl_acc_sample;
+float magnetic_field[3];
 
 event_source_t sensor_events;
 
@@ -232,9 +233,18 @@ static THD_FUNCTION(i2c_sensors, arg)
     }
 
     h3lis331dl_acc_sample.sensor = NULL; // todo
-
     h3lis331dl_setup(&high_g_acc, H3LIS331DL_CONFIG_ODR_400HZ | H3LIS331DL_CONFIG_FS_400G);
 
+    // Magnetometer setup
+
+    static hmc5883l_t magnetometer;
+    hmc5883l_init(&magnetometer, i2c_driver);
+    if (!hmc5883l_ping(&magnetometer)) {
+        error_set(ERROR_LEVEL_WARNING);
+    }
+    hmc5883l_setup(&magnetometer, HMC5883L_SAMPLE_AVG_8 | HMC5883L_GAIN_230 | HMC5883L_RATE_HZ_75);
+
+    // Event setup
 
     static event_listener_t acc_sensor_int;
     chEvtRegisterMaskWithFlags(&exti_events, &acc_sensor_int,
@@ -258,7 +268,13 @@ static THD_FUNCTION(i2c_sensors, arg)
             chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_H3LIS331DL);
         }
         if (events & HMC5883L_INTERRUPT_EVENT) {
-            // todo
+            static float mag[3];
+            hmc5883l_read(&magnetometer, mag);
+            chSysLock();
+            magnetic_field[0] = mag[0];
+            magnetic_field[1] = mag[1];
+            magnetic_field[2] = mag[2];
+            chSysUnlock();
             chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_HMC5883L);
         }
     }
