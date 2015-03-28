@@ -125,6 +125,7 @@ static int i2c_reg_read_multi(h3lis331dl_t *dev, uint8_t reg, uint8_t *data, uin
 {
     I2CDriver *driver = dev->i2c_driver;
     msg_t msg;
+    reg = reg | 0x80;
 
     msg = i2cMasterTransmit(driver, dev->i2c_addr, &reg, 1, data, len);
 
