@@ -12,6 +12,7 @@ target.arm:
     - src/sensors/mpu60X0.c
     - src/sensors/ms5611.c
     - src/sensors/hmc5883l.c
+    - src/sensors/h3lis331dl.c
     - src/sensors/onboardsensors.c
     - src/sqrtpatch.c
     - src/shell_cmds.c

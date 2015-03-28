@@ -4,6 +4,7 @@
 #include "mpu60X0.h"
 #include "hmc5883l.h"
 #include "ms5611.h"
+#include "h3lis331dl.h"
 #include "exti.h"
 #include "parameter/parameter.h"
 #include "main.h"
@@ -14,11 +15,14 @@
 rate_gyro_sample_t mpu_gyro_sample;
 accelerometer_sample_t mpu_acc_sample;
 float mpu_temp;
+accelerometer_sample_t h3lis331dl_acc_sample;
 
 event_source_t sensor_events;
 
 
-#define SENSOR_INTERRUPT_EVENT 1 // internal thread wakeup event mask
+#define MPU6000_INTERRUPT_EVENT     1 // internal thread wakeup event mask
+#define H3LIS331DL_INTERRUPT_EVENT  2
+#define HMC5883L_INTERRUPT_EVENT    4
 
 static parameter_namespace_t sensor_param;
 static parameter_namespace_t mpu6000_param;
@@ -112,7 +116,7 @@ static THD_FUNCTION(spi_sensors, arg)
     chRegSetThreadName("onboard-sensors-spi");
     static event_listener_t sensor_int;
     chEvtRegisterMaskWithFlags(&exti_events, &sensor_int,
-                               (eventmask_t)SENSOR_INTERRUPT_EVENT,
+                               (eventmask_t)MPU6000_INTERRUPT_EVENT,
                                (eventflags_t)EXTI_EVENT_MPU6000_INT);
 
     static mpu60X0_t mpu6000;
@@ -136,7 +140,7 @@ static THD_FUNCTION(spi_sensors, arg)
     while (1) {
         // timestamp_t timestamp;
         float gyro[3], acc[3], temp;
-        chEvtWaitAny(SENSOR_INTERRUPT_EVENT);
+        chEvtWaitAny(MPU6000_INTERRUPT_EVENT);
         mpu60X0_read(&mpu6000, gyro, acc, &temp);
         chSysLock();
         mpu_gyro_sample.rate[0] = gyro[0];
@@ -153,59 +157,110 @@ static THD_FUNCTION(spi_sensors, arg)
 }
 
 
+
+static THD_WORKING_AREA(i2c_barometer_wa, 256);
+static THD_FUNCTION(i2c_barometer, arg)
+{
+    chRegSetThreadName("onboard-sensors-i2c-baro");
+    I2CDriver *i2c_driver = &I2CD1;
+    ms5611_t *barometer = (ms5611_t*)arg;
+
+    while (1) {
+        uint32_t raw_t, raw_p, press;
+        int32_t temp, t;
+        i2cAcquireBus(i2c_driver);
+        t = ms5611_adc_start(barometer, MS5611_ADC_TEMP, MS5611_OSR_4096);
+        i2cReleaseBus(i2c_driver);
+        if (t > 0) {
+            chThdSleepMilliseconds((t - 1)/1000 + 1);
+            i2cAcquireBus(i2c_driver);
+            ms5611_adc_read(barometer, &raw_t);
+            i2cReleaseBus(i2c_driver);
+        }
+
+        i2cAcquireBus(i2c_driver);
+        t = ms5611_adc_start(barometer, MS5611_ADC_PRESS, MS5611_OSR_4096);
+        i2cReleaseBus(i2c_driver);
+        if (t > 0) {
+            chThdSleepMilliseconds((t - 1)/1000 + 1);
+            i2cAcquireBus(i2c_driver);
+            ms5611_adc_read(barometer, &raw_p);
+            i2cReleaseBus(i2c_driver);
+        }
+        press = ms5611_calc_press(barometer, raw_p, raw_t, &temp);
+
+        chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MS5611);
+        chThdSleepMilliseconds(100);
+    }
+}
+
 static THD_WORKING_AREA(i2c_sensors_wa, 256);
 static THD_FUNCTION(i2c_sensors, arg)
 {
+    chRegSetThreadName("onboard-sensors-i2c");
     (void)arg;
     static const I2CConfig i2c_cfg = {
         .op_mode = OPMODE_I2C,
         .clock_speed = 400000,
         .duty_cycle = FAST_DUTY_CYCLE_2
     };
-    I2CDriver *driver = &I2CD1;
+    I2CDriver *i2c_driver = &I2CD1;
 
-    i2cStart(driver, &i2c_cfg);
+    i2cStart(i2c_driver, &i2c_cfg);
+
+    // Barometer setup
 
     static ms5611_t barometer;
 
-    i2cAcquireBus(driver);
-    int init = ms5611_i2c_init(&barometer, driver, 0);
-    i2cReleaseBus(driver);
+    i2cAcquireBus(i2c_driver);
+    int init = ms5611_i2c_init(&barometer, i2c_driver, 0);
+    i2cReleaseBus(i2c_driver);
     if (init != 0) {
-        // i2cflags_t flags = i2cGetErrors(driver);
+        // i2cflags_t flags = i2cGetErrors(i2c_driver);
         // chprintf(out, "ms5611 init failed: %d, %u\r\n", init, (uint32_t)flags);
         error_set(ERROR_LEVEL_WARNING);
     }
 
+    chThdCreateStatic(i2c_barometer_wa, sizeof(i2c_barometer_wa), LOWPRIO, i2c_barometer, &barometer);
+
+    // High-g accelerometer setup
+
+    static h3lis331dl_t high_g_acc;
+    h3lis331dl_init_using_i2c(&high_g_acc, i2c_driver, H3LIS331DL_ADDR_SA0_HIGH);
+    if (!h3lis331dl_ping(&high_g_acc)) {
+        error_set(ERROR_LEVEL_WARNING);
+    }
+
+    h3lis331dl_acc_sample.sensor = NULL; // todo
+
+    h3lis331dl_setup(&high_g_acc, H3LIS331DL_CONFIG_ODR_400HZ | H3LIS331DL_CONFIG_FS_400G);
+
+
+    static event_listener_t acc_sensor_int;
+    chEvtRegisterMaskWithFlags(&exti_events, &acc_sensor_int,
+                               (eventmask_t)H3LIS331DL_INTERRUPT_EVENT,
+                               (eventflags_t)EXTI_EVENT_H3LIS331DL_INT);
+    static event_listener_t magneto_sensor_int;
+    chEvtRegisterMaskWithFlags(&exti_events, &magneto_sensor_int,
+                               (eventmask_t)HMC5883L_INTERRUPT_EVENT,
+                               (eventflags_t)EXTI_EVENT_HMC5883L_DRDY);
+
     while (1) {
-        /*
-         *  Barometer
-         */
-        uint32_t raw_t, raw_p, press;
-        int32_t temp, t;
-        i2cAcquireBus(driver);
-        t = ms5611_adc_start(&barometer, MS5611_ADC_TEMP, MS5611_OSR_4096);
-        i2cReleaseBus(driver);
-        if (t > 0) {
-            chThdSleepMilliseconds((t - 1)/1000 + 1);
-            i2cAcquireBus(driver);
-            ms5611_adc_read(&barometer, &raw_t);
-            i2cReleaseBus(driver);
+        eventmask_t events = chEvtWaitAny(HMC5883L_INTERRUPT_EVENT | H3LIS331DL_INTERRUPT_EVENT);
+        if (events & H3LIS331DL_INTERRUPT_EVENT) {
+            static float acc[3];
+            h3lis331dl_read(&high_g_acc, acc);
+            chSysLock();
+            h3lis331dl_acc_sample.acceleration[0] = acc[0];
+            h3lis331dl_acc_sample.acceleration[1] = acc[1];
+            h3lis331dl_acc_sample.acceleration[2] = acc[2];
+            chSysUnlock();
+            chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_H3LIS331DL);
         }
-
-        i2cAcquireBus(driver);
-        t = ms5611_adc_start(&barometer, MS5611_ADC_PRESS, MS5611_OSR_4096);
-        i2cReleaseBus(driver);
-        if (t > 0) {
-            chThdSleepMilliseconds((t - 1)/1000 + 1);
-            i2cAcquireBus(driver);
-            ms5611_adc_read(&barometer, &raw_p);
-            i2cReleaseBus(driver);
+        if (events & HMC5883L_INTERRUPT_EVENT) {
+            // todo
+            chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_HMC5883L);
         }
-        press = ms5611_calc_press(&barometer, raw_p, raw_t, &temp);
-
-
-        chThdSleepMilliseconds(100);
     }
     return 0;
 }
