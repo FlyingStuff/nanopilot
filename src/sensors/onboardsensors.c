@@ -17,6 +17,8 @@ accelerometer_sample_t mpu_acc_sample;
 float mpu_temp;
 accelerometer_sample_t h3lis331dl_acc_sample;
 float magnetic_field[3];
+float static_pressure;
+float air_temp;
 
 event_source_t sensor_events;
 
@@ -190,9 +192,14 @@ static THD_FUNCTION(i2c_barometer, arg)
         }
         press = ms5611_calc_press(barometer, raw_p, raw_t, &temp);
 
+        chSysLock();
+        static_pressure = press;
+        air_temp = (float)temp/100;
+        chSysUnlock();
         chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MS5611);
         chThdSleepMilliseconds(100);
     }
+    return 0;
 }
 
 static THD_WORKING_AREA(i2c_sensors_wa, 256);
