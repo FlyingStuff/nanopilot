@@ -137,66 +137,18 @@ static const I2CConfig i2c_cfg = {
     .duty_cycle = FAST_DUTY_CYCLE_2
 };
 
-static void cmd_barometer(BaseSequentialStream *chp, int argc, char *argv[])
+static void cmd_baro(BaseSequentialStream *chp, int argc, char *argv[])
 {
     (void) argc;
     (void) argv;
-    ms5611_t barometer;
-
-    I2CDriver *driver = &I2CD1;
-
-    i2cStart(driver, &i2c_cfg);
-    i2cAcquireBus(driver);
-
-    chprintf(chp, "ms5611 init\r\n");
-
-    int init = ms5611_i2c_init(&barometer, driver, 0);
-
-    if (init != 0) {
-        i2cflags_t flags = i2cGetErrors(driver);
-        chprintf(chp, "ms5611 init failed: %d, %u\r\n", init, (uint32_t)flags);
-        i2cReleaseBus(driver);
-        i2cStop(driver);
-        return;
-    } else {
-        chprintf(chp, "ms5611 init succeeded\r\n");
+    int i;
+    for (i = 0; i < 100; i++) {
+        chSysLock();
+        unsigned int p = static_pressure;
+        chSysUnlock();
+        chprintf(chp, "baro %u\n", p);
+        chThdSleepMilliseconds(10);
     }
-
-    chThdSleepMilliseconds(100);
-
-    int i = 50;
-    while (i-- > 0) {
-        uint32_t raw_t, raw_p, press;
-        int32_t temp;
-        int16_t t;
-
-        t = ms5611_adc_start(&barometer, MS5611_ADC_TEMP, MS5611_OSR_4096);
-        if (t < 0) {
-            continue;
-        }
-
-        chThdSleepMilliseconds((t - 1)/1000 + 1);
-
-        ms5611_adc_read(&barometer, &raw_t);
-
-        t = ms5611_adc_start(&barometer, MS5611_ADC_PRESS, MS5611_OSR_4096);
-        if (t < 0) {
-            continue;
-        }
-
-        chThdSleepMilliseconds((t - 1)/1000 + 1);
-
-        ms5611_adc_read(&barometer, &raw_p);
-
-        press = ms5611_calc_press(&barometer, raw_p, raw_t, &temp);
-
-        chprintf(chp, "pressure: %u, temperature: %u\r\n", press, temp);
-
-        chThdSleepMilliseconds(100);
-    }
-
-    i2cReleaseBus(driver);
-    i2cStop(driver);
 }
 
 const ShellCommand shell_commands[] = {
@@ -211,7 +163,7 @@ const ShellCommand shell_commands[] = {
   {"parameter_list", cmd_parameter_list},
   {"parameter_set", cmd_parameter_set},
   {"gyro", cmd_gyro},
-  {"baro", cmd_barometer},
+  {"baro", cmd_baro},
   {NULL, NULL}
 };
 
