@@ -199,11 +199,11 @@ int32_t ms5611_calc_temp(ms5611_t *ms5611, uint32_t adc_temp)
 {
     int32_t dt, temp;
 
-    dt = (int32_t) adc_temp - (ms5611->prom[PROM_TREF]<<8);
-    temp = (int32_t) 2000 + (dt * ms5611->prom[PROM_TEMPSENS] / (1<<23));
+    dt = (int32_t) adc_temp - ms5611->prom[PROM_TREF] * (1<<8);
+    temp = (int32_t) 2000 + (int64_t) dt * ms5611->prom[PROM_TEMPSENS] / (1<<23);
     /* low temperature correcture, (temp < 20.00 C) */
     if (temp < 2000) {
-        temp = temp - SQUARE(dt) / (1<<31);
+        temp = temp - SQUARE((int64_t)dt) / (1<<31);
     }
     return temp;
 }
@@ -214,16 +214,16 @@ uint32_t ms5611_calc_press(ms5611_t *ms5611, uint32_t adc_press, uint32_t adc_te
     int64_t off, sens;
 
     dt = (int32_t) adc_temp - ms5611->prom[PROM_TREF] * (1<<8);
-    temp = (int32_t) 2000 + dt * ms5611->prom[PROM_TEMPSENS] / (1<<23);
+    temp = (int32_t) 2000 + (int64_t) dt * ms5611->prom[PROM_TEMPSENS] / (1<<23);
 
-    off = (int64_t) ms5611->prom[PROM_OFF] * (1<<16) + ms5611->prom[PROM_TCO] * dt / (1<<7);
-    sens = (int64_t) ms5611->prom[PROM_SENS] * (1<<15) + ms5611->prom[PROM_TCS] * dt / (1<<8);
+    off = (int64_t) ms5611->prom[PROM_OFF] * (1<<16) + (int64_t) ms5611->prom[PROM_TCO] * dt / (1<<7);
+    sens = (int64_t) ms5611->prom[PROM_SENS] * (1<<15) + (int64_t) ms5611->prom[PROM_TCS] * dt / (1<<8);
 
     /* low temperature correcture, (temp < 20.00 C) */
     if (temp < 2000) {
         uint32_t t2, off2, sens2;
 
-        t2 = (uint32_t) (SQUARE(dt) / (1<<31));
+        t2 = (uint32_t) (SQUARE((int64_t)dt) / (1<<31));
         off2 = (uint32_t) (5 * SQUARE(temp - 2000)) / 2;
         sens2 = off2 / 2;
 
