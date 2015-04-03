@@ -68,13 +68,13 @@ static THD_FUNCTION(sdlog, arg)
 
         if (events & EVENT_MASK_MPU6000) {
             chSysLock();
-            float gx = mpu_gyro_sample.rate[0];
-            float gy = mpu_gyro_sample.rate[1];
-            float gz = mpu_gyro_sample.rate[2];
-            float ax = mpu_acc_sample.acceleration[0];
-            float ay = mpu_acc_sample.acceleration[1];
-            float az = mpu_acc_sample.acceleration[2];
-            float temp = mpu_temp;
+            float gx = onboard_mpu6000_gyro_sample.rate[0];
+            float gy = onboard_mpu6000_gyro_sample.rate[1];
+            float gz = onboard_mpu6000_gyro_sample.rate[2];
+            float ax = onboard_mpu6000_acc_sample.acceleration[0];
+            float ay = onboard_mpu6000_acc_sample.acceleration[1];
+            float az = onboard_mpu6000_acc_sample.acceleration[2];
+            float temp = onboard_mpu6000_temp;
             chSysUnlock();
             msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
             chprintf((BaseSequentialStream*)&writebuf_stream,

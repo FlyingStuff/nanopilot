@@ -49,12 +49,12 @@ static THD_FUNCTION(stream, arg)
         float t = (float)chVTGetSystemTimeX() / CH_CFG_ST_FREQUENCY;
         if (events & EVENT_MASK_MPU6000) {
             chSysLock();
-            float gx = mpu_gyro_sample.rate[0];
-            float gy = mpu_gyro_sample.rate[1];
-            float gz = mpu_gyro_sample.rate[2];
-            float ax = mpu_acc_sample.acceleration[0];
-            float ay = mpu_acc_sample.acceleration[1];
-            float az = mpu_acc_sample.acceleration[2];
+            float gx = onboard_mpu6000_gyro_sample.rate[0];
+            float gy = onboard_mpu6000_gyro_sample.rate[1];
+            float gz = onboard_mpu6000_gyro_sample.rate[2];
+            float ax = onboard_mpu6000_acc_sample.acceleration[0];
+            float ay = onboard_mpu6000_acc_sample.acceleration[1];
+            float az = onboard_mpu6000_acc_sample.acceleration[2];
             chSysUnlock();
             cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
             bool err = false;
@@ -80,9 +80,9 @@ static THD_FUNCTION(stream, arg)
         }
         if (events & EVENT_MASK_HMC5883L) {
             chSysLock();
-            float mx = magnetic_field[0];
-            float my = magnetic_field[1];
-            float mz = magnetic_field[2];
+            float mx = onboard_hmc5883l_mag_sample.magnetic_field[0];
+            float my = onboard_hmc5883l_mag_sample.magnetic_field[1];
+            float mz = onboard_hmc5883l_mag_sample.magnetic_field[2];
             chSysUnlock();
             cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
             bool err = false;
@@ -102,9 +102,9 @@ static THD_FUNCTION(stream, arg)
         }
         if (events & EVENT_MASK_H3LIS331DL) {
             chSysLock();
-            float ax = h3lis331dl_acc_sample.acceleration[0];
-            float ay = h3lis331dl_acc_sample.acceleration[1];
-            float az = h3lis331dl_acc_sample.acceleration[2];
+            float ax = onboard_h3lis331dl_acc_sample.acceleration[0];
+            float ay = onboard_h3lis331dl_acc_sample.acceleration[1];
+            float az = onboard_h3lis331dl_acc_sample.acceleration[2];
             chSysUnlock();
             cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
             bool err = false;
@@ -124,8 +124,8 @@ static THD_FUNCTION(stream, arg)
         }
         if (events & EVENT_MASK_MS5611) {
             chSysLock();
-            float baro = static_pressure;
-            float temp = air_temp;
+            float baro = onboard_ms5511_baro_sample.pressure;
+            float temp = onboard_ms5511_baro_sample.temperature;
             chSysUnlock();
             cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
             bool err = false;

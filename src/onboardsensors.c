@@ -13,13 +13,12 @@
 
 #include "onboardsensors.h"
 
-rate_gyro_sample_t mpu_gyro_sample;
-accelerometer_sample_t mpu_acc_sample;
-float mpu_temp;
-accelerometer_sample_t h3lis331dl_acc_sample;
-float magnetic_field[3];
-float static_pressure;
-float air_temp;
+rate_gyro_sample_t onboard_mpu6000_gyro_sample;
+accelerometer_sample_t onboard_mpu6000_acc_sample;
+float onboard_mpu6000_temp;
+accelerometer_sample_t onboard_h3lis331dl_acc_sample;
+magnetometer_sample_t onboard_hmc5883l_mag_sample;
+barometer_sample_t onboard_ms5511_baro_sample;
 
 event_source_t sensor_events;
 
@@ -122,8 +121,8 @@ static THD_FUNCTION(spi_sensors, arg)
     static rate_gyro_t mpu_gyro = { .device = "MPU6000", .update_rate = 1000};
     static accelerometer_t mpu_acc = { .device = "MPU6000", .update_rate = 1000};
 
-    mpu_gyro_sample.sensor = &mpu_gyro;
-    mpu_acc_sample.sensor = &mpu_acc;
+    onboard_mpu6000_gyro_sample.sensor = &mpu_gyro;
+    onboard_mpu6000_acc_sample.sensor = &mpu_acc;
 
     if (mpu6000_init(&mpu6000, &mpu_gyro, &mpu_acc) != 0) {
         error_set(ERROR_LEVEL_CRITICAL);
@@ -136,15 +135,15 @@ static THD_FUNCTION(spi_sensors, arg)
         timestamp_t t = timestamp_get();
         mpu60X0_read(&mpu6000, gyro, acc, &temp);
         chSysLock();
-        mpu_gyro_sample.rate[0] = gyro[0];
-        mpu_gyro_sample.rate[1] = gyro[1];
-        mpu_gyro_sample.rate[2] = gyro[2];
-        mpu_gyro_sample.timestamp = t;
-        mpu_acc_sample.acceleration[0] = acc[0];
-        mpu_acc_sample.acceleration[1] = acc[1];
-        mpu_acc_sample.acceleration[2] = acc[2];
-        mpu_acc_sample.timestamp = t;
-        mpu_temp = temp;
+        onboard_mpu6000_gyro_sample.rate[0] = gyro[0];
+        onboard_mpu6000_gyro_sample.rate[1] = gyro[1];
+        onboard_mpu6000_gyro_sample.rate[2] = gyro[2];
+        onboard_mpu6000_gyro_sample.timestamp = t;
+        onboard_mpu6000_acc_sample.acceleration[0] = acc[0];
+        onboard_mpu6000_acc_sample.acceleration[1] = acc[1];
+        onboard_mpu6000_acc_sample.acceleration[2] = acc[2];
+        onboard_mpu6000_acc_sample.timestamp = t;
+        onboard_mpu6000_temp = temp;
         chSysUnlock();
         chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MPU6000);
     }
@@ -185,8 +184,8 @@ static THD_FUNCTION(i2c_barometer, arg)
         press = ms5611_calc_press(barometer, raw_p, raw_t, &temp);
 
         chSysLock();
-        static_pressure = press;
-        air_temp = (float)temp/100;
+        onboard_ms5511_baro_sample.pressure = press;
+        onboard_ms5511_baro_sample.temperature = (float)temp/100;
         chSysUnlock();
         chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MS5611);
         chThdSleepMilliseconds(100);
@@ -233,7 +232,7 @@ static THD_FUNCTION(i2c_sensors, arg)
     }
     i2cReleaseBus(i2c_driver);
 
-    h3lis331dl_acc_sample.sensor = NULL; // todo
+    onboard_h3lis331dl_acc_sample.sensor = NULL; // todo
     i2cAcquireBus(i2c_driver);
     h3lis331dl_setup(&high_g_acc, H3LIS331DL_CONFIG_ODR_400HZ | H3LIS331DL_CONFIG_FS_400G);
     i2cReleaseBus(i2c_driver);
@@ -272,10 +271,10 @@ static THD_FUNCTION(i2c_sensors, arg)
             h3lis331dl_read(&high_g_acc, acc);
             i2cReleaseBus(i2c_driver);
             chSysLock();
-            h3lis331dl_acc_sample.acceleration[0] = acc[0];
-            h3lis331dl_acc_sample.acceleration[1] = acc[1];
-            h3lis331dl_acc_sample.acceleration[2] = acc[2];
-            h3lis331dl_acc_sample.timestamp = t;
+            onboard_h3lis331dl_acc_sample.acceleration[0] = acc[0];
+            onboard_h3lis331dl_acc_sample.acceleration[1] = acc[1];
+            onboard_h3lis331dl_acc_sample.acceleration[2] = acc[2];
+            onboard_h3lis331dl_acc_sample.timestamp = t;
             chSysUnlock();
             chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_H3LIS331DL);
         }
@@ -285,9 +284,9 @@ static THD_FUNCTION(i2c_sensors, arg)
             hmc5883l_read(&magnetometer, mag);
             i2cReleaseBus(i2c_driver);
             chSysLock();
-            magnetic_field[0] = mag[0];
-            magnetic_field[1] = mag[1];
-            magnetic_field[2] = mag[2];
+            onboard_hmc5883l_mag_sample.magnetic_field[0] = mag[0];
+            onboard_hmc5883l_mag_sample.magnetic_field[1] = mag[1];
+            onboard_hmc5883l_mag_sample.magnetic_field[2] = mag[2];
             chSysUnlock();
             chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_HMC5883L);
         }

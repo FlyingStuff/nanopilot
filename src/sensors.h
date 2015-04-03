@@ -33,6 +33,7 @@ typedef struct {
 
 typedef struct {
     float pressure;                 // [Pa]
+    float temperature;              // [deg Celsius]
     timestamp_t timestamp;
 } barometer_sample_t;
 

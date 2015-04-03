@@ -114,41 +114,6 @@ static void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv
     }
 }
 
-static void cmd_gyro(BaseSequentialStream *chp, int argc, char *argv[])
-{
-    (void)argc;
-    (void)argv;
-    int i;
-    for (i = 0; i < 100; i++) {
-        chSysLock();
-        int gx = 1000*mpu_gyro_sample.rate[0];
-        int gy = 1000*mpu_gyro_sample.rate[1];
-        int gz = 1000*mpu_gyro_sample.rate[2];
-        chSysUnlock();
-        chprintf(chp, "gyro %d %d %d\n", gx, gy, gz);
-        chThdSleepMilliseconds(10);
-    }
-}
-
-static const I2CConfig i2c_cfg = {
-    .op_mode = OPMODE_I2C,
-    .clock_speed = 400000,
-    .duty_cycle = FAST_DUTY_CYCLE_2
-};
-
-static void cmd_baro(BaseSequentialStream *chp, int argc, char *argv[])
-{
-    (void) argc;
-    (void) argv;
-    int i;
-    for (i = 0; i < 100; i++) {
-        chSysLock();
-        unsigned int p = static_pressure;
-        chSysUnlock();
-        chprintf(chp, "baro %u\n", p);
-        chThdSleepMilliseconds(10);
-    }
-}
 
 const ShellCommand shell_commands[] = {
   {"mem", cmd_mem},
@@ -161,8 +126,6 @@ const ShellCommand shell_commands[] = {
   {"panic_get", cmd_panic_get},
   {"parameter_list", cmd_parameter_list},
   {"parameter_set", cmd_parameter_set},
-  {"gyro", cmd_gyro},
-  {"baro", cmd_baro},
   {NULL, NULL}
 };
 
