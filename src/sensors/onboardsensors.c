@@ -9,6 +9,7 @@
 #include "parameter/parameter.h"
 #include "main.h"
 #include "imu.h"
+#include "timestamp/timestamp.h"
 
 #include "onboardsensors.h"
 
@@ -139,17 +140,19 @@ static THD_FUNCTION(spi_sensors, arg)
     }
 
     while (1) {
-        // timestamp_t timestamp;
         float gyro[3], acc[3], temp;
         chEvtWaitAny(MPU6000_INTERRUPT_EVENT);
+        timestamp_t t = timestamp_get();
         mpu60X0_read(&mpu6000, gyro, acc, &temp);
         chSysLock();
         mpu_gyro_sample.rate[0] = gyro[0];
         mpu_gyro_sample.rate[1] = gyro[1];
         mpu_gyro_sample.rate[2] = gyro[2];
+        mpu_gyro_sample.timestamp = t;
         mpu_acc_sample.acceleration[0] = acc[0];
         mpu_acc_sample.acceleration[1] = acc[1];
         mpu_acc_sample.acceleration[2] = acc[2];
+        mpu_acc_sample.timestamp = t;
         mpu_temp = temp;
         chSysUnlock();
         chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MPU6000);
@@ -272,6 +275,7 @@ static THD_FUNCTION(i2c_sensors, arg)
     while (1) {
         eventmask_t events = chEvtWaitAny(HMC5883L_INTERRUPT_EVENT | H3LIS331DL_INTERRUPT_EVENT);
         if (events & H3LIS331DL_INTERRUPT_EVENT) {
+            timestamp_t t = timestamp_get();
             static float acc[3];
             i2cAcquireBus(i2c_driver);
             h3lis331dl_read(&high_g_acc, acc);
@@ -280,6 +284,7 @@ static THD_FUNCTION(i2c_sensors, arg)
             h3lis331dl_acc_sample.acceleration[0] = acc[0];
             h3lis331dl_acc_sample.acceleration[1] = acc[1];
             h3lis331dl_acc_sample.acceleration[2] = acc[2];
+            h3lis331dl_acc_sample.timestamp = t;
             chSysUnlock();
             chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_H3LIS331DL);
         }
