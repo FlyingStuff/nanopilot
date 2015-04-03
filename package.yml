@@ -34,6 +34,7 @@ depends:
     - cmp_mem_access:
         fork: stapelzeiger
     - parameter
+    - timestamp
 
 #tests:
 
