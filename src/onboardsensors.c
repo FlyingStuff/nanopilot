@@ -8,7 +8,7 @@
 #include "exti.h"
 #include "parameter/parameter.h"
 #include "main.h"
-#include "imu.h"
+#include "sensors.h"
 #include "timestamp/timestamp.h"
 
 #include "onboardsensors.h"
@@ -64,39 +64,32 @@ static int mpu6000_init(mpu60X0_t *dev, rate_gyro_t *gyro, accelerometer_t *acc)
     int config = MPU60X0_LOW_PASS_FILTER_6 | MPU60X0_SAMPLE_RATE_DIV(0);
     float afs = parameter_scalar_get(&mpu6000_acc_full_scale);
     float gfs = parameter_scalar_get(&mpu6000_gyro_full_scale);
-    float afs_mps, gfs_radps;
     if (afs <= 2) {
-        afs_mps = 2*9.81;
+        acc->full_scale_range = 2*9.81;
         config |= MPU60X0_ACC_FULL_RANGE_2G;
     } else if (afs <= 4) {
-        afs_mps = 4*9.81;
+        acc->full_scale_range = 4*9.81;
         config |= MPU60X0_ACC_FULL_RANGE_4G;
     } else if (afs <= 8) {
-        afs_mps = 8*9.81;
+        acc->full_scale_range = 8*9.81;
         config |= MPU60X0_ACC_FULL_RANGE_8G;
     } else {
-        afs_mps = 16*9.81;
+        acc->full_scale_range = 16*9.81;
         config |= MPU60X0_ACC_FULL_RANGE_16G;
     }
     if (gfs <= 250) {
-        gfs_radps = 250*M_PI/360;
+        gyro->full_scale_range = 250*M_PI/360;
         config |= MPU60X0_GYRO_FULL_RANGE_250DPS;
     } else if (gfs <= 500) {
-        gfs_radps = 500*M_PI/360;
+        gyro->full_scale_range = 500*M_PI/360;
         config |= MPU60X0_GYRO_FULL_RANGE_500DPS;
     } else if (gfs <= 1000) {
-        gfs_radps = 1000*M_PI/360;
+        gyro->full_scale_range = 1000*M_PI/360;
         config |= MPU60X0_GYRO_FULL_RANGE_1000DPS;
     } else {
-        gfs_radps = 2000*M_PI/360;
+        gyro->full_scale_range = 2000*M_PI/360;
         config |= MPU60X0_GYRO_FULL_RANGE_2000DPS;
     }
-    acc->full_scale_range[0] = afs_mps;
-    acc->full_scale_range[1] = afs_mps;
-    acc->full_scale_range[2] = afs_mps;
-    gyro->full_scale_range[0] = gfs_radps;
-    gyro->full_scale_range[1] = gfs_radps;
-    gyro->full_scale_range[2] = gfs_radps;
 
     mpu60X0_setup(dev, config);
 
@@ -126,10 +119,8 @@ static THD_FUNCTION(spi_sensors, arg)
     static mpu60X0_t mpu6000;
     mpu60X0_init_using_spi(&mpu6000, &SPID1);
 
-    static rate_gyro_t mpu_gyro = {
-        .device = "MPU6000", .noise_stddev = {NAN, NAN, NAN}, .update_rate = 1000};
-    static accelerometer_t mpu_acc = {
-        .device = "MPU6000", .noise_stddev = {NAN, NAN, NAN}, .update_rate = 1000};
+    static rate_gyro_t mpu_gyro = { .device = "MPU6000", .update_rate = 1000};
+    static accelerometer_t mpu_acc = { .device = "MPU6000", .update_rate = 1000};
 
     mpu_gyro_sample.sensor = &mpu_gyro;
     mpu_acc_sample.sensor = &mpu_acc;

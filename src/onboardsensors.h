@@ -1,7 +1,7 @@
 #ifndef ONBOARDSENSORS_H
 #define ONBOARDSENSORS_H
 
-#include "imu.h"
+#include "sensors.h"
 #include <ch.h>
 
 extern rate_gyro_sample_t mpu_gyro_sample;
