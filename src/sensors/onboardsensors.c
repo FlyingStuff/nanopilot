@@ -126,11 +126,9 @@ static THD_FUNCTION(spi_sensors, arg)
     mpu60X0_init_using_spi(&mpu6000, &SPID1);
 
     static rate_gyro_t mpu_gyro = {
-        .device = "MPU6000", .noise_stddev = {NAN, NAN, NAN},
-        .update_rate = 1000,.health = SENSOR_HEALTH_OK };
+        .device = "MPU6000", .noise_stddev = {NAN, NAN, NAN}, .update_rate = 1000};
     static accelerometer_t mpu_acc = {
-        .device = "MPU6000", .noise_stddev = {NAN, NAN, NAN},
-        .update_rate = 1000, .health = SENSOR_HEALTH_OK };
+        .device = "MPU6000", .noise_stddev = {NAN, NAN, NAN}, .update_rate = 1000};
 
     mpu_gyro_sample.sensor = &mpu_gyro;
     mpu_acc_sample.sensor = &mpu_acc;
