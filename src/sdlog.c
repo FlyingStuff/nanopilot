@@ -4,7 +4,7 @@
 #include <chprintf.h>
 #include <ff.h>
 #include "main.h"
-#include "sensors/onboardsensors.h"
+#include "onboardsensors.h"
 #include "sumd_input.h"
 #include "git_revision.h"
 

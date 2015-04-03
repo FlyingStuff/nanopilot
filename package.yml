@@ -13,7 +13,7 @@ target.arm:
     - src/sensors/ms5611.c
     - src/sensors/hmc5883l.c
     - src/sensors/h3lis331dl.c
-    - src/sensors/onboardsensors.c
+    - src/onboardsensors.c
     - src/sqrtpatch.c
     - src/shell_cmds.c
     - src/sumd_input.c

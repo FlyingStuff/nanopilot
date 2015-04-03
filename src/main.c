@@ -8,7 +8,7 @@
 #include "git_revision.h"
 #include "shell_cmds.h"
 #include "sumd_input.h"
-#include "sensors/onboardsensors.h"
+#include "onboardsensors.h"
 #include "serial-datagram/serial_datagram.h"
 #include "cmp/cmp.h"
 #include "cmp_mem_access/cmp_mem_access.h"

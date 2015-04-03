@@ -4,8 +4,7 @@
 #include <shell.h>
 #include <stdlib.h>
 
-#include "sensors/onboardsensors.h"
-#include "sensors/ms5611.h"
+#include "onboardsensors.h"
 #include "serial-datagram/serial_datagram.h"
 #include "parameter_print.h"
 #include "git_revision.h"

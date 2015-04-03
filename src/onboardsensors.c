@@ -1,10 +1,10 @@
 #include <math.h>
 #include <ch.h>
 #include "error.h"
-#include "mpu60X0.h"
-#include "hmc5883l.h"
-#include "ms5611.h"
-#include "h3lis331dl.h"
+#include "sensors/mpu60X0.h"
+#include "sensors/hmc5883l.h"
+#include "sensors/ms5611.h"
+#include "sensors/h3lis331dl.h"
 #include "exti.h"
 #include "parameter/parameter.h"
 #include "main.h"

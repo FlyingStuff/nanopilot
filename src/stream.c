@@ -2,7 +2,7 @@
 #include <hal.h>
 #include <chprintf.h>
 #include <string.h>
-#include "sensors/onboardsensors.h"
+#include "onboardsensors.h"
 #include "cmp_mem_access/cmp_mem_access.h"
 #include "serial-datagram/serial_datagram.h"
 
