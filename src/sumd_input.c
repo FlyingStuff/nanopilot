@@ -34,11 +34,6 @@ static THD_FUNCTION(sumd_input_task, arg)
                 in.channel[i] = ((float)rc.channel[i] - SUMD_POS_NEUTRAL) / (SUMD_POS_HIGH - SUMD_POS_NEUTRAL);
             }
             chSysUnlock();
-            if (in.no_signal) {
-                status_led_off();
-            } else {
-                status_led_on();
-            }
         }
     }
     return 0;
