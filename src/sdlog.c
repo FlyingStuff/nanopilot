@@ -10,7 +10,7 @@
 
 #include "sdlog.h"
 
-#define EVENT_MASK_MPU6000 1
+#define ONBOARDSENSOR_EVENT 1
 
 static THD_WORKING_AREA(sdlog_wa, 512);
 static THD_FUNCTION(sdlog, arg)
@@ -19,7 +19,7 @@ static THD_FUNCTION(sdlog, arg)
     chRegSetThreadName("sdlog");
     static event_listener_t sensor_listener;
     chEvtRegisterMaskWithFlags(&sensor_events, &sensor_listener,
-                               (eventmask_t)EVENT_MASK_MPU6000,
+                               (eventmask_t)ONBOARDSENSOR_EVENT,
                                (eventflags_t)SENSOR_EVENT_MPU6000);
     static uint8_t writebuf[200];
     static MemoryStream writebuf_stream;
@@ -63,10 +63,11 @@ static THD_FUNCTION(sdlog, arg)
     error |= error || f_write(&rc_fd, rc_descr, strlen(rc_descr), &_bytes_written);
 
     while (!error) {
-        eventmask_t events = chEvtWaitAny(EVENT_MASK_MPU6000);
+        eventmask_t events = chEvtWaitAny(ONBOARDSENSOR_EVENT);
         float t = (float)chVTGetSystemTimeX() / CH_CFG_ST_FREQUENCY;
 
-        if (events & EVENT_MASK_MPU6000) {
+        if (events & ONBOARDSENSOR_EVENT) {
+            chEvtGetAndClearFlags(&sensor_listener);
             chSysLock();
             float gx = onboard_mpu6000_gyro_sample.rate[0];
             float gy = onboard_mpu6000_gyro_sample.rate[1];

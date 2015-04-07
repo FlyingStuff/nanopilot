@@ -23,9 +23,7 @@ barometer_sample_t onboard_ms5511_baro_sample;
 event_source_t sensor_events;
 
 
-#define MPU6000_INTERRUPT_EVENT     1 // internal thread wakeup event mask
-#define H3LIS331DL_INTERRUPT_EVENT  2
-#define HMC5883L_INTERRUPT_EVENT    4
+#define EXTI_INTERRUPT_EVENT    1
 
 static parameter_namespace_t sensor_param;
 static parameter_namespace_t mpu6000_param;
@@ -112,7 +110,7 @@ static THD_FUNCTION(spi_sensors, arg)
     chRegSetThreadName("onboard-sensors-spi");
     static event_listener_t sensor_int;
     chEvtRegisterMaskWithFlags(&exti_events, &sensor_int,
-                               (eventmask_t)MPU6000_INTERRUPT_EVENT,
+                               (eventmask_t)EXTI_INTERRUPT_EVENT,
                                (eventflags_t)EXTI_EVENT_MPU6000_INT);
 
     static mpu60X0_t mpu6000;
@@ -131,7 +129,8 @@ static THD_FUNCTION(spi_sensors, arg)
 
     while (1) {
         float gyro[3], acc[3], temp;
-        chEvtWaitAny(MPU6000_INTERRUPT_EVENT);
+        chEvtWaitAny(EXTI_INTERRUPT_EVENT);
+        chEvtGetAndClearFlags(&sensor_int);
         timestamp_t t = timestamp_get();
         mpu60X0_read(&mpu6000, gyro, acc, &temp);
         chSysLock();
@@ -253,18 +252,15 @@ static THD_FUNCTION(i2c_sensors, arg)
 
     // Event setup
 
-    static event_listener_t acc_sensor_int;
-    chEvtRegisterMaskWithFlags(&exti_events, &acc_sensor_int,
-                               (eventmask_t)H3LIS331DL_INTERRUPT_EVENT,
-                               (eventflags_t)EXTI_EVENT_H3LIS331DL_INT);
-    static event_listener_t magneto_sensor_int;
-    chEvtRegisterMaskWithFlags(&exti_events, &magneto_sensor_int,
-                               (eventmask_t)HMC5883L_INTERRUPT_EVENT,
-                               (eventflags_t)EXTI_EVENT_HMC5883L_DRDY);
+    static event_listener_t sensor_int;
+    chEvtRegisterMaskWithFlags(&exti_events, &sensor_int,
+                               (eventmask_t)EXTI_INTERRUPT_EVENT,
+                               (eventflags_t)EXTI_EVENT_H3LIS331DL_INT | EXTI_EVENT_HMC5883L_DRDY);
 
     while (1) {
-        eventmask_t events = chEvtWaitAny(HMC5883L_INTERRUPT_EVENT | H3LIS331DL_INTERRUPT_EVENT);
-        if (events & H3LIS331DL_INTERRUPT_EVENT) {
+        chEvtWaitAny(EXTI_INTERRUPT_EVENT);
+        eventflags_t event_flag = chEvtGetAndClearFlags(&sensor_int);
+        if (event_flag & EXTI_EVENT_H3LIS331DL_INT) {
             timestamp_t t = timestamp_get();
             static float acc[3];
             i2cAcquireBus(i2c_driver);
@@ -278,7 +274,7 @@ static THD_FUNCTION(i2c_sensors, arg)
             chSysUnlock();
             chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_H3LIS331DL);
         }
-        if (events & HMC5883L_INTERRUPT_EVENT) {
+        if (event_flag & EXTI_EVENT_HMC5883L_DRDY) {
             static float mag[3];
             i2cAcquireBus(i2c_driver);
             hmc5883l_read(&magnetometer, mag);
