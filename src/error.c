@@ -3,6 +3,8 @@
 #include <crc/crc32.h>
 #include <string.h>
 
+#include <memstreams.h>
+#include <chprintf.h>
 #include "error.h"
 
 /*
@@ -83,6 +85,7 @@ void reboot_in_safemode(void)
 #define PANIC_CRC_INIT 0x1aaadc37 // random value
 static __attribute__((section(".noinit"))) char panic_buffer[200];
 static __attribute__((section(".noinit"))) uint32_t panic_buffer_crc;
+MemoryStream panic_bss;
 
 static bool panic_buffer_crc_matched;
 
@@ -102,7 +105,7 @@ void panic_handler(const char *reason)
     (void)msg;
     (void)ipsr;
 
-    strncpy(panic_buffer, reason, sizeof(panic_buffer));
+    panic_printf("%s", reason);
 
     panic_buffer[sizeof(panic_buffer) - 1] = '\0';
     panic_buffer_crc = crc32(PANIC_CRC_INIT, panic_buffer, sizeof(panic_buffer));
@@ -117,6 +120,14 @@ void panic_handler(const char *reason)
 #endif
 }
 
+void panic_printf(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    chvprintf((BaseSequentialStream *)&panic_bss, fmt, ap);
+    va_end(ap);
+}
+
 const char *get_panic_message(void)
 {
     if (panic_buffer_crc_matched) {
@@ -128,6 +139,8 @@ const char *get_panic_message(void)
 
 static void panic_msg_init(void)
 {
+    msObjectInit(&panic_bss, (uint8_t *)&panic_buffer[0], sizeof(panic_buffer), 0);
+
     if (crc32(PANIC_CRC_INIT, panic_buffer, sizeof(panic_buffer)) == panic_buffer_crc) {
         panic_buffer_crc_matched = true;
     } else {
