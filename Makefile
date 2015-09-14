@@ -138,7 +138,11 @@ TCSRC =
 TCPPSRC =
 
 # List ASM source files here
-ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
+ASMSRC = $(PORTASM) $(OSALASM)
+# Note: Using custom crt0_v7m.s instead of $(STARTUPASM)
+#       This might create problems if the original crt0_v7m.s is updated or
+# 		further startup assembly sources are added to STARTUPASM.
+ASMSRC += src/crt0_v7m.s #$(STARTUPASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) $(STARTUPINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
