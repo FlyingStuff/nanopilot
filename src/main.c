@@ -65,7 +65,6 @@ static THD_FUNCTION(led_task, arg)
             }
         }
     }
-    return 0;
 }
 
 

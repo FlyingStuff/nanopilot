@@ -124,7 +124,7 @@ static THD_FUNCTION(spi_sensors, arg)
 
     if (mpu6000_init(&mpu6000, &mpu_gyro, &mpu_acc) != 0) {
         error_set(ERROR_LEVEL_CRITICAL);
-        return 0;
+        return;
     }
 
     while (1) {
@@ -146,7 +146,6 @@ static THD_FUNCTION(spi_sensors, arg)
         chSysUnlock();
         chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MPU6000);
     }
-    return 0;
 }
 
 
@@ -189,7 +188,6 @@ static THD_FUNCTION(i2c_barometer, arg)
         chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MS5611);
         chThdSleepMilliseconds(100);
     }
-    return 0;
 }
 
 static THD_WORKING_AREA(i2c_sensors_wa, 256);
@@ -287,7 +285,6 @@ static THD_FUNCTION(i2c_sensors, arg)
             chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_HMC5883L);
         }
     }
-    return 0;
 }
 
 

@@ -133,7 +133,6 @@ static THD_FUNCTION(stream, arg)
             }
         } // ONBOARDSENSOR_EVENT
     }
-    return 0;
 }
 
 void stream_start(BaseSequentialStream *out)
