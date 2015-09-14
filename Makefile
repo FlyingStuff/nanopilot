@@ -172,6 +172,7 @@ CP   = $(TRGT)objcopy
 AS   = $(TRGT)gcc -x assembler-with-cpp
 AR   = $(TRGT)ar
 OD   = $(TRGT)objdump
+NM   = $(TRGT)nm
 SZ   = $(TRGT)size
 HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary
@@ -221,11 +222,10 @@ RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
 include rules.mk
 -include tools.mk
 
-$(shell ./git_revision.sh)
+PRE_MAKE_ALL_RULE_HOOK:
+	./git_revision.sh
 
-# TODO add targets for:
-# arm-none-eabi-objdump -D -g -h build/ins-board.elf > build/ins-board.lst
-# arm-none-eabi-nm --numeric-sort --print-size -S build/ins-board.elf > build/ins-board.sizemap
+POST_MAKE_ALL_RULE_HOOK:
 
 .PHONY: packager
 packager:

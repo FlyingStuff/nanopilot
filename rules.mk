@@ -64,6 +64,8 @@ endif
 OUTFILES = $(BUILDDIR)/$(PROJECT).elf \
            $(BUILDDIR)/$(PROJECT).hex \
            $(BUILDDIR)/$(PROJECT).bin \
+           $(BUILDDIR)/$(PROJECT).size \
+           $(BUILDDIR)/$(PROJECT).addr \
            $(BUILDDIR)/$(PROJECT).dmp \
            $(BUILDDIR)/$(PROJECT).list
 
@@ -150,6 +152,11 @@ CPPFLAGS += -MD -MP -MF .dep/$(@F).d
 # Paths where to search for sources
 VPATH     = $(SRCPATHS)
 
+# Colored output messages
+COLOR       = \033[1;34m
+COLOR_CLEAR = \033[0m
+COLOR_PRINTF = printf "$(COLOR)%s$(COLOR_CLEAR)\n"
+
 #
 # Makefile rules
 #
@@ -176,57 +183,57 @@ $(OBJDIR):
 $(LSTDIR):
 	@mkdir -p $(LSTDIR)
 
-$(ACPPOBJS) : $(OBJDIR)/%.o : %.cpp Makefile
+$(ACPPOBJS) : $(OBJDIR)/%.o : %.cpp Makefile $(GLOBAL_SRC_DEP)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CPPC) -c $(CPPFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
+	@$(COLOR_PRINTF) "Compiling $(<F)"
 	@$(CPPC) -c $(CPPFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 endif
 
-$(TCPPOBJS) : $(OBJDIR)/%.o : %.cpp Makefile
+$(TCPPOBJS) : $(OBJDIR)/%.o : %.cpp Makefile $(GLOBAL_SRC_DEP)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CPPC) -c $(CPPFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
+	@$(COLOR_PRINTF) "Compiling $(<F)"
 	@$(CPPC) -c $(CPPFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 endif
 
-$(ACOBJS) : $(OBJDIR)/%.o : %.c Makefile
+$(ACOBJS) : $(OBJDIR)/%.o : %.c Makefile $(GLOBAL_SRC_DEP)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CC) -c $(CFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
+	@$(COLOR_PRINTF) "Compiling $(<F)"
 	@$(CC) -c $(CFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 endif
 
-$(TCOBJS) : $(OBJDIR)/%.o : %.c Makefile
+$(TCOBJS) : $(OBJDIR)/%.o : %.c Makefile $(GLOBAL_SRC_DEP)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CC) -c $(CFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
+	@$(COLOR_PRINTF) "Compiling $(<F)"
 	@$(CC) -c $(CFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 endif
 
-$(ASMOBJS) : $(OBJDIR)/%.o : %.s Makefile
+$(ASMOBJS) : $(OBJDIR)/%.o : %.s Makefile $(GLOBAL_SRC_DEP)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(AS) -c $(ASFLAGS) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
+	@$(COLOR_PRINTF) "Compiling $(<F)"
 	@$(AS) -c $(ASFLAGS) -I. $(IINCDIR) $< -o $@
 endif
 
-$(ASMXOBJS) : $(OBJDIR)/%.o : %.S Makefile
+$(ASMXOBJS) : $(OBJDIR)/%.o : %.S Makefile $(GLOBAL_SRC_DEP)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CC) -c $(ASXFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
+	@$(COLOR_PRINTF) "Compiling $(<F)"
 	@$(CC) -c $(ASXFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 endif
 
@@ -235,7 +242,7 @@ ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 else
-	@echo Linking $@
+	@$(COLOR_PRINTF) "Linking $@"
 	@$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 endif
 
@@ -243,7 +250,7 @@ endif
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	$(HEX) $< $@
 else
-	@echo Creating $@
+	@$(COLOR_PRINTF) "Creating $@"
 	@$(HEX) $< $@
 endif
 
@@ -251,7 +258,7 @@ endif
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	$(BIN) $< $@
 else
-	@echo Creating $@
+	@$(COLOR_PRINTF) "Creating $@"
 	@$(BIN) $< $@
 endif
 
@@ -259,8 +266,24 @@ endif
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	$(SREC) $< $@
 else
-	@echo Creating $@
+	@$(COLOR_PRINTF) "Creating $@"
 	@$(SREC) $< $@
+endif
+
+%.size: %.elf $(LDSCRIPT)
+ifeq ($(USE_VERBOSE_COMPILE),yes)
+	$(NM) --size-sort --print-size $< > $@
+else
+	@$(COLOR_PRINTF) "Creating $@"
+	@$(NM) --size-sort --print-size $< > $@
+endif
+
+%.addr: %.elf $(LDSCRIPT)
+ifeq ($(USE_VERBOSE_COMPILE),yes)
+	$(NM) --numeric-sort --print-size $< > $@
+else
+	@$(COLOR_PRINTF) "Creating $@"
+	@$(NM) --numeric-sort --print-size $< > $@
 endif
 
 %.dmp: %.elf $(LDSCRIPT)
@@ -268,7 +291,7 @@ ifeq ($(USE_VERBOSE_COMPILE),yes)
 	$(OD) $(ODFLAGS) $< > $@
 	$(SZ) $<
 else
-	@echo Creating $@
+	@$(COLOR_PRINTF) "Creating $@"
 	@$(OD) $(ODFLAGS) $< > $@
 	@echo
 	@$(SZ) $<
@@ -276,12 +299,12 @@ endif
 
 %.list: %.elf $(LDSCRIPT)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
-	$(OD) -S $< > $@
+	$(OD) -d $< > $@
 else
-	@echo Creating $@
-	@$(OD) -S $< > $@
+	@$(COLOR_PRINTF) "Creating $@"
+	@$(OD) -d $< > $@
 	@echo
-	@echo Done
+	@echo "\x1b[32mDone\x1b[0m"
 endif
 
 lib: $(OBJS) $(BUILDDIR)/lib$(PROJECT).a
