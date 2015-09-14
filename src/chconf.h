@@ -484,6 +484,12 @@
  *          the system is halted.
  */
 #if !defined(_FROM_ASM_)
+#define chDbgAssert(c, r) do {                                              \
+  if (CH_DBG_ENABLE_ASSERTS && !(c)) {                                      \
+    chSysHalt(r);                                                           \
+  }                                                                         \
+} while (0)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
