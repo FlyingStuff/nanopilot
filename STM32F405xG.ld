@@ -47,4 +47,10 @@ REGION_ALIAS("DATA_RAM", ram0);
 /* RAM region to be used for BSS segment.*/
 REGION_ALIAS("BSS_RAM", ram0);
 
+/* RAM REGION to be usded for noinit section. */
+REGION_ALIAS("NOINIT_RAM", ram0);
+
+/* core coupled memory region */
+REGION_ALIAS("CCM_RAM", ram4);
+
 INCLUDE rules.ld

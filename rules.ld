@@ -153,6 +153,22 @@ SECTIONS
         PROVIDE(end = .);
     } > BSS_RAM
 
+    .noinit (NOLOAD) : ALIGN(4)
+    {
+        . = ALIGN(4);
+        *(.noinit)
+        *(.noinit.*)
+        . = ALIGN(4);
+    } > NOINIT_RAM
+
+    .ccm (NOLOAD) : ALIGN(4)
+    {
+        . = ALIGN(4);
+        *(.ccm)
+        *(.ccm.*)
+        . = ALIGN(4);
+    } > CCM_RAM
+
     .ram0 (NOLOAD) : ALIGN(4)
     {
         . = ALIGN(4);
