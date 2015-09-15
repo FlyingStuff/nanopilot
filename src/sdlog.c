@@ -32,7 +32,7 @@ static THD_FUNCTION(sdlog, arg)
     res = f_open(&version_fd, "/log/version", FA_WRITE | FA_CREATE_ALWAYS);
     if (res) {
         chprintf(stdout, "error %d opening %s\n", res, "/log/version");
-        return -1;
+        return;
     }
     msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
             chprintf((BaseSequentialStream*)&writebuf_stream,
@@ -49,7 +49,7 @@ static THD_FUNCTION(sdlog, arg)
     res = f_open(&mpu6000_fd, "/log/mpu6000.csv", FA_WRITE | FA_CREATE_ALWAYS);
     if (res) {
         chprintf(stdout, "error %d opening %s\n", res, "/log/mpu6000.csv");
-        return -1;
+        return;
     }
     const char *mpu_descr = "time,gyro_x,gyro_y,gyro_z,acc_x,acc_y,acc_z,temp\n";
     error |= error || f_write(&mpu6000_fd, mpu_descr, strlen(mpu_descr), &_bytes_written);
@@ -57,7 +57,7 @@ static THD_FUNCTION(sdlog, arg)
     res = f_open(&rc_fd, "/log/rc.csv", FA_WRITE | FA_CREATE_ALWAYS);
     if (res) {
         chprintf(stdout, "error %d opening %s\n", res, "/log/rc.csv");
-        return -1;
+        return;
     }
     const char *rc_descr = "time,signal,ch1,ch2,ch3,ch4,ch5\n";
     error |= error || f_write(&rc_fd, rc_descr, strlen(rc_descr), &_bytes_written);
@@ -115,7 +115,6 @@ static THD_FUNCTION(sdlog, arg)
             }
         }
     }
-    return -1;
 }
 
 void sdlog_start(void)

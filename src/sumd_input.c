@@ -36,7 +36,6 @@ static THD_FUNCTION(sumd_input_task, arg)
             chSysUnlock();
         }
     }
-    return 0;
 }
 
 void sumd_input_start(BaseSequentialStream *input)
