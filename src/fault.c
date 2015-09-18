@@ -134,22 +134,22 @@ void _HardFault_Handler(void *sp)
         old_sp += 0x04; // correct 8-byte auto alignment
     }
 
-    panic_printf("%s at %x, stack: %x, called from %x\n", isr, ctx->pc, old_sp, ctx->lr);
-    panic_printf("r0-r7:  %x %x %x %x %x %x %x %x\n", ctx->r0, ctx->r1, ctx->r2, ctx->r3, ctx->r4, ctx->r5, ctx->r6, ctx->r7);
-    panic_printf("r8-r12: %x %x %x %x %x\n", ctx->r8, ctx->r9, ctx->r10, ctx->r11, ctx->r12);
-    panic_printf("sp: %x lr: %x pc: %x\n", old_sp, ctx->lr, ctx->pc);
+    panic_printf("%s at %08x, stack: %08x, called from %08x\n", isr, ctx->pc, old_sp, ctx->lr);
+    panic_printf("r0-r7:  %08x %08x %08x %08x %08x %08x %08x %08x\n", ctx->r0, ctx->r1, ctx->r2, ctx->r3, ctx->r4, ctx->r5, ctx->r6, ctx->r7);
+    panic_printf("r8-r12: %08x %08x %08x %08x %08x\n", ctx->r8, ctx->r9, ctx->r10, ctx->r11, ctx->r12);
+    panic_printf("sp: %08x lr: %08x pc: %08x\n", old_sp, ctx->lr, ctx->pc);
 
     // uint16_t UFSR = (SCB_CFSR >> 16) & 0xffff; // UFSR not yet used
     uint8_t BFSR = (SCB_CFSR >> 8) & 0xff;
     uint8_t MMFSR = (SCB_CFSR) & 0xff;
 
-    panic_printf("CFSR: %x\n", SCB_CFSR);
+    panic_printf("CFSR: %08x\n", SCB_CFSR);
 
     if (MMFSR & MMFSR_MMARVALID) {
-        panic_printf("MemManageFault: 0x%x\n", SCB_MMFAR);
+        panic_printf("MemManageFault: 0x%08x\n", SCB_MMFAR);
     }
     if (BFSR & BFSR_BFARVALID) {
-        panic_printf("BusFault: 0x%x\n", SCB_BFAR);
+        panic_printf("BusFault: 0x%08x\n", SCB_BFAR);
     }
 
     panic_handler(isr);
