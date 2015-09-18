@@ -83,7 +83,7 @@ void reboot_in_safemode(void)
  */
 
 #define PANIC_CRC_INIT 0x1aaadc37 // random value
-static __attribute__((section(".noinit"))) char panic_buffer[200];
+static __attribute__((section(".noinit"))) char panic_buffer[300];
 static __attribute__((section(".noinit"))) uint32_t panic_buffer_crc;
 MemoryStream panic_bss;
 
