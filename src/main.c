@@ -163,7 +163,7 @@ int main(void)
 
 
     parameter_namespace_declare(&parameters, NULL, NULL); // root namespace
-    onboardsensors_declare_parameters();
+    onboardsensors_declare_parameters(&parameters);
 
     board_sdcard_pwr_en(true);
     chThdSleepMilliseconds(100);

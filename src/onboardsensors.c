@@ -7,7 +7,6 @@
 #include "sensors/h3lis331dl.h"
 #include "exti.h"
 #include "parameter/parameter.h"
-#include "main.h"
 #include "sensors.h"
 #include "timestamp/timestamp.h"
 
@@ -31,9 +30,9 @@ static parameter_t mpu6000_gyro_full_scale;
 static parameter_t mpu6000_acc_full_scale;
 
 
-void onboardsensors_declare_parameters(void)
+void onboardsensors_declare_parameters(parameter_namespace_t *namespace)
 {
-    parameter_namespace_declare(&sensor_param, &parameters, "sensors");
+    parameter_namespace_declare(&sensor_param, namespace, "sensors");
     parameter_namespace_declare(&mpu6000_param, &sensor_param, "mpu6000");
     parameter_scalar_declare_with_default(&mpu6000_gyro_full_scale, &mpu6000_param, "gyro_full_scale", 2000); // [deg/s]
     parameter_scalar_declare_with_default(&mpu6000_acc_full_scale, &mpu6000_param, "acc_full_scale", 16); // [g]

@@ -2,6 +2,7 @@
 #define ONBOARDSENSORS_H
 
 #include "sensors.h"
+#include "parameter/parameter.h"
 #include <ch.h>
 
 extern rate_gyro_sample_t onboard_mpu6000_gyro_sample;
@@ -18,7 +19,7 @@ extern barometer_sample_t onboard_ms5511_baro_sample;
 
 extern event_source_t sensor_events;
 
-void onboardsensors_declare_parameters(void);
+void onboardsensors_declare_parameters(parameter_namespace_t *namespace);
 void onboard_sensors_start(void);
 
 #endif // ONBOARDSENSORS_H
