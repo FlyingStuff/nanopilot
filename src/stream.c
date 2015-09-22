@@ -10,6 +10,7 @@
 
 #define ONBOARDSENSOR_EVENT     1
 
+static bool msg_header_write(cmp_ctx_t *cmp, const char *msg_id);
 static void _stream_imu_values_sndfn(void *arg, const void *p, size_t len);
 
 
@@ -44,6 +45,7 @@ static THD_FUNCTION(stream, arg)
                 chSysUnlock();
                 cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
                 bool err = false;
+                err = err || !msg_header_write(&cmp, "imu");
                 err = err || !cmp_write_map(&cmp, 3);
                 err = err || !CMP_WRITE_C_STRING(cmp, "gyro");
                 err = err || !cmp_write_array(&cmp, 3);
@@ -69,8 +71,9 @@ static THD_FUNCTION(stream, arg)
                 chSysUnlock();
                 cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
                 bool err = false;
+                err = err || !msg_header_write(&cmp, "mag");
                 err = err || !cmp_write_map(&cmp, 2);
-                err = err || !CMP_WRITE_C_STRING(cmp, "magfield");
+                err = err || !CMP_WRITE_C_STRING(cmp, "field");
                 err = err || !cmp_write_array(&cmp, 3);
                 err = err || !cmp_write_float(&cmp, mx);
                 err = err || !cmp_write_float(&cmp, my);
@@ -89,8 +92,9 @@ static THD_FUNCTION(stream, arg)
                 chSysUnlock();
                 cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
                 bool err = false;
+                err = err || !msg_header_write(&cmp, "hi_acc");
                 err = err || !cmp_write_map(&cmp, 2);
-                err = err || !CMP_WRITE_C_STRING(cmp, "hi_acc");
+                err = err || !CMP_WRITE_C_STRING(cmp, "acc");
                 err = err || !cmp_write_array(&cmp, 3);
                 err = err || !cmp_write_float(&cmp, ax);
                 err = err || !cmp_write_float(&cmp, ay);
@@ -108,6 +112,7 @@ static THD_FUNCTION(stream, arg)
                 chSysUnlock();
                 cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
                 bool err = false;
+                err = err || !msg_header_write(&cmp, "baro");
                 err = err || !cmp_write_map(&cmp, 3);
                 err = err || !CMP_WRITE_C_STRING(cmp, "static_press");
                 err = err || !cmp_write_float(&cmp, baro);
@@ -129,6 +134,15 @@ static void _stream_imu_values_sndfn(void *arg, const void *p, size_t len)
     if (len > 0) {
         chSequentialStreamWrite((BaseSequentialStream*)arg, (const uint8_t*)p, len);
     }
+}
+
+
+bool msg_header_write(cmp_ctx_t *cmp, const char *msg_id)
+{
+    bool err = false;
+    err = err || !cmp_write_array(cmp, 2);
+    err = err || !cmp_write_str(cmp, msg_id, strlen(msg_id));
+    return !err;
 }
 
 
