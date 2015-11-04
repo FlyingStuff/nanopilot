@@ -133,12 +133,13 @@ static THD_FUNCTION(spi_sensors, arg)
         timestamp_t t = timestamp_get();
         mpu60X0_read(&mpu6000, gyro, acc, &temp);
         chSysLock();
-        onboard_mpu6000_gyro_sample.rate[0] = gyro[0];
-        onboard_mpu6000_gyro_sample.rate[1] = gyro[1];
+        // the mpu6000 is mounted with an offset of -90deg around z
+        onboard_mpu6000_gyro_sample.rate[0] = gyro[1];
+        onboard_mpu6000_gyro_sample.rate[1] = -gyro[0];
         onboard_mpu6000_gyro_sample.rate[2] = gyro[2];
         onboard_mpu6000_gyro_sample.timestamp = t;
-        onboard_mpu6000_acc_sample.acceleration[0] = acc[0];
-        onboard_mpu6000_acc_sample.acceleration[1] = acc[1];
+        onboard_mpu6000_acc_sample.acceleration[0] = acc[1];
+        onboard_mpu6000_acc_sample.acceleration[1] = -acc[0];
         onboard_mpu6000_acc_sample.acceleration[2] = acc[2];
         onboard_mpu6000_acc_sample.timestamp = t;
         onboard_mpu6000_temp = temp;
