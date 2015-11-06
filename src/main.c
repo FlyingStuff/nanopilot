@@ -17,6 +17,7 @@
 #include "parameter/parameter.h"
 #include "sdlog.h"
 #include "stream.h"
+#include "timestamp/timestamp_stm32.h"
 
 BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
@@ -133,6 +134,8 @@ int main(void)
 {
     halInit();
     chSysInit();
+
+    timestamp_stm32_init();
 
     chThdCreateStatic(led_task_wa, sizeof(led_task_wa), THD_PRIO_LED, led_task, NULL);
 
