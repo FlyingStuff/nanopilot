@@ -20,6 +20,7 @@ target.arm:
     - src/sumd_input.c
     - src/sdlog.c
     - src/stream.c
+    - src/fault.c
 
 depends:
     - crc
