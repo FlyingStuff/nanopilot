@@ -9,11 +9,16 @@ extern "C" {
 
 // this is for the unit tests
 
+#include <assert.h>
+
 #define PARAMETER_LOCK() {}
 
 #define PARAMETER_UNLOCK() {}
 
-#define PARAMETER_ASSERT(check) {}
+#define PARAMETER_ASSERT(check) {assert(check);}
+
+#define PARAMETER_MSGPACK_MALLOC(size) malloc(size)
+#define PARAMETER_MSGPACK_FREE(ptr) free(ptr)
 
 #else
 
@@ -25,6 +30,9 @@ extern "C" {
 #define PARAMETER_UNLOCK() {chSysUnlock();}
 
 #define PARAMETER_ASSERT(check) {osalDbgAssert(check, "parameter_assert");}
+
+#define PARAMETER_MSGPACK_MALLOC(size) malloc(size)
+#define PARAMETER_MSGPACK_FREE(ptr) free(ptr)
 
 #endif
 

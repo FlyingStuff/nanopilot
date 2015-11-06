@@ -17,7 +17,6 @@ target.arm:
     - src/sqrtpatch.c
     - src/shell_cmds.c
     - src/sumd_input.c
-    - src/parameter_print.c
     - src/sdlog.c
     - src/stream.c
 

@@ -6,7 +6,7 @@
 
 #include "onboardsensors.h"
 #include "serial-datagram/serial_datagram.h"
-#include "parameter_print.h"
+#include "parameter/parameter_print.h"
 #include "git_revision.h"
 #include "error.h"
 #include "main.h"
@@ -94,7 +94,7 @@ static void cmd_panic_get(BaseSequentialStream *chp, int argc, char *argv[]) {
 static void cmd_parameter_list(BaseSequentialStream *stream, int argc, char *argv[]) {
     (void)argc;
     (void)argv;
-    parameter_print(stream, &parameters);
+    parameter_print(&parameters, (parameter_printfn_t)chprintf, stream);
 }
 
 static void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv[]) {
