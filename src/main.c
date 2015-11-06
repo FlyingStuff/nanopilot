@@ -6,6 +6,7 @@
 #include <usbcfg.h>
 
 #include "git_revision.h"
+#include "thread_prio.h"
 #include "shell_cmds.h"
 #include "sumd_input.h"
 #include "onboardsensors.h"
@@ -133,7 +134,7 @@ int main(void)
     halInit();
     chSysInit();
 
-    chThdCreateStatic(led_task_wa, sizeof(led_task_wa), LOWPRIO, led_task, NULL);
+    chThdCreateStatic(led_task_wa, sizeof(led_task_wa), THD_PRIO_LED, led_task, NULL);
 
     sdStart(&UART_CONN1, NULL);
     sdStart(&UART_CONN2, NULL);
@@ -192,7 +193,7 @@ int main(void)
         if (!shelltp) {
             if (SDU1.config->usbp->state == USB_ACTIVE) {
                 file_cat((BaseSequentialStream*)&SDU1, "/banner.txt");
-                shelltp = shellCreate(&shell_cfg, THD_WORKING_AREA_SIZE(2048), NORMALPRIO);
+                shelltp = shellCreate(&shell_cfg, THD_WORKING_AREA_SIZE(2048), THD_PRIO_SHELL);
             }
         } else if (chThdTerminatedX(shelltp)) {
             chThdRelease(shelltp);

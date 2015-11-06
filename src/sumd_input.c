@@ -1,4 +1,5 @@
 #include <ch.h>
+#include "thread_prio.h"
 #include "hott/sumd.h"
 #include "sumd_input.h"
 
@@ -40,5 +41,5 @@ static THD_FUNCTION(sumd_input_task, arg)
 
 void sumd_input_start(BaseSequentialStream *input)
 {
-    chThdCreateStatic(sumd_input_task_wa, sizeof(sumd_input_task_wa), LOWPRIO, sumd_input_task, input);
+    chThdCreateStatic(sumd_input_task_wa, sizeof(sumd_input_task_wa), THD_PRIO_RC_SUMD_IN, sumd_input_task, input);
 }

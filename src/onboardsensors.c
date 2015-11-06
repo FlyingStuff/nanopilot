@@ -1,5 +1,6 @@
 #include <math.h>
 #include <ch.h>
+#include "thread_prio.h"
 #include "error.h"
 #include "sensors/mpu60X0.h"
 #include "sensors/hmc5883l.h"
@@ -217,7 +218,7 @@ static THD_FUNCTION(i2c_sensors, arg)
         error_set(ERROR_LEVEL_WARNING);
     }
 
-    chThdCreateStatic(i2c_barometer_wa, sizeof(i2c_barometer_wa), LOWPRIO, i2c_barometer, &barometer);
+    chThdCreateStatic(i2c_barometer_wa, sizeof(i2c_barometer_wa), THD_PRIO_SENSOR_DRV_I2C_BARO, i2c_barometer, &barometer);
 
     // High-g accelerometer setup
 
@@ -292,6 +293,6 @@ void onboard_sensors_start(void)
 {
     chEvtObjectInit(&sensor_events);
     exti_setup();
-    chThdCreateStatic(spi_sensors_wa, sizeof(spi_sensors_wa), LOWPRIO, spi_sensors, NULL);
-    chThdCreateStatic(i2c_sensors_wa, sizeof(i2c_sensors_wa), LOWPRIO, i2c_sensors, NULL);
+    chThdCreateStatic(spi_sensors_wa, sizeof(spi_sensors_wa), THD_PRIO_SENSOR_DRV_SPI, spi_sensors, NULL);
+    chThdCreateStatic(i2c_sensors_wa, sizeof(i2c_sensors_wa), THD_PRIO_SENSOR_DRV_I2C, i2c_sensors, NULL);
 }

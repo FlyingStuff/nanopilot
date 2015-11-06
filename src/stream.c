@@ -1,5 +1,6 @@
 #include <ch.h>
 #include <hal.h>
+#include "thread_prio.h"
 #include <chprintf.h>
 #include <string.h>
 #include "onboardsensors.h"
@@ -148,5 +149,5 @@ bool msg_header_write(cmp_ctx_t *cmp, const char *msg_id)
 
 void stream_start(BaseSequentialStream *out)
 {
-    chThdCreateStatic(stream_wa, sizeof(stream_wa), LOWPRIO, stream, out);
+    chThdCreateStatic(stream_wa, sizeof(stream_wa), THD_PRIO_STREAM, stream, out);
 }
