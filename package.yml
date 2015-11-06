@@ -4,6 +4,7 @@ source:
     - src/cmp/cmp.c
 
 target.arm:
+    - src/syscalls.c
     - src/board.c
     - src/error.c
     - src/main.c
