@@ -45,7 +45,7 @@ typedef struct {
 } magnetometer_t;
 
 typedef struct {
-    const magnetometer_t sensor;
+    const magnetometer_t *sensor;
     float magnetic_field[3];        // [T]
     timestamp_t timestamp;
 } magnetometer_sample_t;

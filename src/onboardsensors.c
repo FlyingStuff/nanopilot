@@ -174,6 +174,8 @@ static THD_FUNCTION(i2c_barometer, arg)
         i2cAcquireBus(i2c_driver);
         t = ms5611_adc_start(barometer, MS5611_ADC_PRESS, MS5611_OSR_4096);
         i2cReleaseBus(i2c_driver);
+        timestamp_t timestamp = timestamp_get();
+
         if (t > 0) {
             chThdSleepMilliseconds((t - 1)/1000 + 1);
             i2cAcquireBus(i2c_driver);
@@ -185,9 +187,9 @@ static THD_FUNCTION(i2c_barometer, arg)
         chSysLock();
         onboard_ms5511_baro_sample.pressure = press;
         onboard_ms5511_baro_sample.temperature = (float)temp/100;
+        onboard_ms5511_baro_sample.timestamp = timestamp;
         chSysUnlock();
         chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MS5611);
-        chThdSleepMilliseconds(100);
     }
 }
 
@@ -237,6 +239,7 @@ static THD_FUNCTION(i2c_sensors, arg)
 
     // Magnetometer setup
 
+    onboard_hmc5883l_mag_sample.sensor = NULL; // todo
     static hmc5883l_t magnetometer;
     hmc5883l_init(&magnetometer, i2c_driver);
     i2cAcquireBus(i2c_driver);
@@ -258,9 +261,9 @@ static THD_FUNCTION(i2c_sensors, arg)
 
     while (1) {
         chEvtWaitAny(EXTI_INTERRUPT_EVENT);
+        timestamp_t t = timestamp_get();
         eventflags_t event_flag = chEvtGetAndClearFlags(&sensor_int);
         if (event_flag & EXTI_EVENT_H3LIS331DL_INT) {
-            timestamp_t t = timestamp_get();
             static float acc[3];
             i2cAcquireBus(i2c_driver);
             h3lis331dl_read(&high_g_acc, acc);
@@ -282,6 +285,7 @@ static THD_FUNCTION(i2c_sensors, arg)
             onboard_hmc5883l_mag_sample.magnetic_field[0] = mag[0];
             onboard_hmc5883l_mag_sample.magnetic_field[1] = mag[1];
             onboard_hmc5883l_mag_sample.magnetic_field[2] = mag[2];
+            onboard_hmc5883l_mag_sample.timestamp = t;
             chSysUnlock();
             chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_HMC5883L);
         }
