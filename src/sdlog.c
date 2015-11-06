@@ -68,18 +68,16 @@ static THD_FUNCTION(sdlog, arg)
 
         if (events & ONBOARDSENSOR_EVENT) {
             chEvtGetAndClearFlags(&sensor_listener);
-            chSysLock();
-            float gx = onboard_mpu6000_gyro_sample.rate[0];
-            float gy = onboard_mpu6000_gyro_sample.rate[1];
-            float gz = onboard_mpu6000_gyro_sample.rate[2];
-            float ax = onboard_mpu6000_acc_sample.acceleration[0];
-            float ay = onboard_mpu6000_acc_sample.acceleration[1];
-            float az = onboard_mpu6000_acc_sample.acceleration[2];
-            float temp = onboard_mpu6000_temp;
-            chSysUnlock();
+            rate_gyro_sample_t gyro;
+            accelerometer_sample_t acc;
+
+            onboard_sensor_get_mpu6000_gyro_sample(&gyro);
+            onboard_sensor_get_mpu6000_acc_sample(&acc);
+            float temp = onboard_sensor_get_mpu6000_temp();
+
             msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
             chprintf((BaseSequentialStream*)&writebuf_stream,
-                      "%f,%f,%f,%f,%f,%f,%f,%f\n", t, gx, gy, gz, ax, ay, az, temp);
+                      "%f,%f,%f,%f,%f,%f,%f,%f\n", gyro.timestamp, gyro.rate[0], gyro.rate[1], gyro.rate[2], acc.acceleration[0], acc.acceleration[1], acc.acceleration[2], temp);
             UINT _bytes_written;
             int ret = f_write(&mpu6000_fd, writebuf, writebuf_stream.eos, &_bytes_written);
             if (ret != 0) {

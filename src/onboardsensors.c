@@ -13,12 +13,12 @@
 
 #include "onboardsensors.h"
 
-rate_gyro_sample_t onboard_mpu6000_gyro_sample;
-accelerometer_sample_t onboard_mpu6000_acc_sample;
-float onboard_mpu6000_temp;
-accelerometer_sample_t onboard_h3lis331dl_acc_sample;
-magnetometer_sample_t onboard_hmc5883l_mag_sample;
-barometer_sample_t onboard_ms5511_baro_sample;
+static rate_gyro_sample_t onboard_mpu6000_gyro_sample;
+static accelerometer_sample_t onboard_mpu6000_acc_sample;
+static float onboard_mpu6000_temp;
+static accelerometer_sample_t onboard_h3lis331dl_acc_sample;
+static magnetometer_sample_t onboard_hmc5883l_mag_sample;
+static barometer_sample_t onboard_ms5511_baro_sample;
 
 event_source_t sensor_events;
 
@@ -29,6 +29,52 @@ static parameter_namespace_t sensor_param;
 static parameter_namespace_t mpu6000_param;
 static parameter_t mpu6000_gyro_full_scale;
 static parameter_t mpu6000_acc_full_scale;
+
+
+void onboard_sensor_get_mpu6000_gyro_sample(rate_gyro_sample_t *out)
+
+{
+    chSysLock();
+    *out = onboard_mpu6000_gyro_sample;
+    chSysUnlock();
+}
+
+void onboard_sensor_get_mpu6000_acc_sample(accelerometer_sample_t *out)
+{
+    chSysLock();
+    *out = onboard_mpu6000_acc_sample;
+    chSysUnlock();
+}
+
+float onboard_sensor_get_mpu6000_temp(void)
+{
+    chSysLock();
+    float out = onboard_mpu6000_temp;
+    chSysUnlock();
+    return out;
+}
+
+void onboard_sensor_get_h3lis331dl_acc_sample(accelerometer_sample_t *out)
+{
+    chSysLock();
+    *out = onboard_h3lis331dl_acc_sample;
+    chSysUnlock();
+}
+
+void onboard_sensor_get_hmc5883l_mag_sample(magnetometer_sample_t *out)
+{
+    chSysLock();
+    *out = onboard_hmc5883l_mag_sample;
+    chSysUnlock();
+}
+
+void onboard_sensor_get_ms5511_baro_sample(barometer_sample_t *out)
+{
+    chSysLock();
+    *out = onboard_ms5511_baro_sample;
+    chSysUnlock();
+}
+
 
 
 void onboardsensors_declare_parameters(parameter_namespace_t *namespace)

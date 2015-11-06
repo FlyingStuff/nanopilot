@@ -32,95 +32,91 @@ static THD_FUNCTION(stream, arg)
     static cmp_ctx_t cmp;
     while (1) {
         eventmask_t events = chEvtWaitAny(ONBOARDSENSOR_EVENT);
-        float t = (float)chVTGetSystemTimeX() / CH_CFG_ST_FREQUENCY;
+
         if (events & ONBOARDSENSOR_EVENT) {
             eventflags_t event_flags = chEvtGetAndClearFlags(&sensor_event_listener);
             if (event_flags & SENSOR_EVENT_MPU6000) {
-                chSysLock();
-                float gx = onboard_mpu6000_gyro_sample.rate[0];
-                float gy = onboard_mpu6000_gyro_sample.rate[1];
-                float gz = onboard_mpu6000_gyro_sample.rate[2];
-                float ax = onboard_mpu6000_acc_sample.acceleration[0];
-                float ay = onboard_mpu6000_acc_sample.acceleration[1];
-                float az = onboard_mpu6000_acc_sample.acceleration[2];
-                chSysUnlock();
+
+                rate_gyro_sample_t gyro;
+                accelerometer_sample_t acc;
+                onboard_sensor_get_mpu6000_gyro_sample(&gyro);
+                onboard_sensor_get_mpu6000_acc_sample(&acc);
+
                 cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
                 bool err = false;
                 err = err || !msg_header_write(&cmp, "imu");
                 err = err || !cmp_write_map(&cmp, 3);
                 err = err || !CMP_WRITE_C_STRING(cmp, "gyro");
                 err = err || !cmp_write_array(&cmp, 3);
-                err = err || !cmp_write_float(&cmp, gx);
-                err = err || !cmp_write_float(&cmp, gy);
-                err = err || !cmp_write_float(&cmp, gz);
+                err = err || !cmp_write_float(&cmp, gyro.rate[0]);
+                err = err || !cmp_write_float(&cmp, gyro.rate[1]);
+                err = err || !cmp_write_float(&cmp, gyro.rate[2]);
                 err = err || !CMP_WRITE_C_STRING(cmp, "acc");
                 err = err || !cmp_write_array(&cmp, 3);
-                err = err || !cmp_write_float(&cmp, ax);
-                err = err || !cmp_write_float(&cmp, ay);
-                err = err || !cmp_write_float(&cmp, az);
+                err = err || !cmp_write_float(&cmp, acc.acceleration[0]);
+                err = err || !cmp_write_float(&cmp, acc.acceleration[1]);
+                err = err || !cmp_write_float(&cmp, acc.acceleration[2]);
                 err = err || !CMP_WRITE_C_STRING(cmp, "time");
-                err = err || !cmp_write_float(&cmp, t);
+                err = err || !cmp_write_uint(&cmp, gyro.timestamp);
                 if (!err) {
                     serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
                 }
             }
             if (event_flags & SENSOR_EVENT_HMC5883L) {
-                chSysLock();
-                float mx = onboard_hmc5883l_mag_sample.magnetic_field[0];
-                float my = onboard_hmc5883l_mag_sample.magnetic_field[1];
-                float mz = onboard_hmc5883l_mag_sample.magnetic_field[2];
-                chSysUnlock();
+
+                magnetometer_sample_t magnetometer;
+                onboard_sensor_get_hmc5883l_mag_sample(&magnetometer);
+
                 cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
                 bool err = false;
                 err = err || !msg_header_write(&cmp, "mag");
                 err = err || !cmp_write_map(&cmp, 2);
                 err = err || !CMP_WRITE_C_STRING(cmp, "field");
                 err = err || !cmp_write_array(&cmp, 3);
-                err = err || !cmp_write_float(&cmp, mx);
-                err = err || !cmp_write_float(&cmp, my);
-                err = err || !cmp_write_float(&cmp, mz);
+                err = err || !cmp_write_float(&cmp, magnetometer.magnetic_field[0]);
+                err = err || !cmp_write_float(&cmp, magnetometer.magnetic_field[1]);
+                err = err || !cmp_write_float(&cmp, magnetometer.magnetic_field[2]);
                 err = err || !CMP_WRITE_C_STRING(cmp, "time");
-                err = err || !cmp_write_float(&cmp, t);
+                err = err || !cmp_write_uint(&cmp, magnetometer.timestamp);
                 if (!err) {
                     serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
                 }
             }
             if (event_flags & SENSOR_EVENT_H3LIS331DL) {
-                chSysLock();
-                float ax = onboard_h3lis331dl_acc_sample.acceleration[0];
-                float ay = onboard_h3lis331dl_acc_sample.acceleration[1];
-                float az = onboard_h3lis331dl_acc_sample.acceleration[2];
-                chSysUnlock();
+
+                accelerometer_sample_t acc;
+                onboard_sensor_get_h3lis331dl_acc_sample(&acc);
+
                 cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
                 bool err = false;
                 err = err || !msg_header_write(&cmp, "hi_acc");
                 err = err || !cmp_write_map(&cmp, 2);
                 err = err || !CMP_WRITE_C_STRING(cmp, "acc");
                 err = err || !cmp_write_array(&cmp, 3);
-                err = err || !cmp_write_float(&cmp, ax);
-                err = err || !cmp_write_float(&cmp, ay);
-                err = err || !cmp_write_float(&cmp, az);
+                err = err || !cmp_write_float(&cmp, acc.acceleration[0]);
+                err = err || !cmp_write_float(&cmp, acc.acceleration[1]);
+                err = err || !cmp_write_float(&cmp, acc.acceleration[2]);
                 err = err || !CMP_WRITE_C_STRING(cmp, "time");
-                err = err || !cmp_write_float(&cmp, t);
+                err = err || !cmp_write_uint(&cmp, acc.timestamp);
                 if (!err) {
                     serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
                 }
             }
             if (event_flags & SENSOR_EVENT_MS5611) {
-                chSysLock();
-                float baro = onboard_ms5511_baro_sample.pressure;
-                float temp = onboard_ms5511_baro_sample.temperature;
-                chSysUnlock();
+
+                barometer_sample_t baro;
+                onboard_sensor_get_ms5511_baro_sample(&baro);
+
                 cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
                 bool err = false;
                 err = err || !msg_header_write(&cmp, "baro");
                 err = err || !cmp_write_map(&cmp, 3);
                 err = err || !CMP_WRITE_C_STRING(cmp, "static_press");
-                err = err || !cmp_write_float(&cmp, baro);
+                err = err || !cmp_write_float(&cmp, baro.pressure);
                 err = err || !CMP_WRITE_C_STRING(cmp, "air_temp");
-                err = err || !cmp_write_float(&cmp, temp);
+                err = err || !cmp_write_float(&cmp, baro.temperature);
                 err = err || !CMP_WRITE_C_STRING(cmp, "time");
-                err = err || !cmp_write_float(&cmp, t);
+                err = err || !cmp_write_uint(&cmp, baro.timestamp);
                 if (!err) {
                     serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
                 }
