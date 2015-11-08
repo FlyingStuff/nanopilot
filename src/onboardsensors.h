@@ -25,7 +25,7 @@ void onboard_sensor_get_ms5511_baro_sample(barometer_sample_t *out);
 
 extern event_source_t sensor_events;
 
-void onboardsensors_declare_parameters(parameter_namespace_t *namespace);
+void onboardsensors_declare_parameters(parameter_namespace_t *ns);
 void onboard_sensors_start(void);
 
 

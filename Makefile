@@ -89,6 +89,8 @@ include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 include $(CHIBIOS)/test/rt/test.mk
+# ChibiOS C++ bindings
+include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
 include src/fatfs/fatfs.mk
 include src/src.mk
 
@@ -114,7 +116,7 @@ CSRC = $(PORTSRC) \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CPPSRC =
+CPPSRC = $(CHCPPSRC) $(PROJCPPSRC)
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
@@ -145,8 +147,8 @@ ASMSRC += src/crt0_v7m.s #$(STARTUPASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) $(STARTUPINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
-         $(FATFSINC) $(CHIBIOS)/os/various $(PROJINC) \
-         $(CHIBIOS)/os/hal/lib/streams
+         $(FATFSINC) $(CHIBIOS)/os/various $(CHCPPINC) \
+         $(PROJINC) $(CHIBIOS)/os/hal/lib/streams
 
 #
 # Project, sources and paths
@@ -165,8 +167,8 @@ CPPC = $(TRGT)g++
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
-LD   = $(TRGT)gcc
-#LD   = $(TRGT)g++
+# LD   = $(TRGT)gcc
+LD   = $(TRGT)g++
 CP   = $(TRGT)objcopy
 AS   = $(TRGT)gcc -x assembler-with-cpp
 AR   = $(TRGT)ar
@@ -186,7 +188,7 @@ TOPT = -mthumb -DTHUMB
 CWARN = -Wall -Wextra -Wstrict-prototypes
 
 # Define C++ warning options here
-CPPWARN = -Wall -Wextra
+CPPWARN = -Wall -Wextra -std=c++11
 
 #
 # Compiler settings
