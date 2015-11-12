@@ -18,6 +18,7 @@
 #include "sdlog.h"
 #include "stream.h"
 #include "timestamp/timestamp_stm32.h"
+#include "attitude_determination.h"
 
 BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
@@ -182,6 +183,7 @@ int main(void)
     sdlog_start();
     stream_start((BaseSequentialStream*)&UART_CONN4);
 
+    run_attitude_determination();
     // while (1) {
     //     chThdSleepMilliseconds(100);
     //     sdcard_automount();

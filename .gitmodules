@@ -37,3 +37,6 @@
 [submodule "src/sensors"]
 	path = src/sensors
 	url = https://github.com/Stapelzeiger/sensor-drivers.git
+[submodule "src/flight-stack"]
+	path = src/flight-stack
+	url = https://stapelzeiger@github.com/Stapelzeiger/kalman-attitude-estimator.git

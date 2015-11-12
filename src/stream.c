@@ -6,6 +6,7 @@
 #include "onboardsensors.h"
 #include "cmp_mem_access/cmp_mem_access.h"
 #include "serial-datagram/serial_datagram.h"
+#include "attitude_determination.h"
 
 #include "stream.h"
 
@@ -61,6 +62,22 @@ static THD_FUNCTION(stream, arg)
                 if (!err) {
                     serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
                 }
+
+
+                cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
+                err = false;
+                float att[4];
+                attitude_determination_get_attitude(att);
+                err = err || !msg_header_write(&cmp, "att");
+                err = err || !cmp_write_array(&cmp, 4);
+                err = err || !cmp_write_float(&cmp, att[0]);
+                err = err || !cmp_write_float(&cmp, att[1]);
+                err = err || !cmp_write_float(&cmp, att[2]);
+                err = err || !cmp_write_float(&cmp, att[3]);
+                if (!err) {
+                    serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
+                }
+
             }
             if (event_flags & SENSOR_EVENT_HMC5883L) {
 
