@@ -40,3 +40,6 @@
 [submodule "src/flight-stack"]
 	path = src/flight-stack
 	url = https://stapelzeiger@github.com/Stapelzeiger/kalman-attitude-estimator.git
+[submodule "src/eigen"]
+	path = src/eigen
+	url = https://github.com/Stapelzeiger/eigen.git
