@@ -4,7 +4,7 @@
 #include "main.h"
 #include "chprintf.h"
 
-#include "ekf_gyro_acc_mag.h"
+#include "attitude_estimation/ekf_gyro_acc_mag.h"
 
 static Eigen::Quaternionf attitude;
 

@@ -223,6 +223,7 @@ include rules.mk
 -include tools.mk
 
 PRE_MAKE_ALL_RULE_HOOK:
+	cd src/flight-stack && ./code_gen.sh
 	./git_revision.sh
 
 POST_MAKE_ALL_RULE_HOOK:

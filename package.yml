@@ -22,12 +22,11 @@ target.arm:
     - src/stream.c
     - src/fault.c
     - src/attitude_determination.cpp
-    - src/flight-stack/attitude_estimation/ekf_gyro_acc.cpp
-    - src/flight-stack/attitude_estimation/ekf_gyro_acc_mag.cpp
+    - src/flight-stack/src/attitude_estimation/ekf_gyro_acc.cpp
+    - src/flight-stack/src/attitude_estimation/ekf_gyro_acc_mag.cpp
 
 include_directories:
     - src/flight-stack/src/
-    - src/flight-stack/attitude_estimation/
     - src/eigen/
 
 depends:
