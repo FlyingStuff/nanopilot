@@ -219,7 +219,6 @@ ULIBS = -lm
 
 GLOBAL_SRC_DEP = src/src.mk
 
-RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
 include rules.mk
 -include tools.mk
 
