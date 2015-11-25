@@ -79,9 +79,6 @@ bool sdc_lld_is_write_protected(SDCDriver *sdcp) {
 
 
 void board_init(void) {
-    board_sensor_pwr_en(true);
-    board_io_pwr_en(true);
-    error_init();
 }
 
 

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <usbcfg.h>
 
+#include "log.h"
 #include "git_revision.h"
 #include "thread_prio.h"
 #include "shell_cmds.h"
@@ -78,20 +79,24 @@ bool fatfs_mounted = false;
 
 void sdcard_mount(void)
 {
+    if (palReadPad(GPIOC, GPIOC_SDCARD_DETECT)) {
+        log_warning("SD card not found");
+        return;
+    }
     if (sdcConnect(&SDCD1)) {
-        chprintf(stdout, "SD card: failed to connect\n");
+        log_error("SD card connection failed");
         return;
     }
     FRESULT err;
     err = f_mount(&SDC_FS, "", 0);
     if (err != FR_OK) {
-        chprintf(stdout, "SD card: mount failed\n");
+        log_error("SD card filesystem mount failed");
         sdcDisconnect(&SDCD1);
         return;
     }
     fatfs_mounted = true;
     palSetPad(GPIOB, GPIOB_LED_SDCARD);
-    chprintf(stdout, "SD card mounted\n");
+    log_info("SD card filesystem mounted");
 }
 
 void sdcard_unmount(void)
@@ -120,7 +125,7 @@ void file_cat(BaseSequentialStream *out, const char *file_path)
     static FIL f;
     FRESULT res = f_open(&f, file_path, FA_READ);
     if (res) {
-        chprintf(out, "error %d opening %s\n", res, file_path);
+        log_error("error %d opening %s\n", res, file_path);
         return;
     }
     static char line[80];
@@ -130,6 +135,51 @@ void file_cat(BaseSequentialStream *out, const char *file_path)
     f_close(&f);
 }
 
+static SerialConfig uart_config =
+{
+    115200,
+    0,
+    USART_CR2_STOP1_BITS,
+    0
+};
+
+
+static void boot_message(void)
+{
+    chprintf(stdout, "\n\n\n");
+
+    const char *panic_msg = get_panic_message();
+    if (panic_msg != NULL) {
+        log_warning("reboot after panic:\n%s\n", panic_msg);
+    } else {
+        log_info("boot");
+    }
+    if (safemode_active()) {
+        log_warning("safemode active");
+    }
+    log_info("git: %s branch: %s", build_git_version, build_git_branch);
+    log_info("built: %s", build_date);
+}
+
+
+static void services_init(void)
+{
+    onboardsensors_declare_parameters(&parameters);
+}
+
+
+static void services_start(void)
+{
+    onboard_sensors_start();
+
+    sumd_input_start((BaseSequentialStream*)&UART_CONN2);
+
+    sdlog_start();
+
+    stream_start((BaseSequentialStream*)&UART_CONN4);
+
+    run_attitude_determination();
+}
 
 int main(void)
 {
@@ -138,27 +188,40 @@ int main(void)
 
     timestamp_stm32_init();
 
+    board_io_pwr_en(true);
+    board_sensor_pwr_en(true);
+
+    error_init();
+
     chThdCreateStatic(led_task_wa, sizeof(led_task_wa), THD_PRIO_LED, led_task, NULL);
 
-    sdStart(&UART_CONN1, NULL);
-    sdStart(&UART_CONN2, NULL);
-    sdStart(&UART_CONN3, NULL);
-    sdStart(&UART_CONN4, NULL);
-
+    // standard output
+    sdStart(&UART_CONN1, &uart_config);
     stdout = (BaseSequentialStream*)&UART_CONN1;
 
-    const char *panic_msg = get_panic_message();
-    if (panic_msg != NULL) {
-        chprintf(stdout, "\n> reboot after panic:\n%s\n", panic_msg);
-    } else {
-        chprintf(stdout, "\n> boot\n");
-    }
-    chprintf(stdout, "> version: %s\n", build_git_version);
-    if (safemode_active()) {
-        chprintf(stdout, "> safemode active\n");
-    }
+    boot_message();
 
-    // USB Serial Driver
+    // initialization
+    parameter_namespace_declare(&parameters, NULL, NULL); // root namespace
+    services_init();
+
+    // mount SD card
+    board_sdcard_pwr_en(true);
+    chThdSleepMilliseconds(100);
+    sdcStart(&SDCD1, NULL);
+    sdcard_mount();
+
+    // load parameters from SD card
+    file_cat(stdout, "/test.txt");
+
+    // UART driver
+    uart_config.speed = 230400;
+    sdStart(&UART_CONN2, &uart_config);
+    sdStart(&UART_CONN3, &uart_config);
+    sdStart(&UART_CONN4, &uart_config);
+    sdStart(&UART_CONN_I2C, &uart_config);
+
+    // USB serial driver
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);
     usbDisconnectBus(serusbcfg.usbp);
@@ -166,28 +229,9 @@ int main(void)
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
 
+    // start all services
+    services_start();
 
-    parameter_namespace_declare(&parameters, NULL, NULL); // root namespace
-    onboardsensors_declare_parameters(&parameters);
-
-    board_sdcard_pwr_en(true);
-    chThdSleepMilliseconds(100);
-    sdcStart(&SDCD1, NULL);
-    sdcard_mount();
-    file_cat(stdout, "/test.txt");
-
-    onboard_sensors_start();
-
-    sumd_input_start((BaseSequentialStream*)&UART_CONN2);
-
-    sdlog_start();
-    stream_start((BaseSequentialStream*)&UART_CONN4);
-
-    run_attitude_determination();
-    // while (1) {
-    //     chThdSleepMilliseconds(100);
-    //     sdcard_automount();
-    // }
 
     shellInit();
     static thread_t *shelltp = NULL;

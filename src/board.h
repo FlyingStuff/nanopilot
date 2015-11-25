@@ -20,14 +20,15 @@
 #define UART_CONN2 SD4
 #define UART_CONN3 SD2
 #define UART_CONN4 SD6
+#define UART_CONN_I2C SD3
 
 /*
  * IO pins assignments.
  */
-#define GPIOA_UART4_TX_CONN2        0
-#define GPIOA_UART4_RX_CONN2        1
-#define GPIOA_UART2_TX_CONN3        2
-#define GPIOA_UART2_RX_CONN3        3
+#define GPIOA_UART4_TX_CONN2        0 // (ADC123_IN0, UART2_CTS)
+#define GPIOA_UART4_RX_CONN2        1 // (ADC123_IN1, UART2_RTS)
+#define GPIOA_UART2_TX_CONN3        2 // (ADC123_IN2)
+#define GPIOA_UART2_RX_CONN3        3 // (ADC123_IN3)
 #define GPIOA_NC_4                  4
 #define GPIOA_SPI1_SCK              5
 #define GPIOA_SPI1_MISO             6
@@ -51,8 +52,8 @@
 #define GPIOB_UART1_RX_CONN1        7
 #define GPIOB_I2C1_SCL              8
 #define GPIOB_I2C1_SDA              9
-#define GPIOB_I2C2_SCL_CONN         10
-#define GPIOB_I2C2_SDA_CONN         11
+#define GPIOB_I2C2_SCL_CONN         10 // USART3_TX
+#define GPIOB_I2C2_SDA_CONN         11 // USART3_RX
 #define GPIOB_CAN2_RX_CONN          12
 #define GPIOB_CAN2_TX_CONN          13
 #define GPIOB_LED_STATUS            14
