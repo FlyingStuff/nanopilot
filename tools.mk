@@ -2,6 +2,10 @@
 flash: all
 	openocd -f oocd.cfg -c "program build/ins-board.elf verify reset" -c "shutdown"
 
+.PHONY: flash-stlink
+flash-stlink: all
+	openocd -f oocd-stlink.cfg -c "program build/ins-board.elf verify reset" -c "shutdown"
+
 .PHONY: r
 r: reset
 .PHONY: reset
