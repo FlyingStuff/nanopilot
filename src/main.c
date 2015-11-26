@@ -17,6 +17,7 @@
 #include "cmp_mem_access/cmp_mem_access.h"
 #include "error.h"
 #include "parameter/parameter.h"
+#include "parameter/parameter_print.h"
 #include "sdlog.h"
 #include "stream.h"
 #include "timestamp/timestamp_stm32.h"
@@ -234,7 +235,10 @@ int main(void)
     sdcard_mount();
 
     // load parameters from SD card
-    file_cat(stdout, "/test.txt");
+    log_info("loading parameters from sd card")
+    sdcard_read_parameter(&parameters, "/config.msgpack");
+    log_info("current parameters:")
+    parameter_print(&parameters, (parameter_printfn_t)chprintf, stdout);
 
     // UART driver
     io_setup();

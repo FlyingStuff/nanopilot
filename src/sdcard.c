@@ -1,6 +1,8 @@
 #include <ch.h>
 #include <hal.h>
 #include <chprintf.h>
+#include "parameter/parameter.h"
+#include "parameter/parameter_msgpack.h"
 #include "log.h"
 
 #include "sdcard.h"
@@ -66,3 +68,25 @@ void file_cat(BaseSequentialStream *out, const char *file_path)
     }
     f_close(&f);
 }
+
+static void read_param_cb(void *arg, const char *id, const char *err)
+{
+    log_warning("file: %s, parameter %s: %s", (const char*)arg, id, err);
+}
+
+void sdcard_read_parameter(parameter_namespace_t *ns, const char *file_path)
+{
+    static FIL f;
+    FRESULT res = f_open(&f, file_path, FA_READ);
+    if (res) {
+        log_error("error %d opening %s\n", res, file_path);
+        return;
+    }
+    static char config_file_buffer[1000];
+    if (f_gets(config_file_buffer, sizeof(config_file_buffer), &f)) {
+        log_info("file %s read", file_path);
+        parameter_msgpack_read(ns, config_file_buffer, sizeof(config_file_buffer), read_param_cb, (void *)file_path);
+    }
+    f_close(&f);
+}
+
