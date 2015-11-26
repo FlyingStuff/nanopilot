@@ -187,7 +187,7 @@ static void services_init(void)
 
 static void services_start(void)
 {
-    static char buf[10];
+    char buf[10];
     onboard_sensors_start();
 
     parameter_string_get(&sumd_in_uart, buf, sizeof(buf));
@@ -253,22 +253,25 @@ int main(void)
     // start all services
     services_start();
 
-
     shellInit();
+    char buf[10];
+    parameter_string_get(&shell_port, buf, sizeof(buf));
+    BaseSequentialStream* shell_dev = get_base_seq_stream_device_from_str(buf);
     static thread_t *shelltp = NULL;
     static ShellConfig shell_cfg;
-    shell_cfg.sc_channel = (BaseSequentialStream*)&SDU1;
+    shell_cfg.sc_channel = shell_dev;
     shell_cfg.sc_commands = shell_commands;
+
     while (true) {
-        if (!shelltp) {
-            if (SDU1.config->usbp->state == USB_ACTIVE) {
-                file_cat((BaseSequentialStream*)&SDU1, "/banner.txt");
-                shelltp = shellCreate(&shell_cfg, THD_WORKING_AREA_SIZE(2048), THD_PRIO_SHELL);
-            }
-        } else if (chThdTerminatedX(shelltp)) {
+        if (shelltp == NULL && shell_dev != NULL) {
+            shelltp = shellCreate(&shell_cfg, THD_WORKING_AREA_SIZE(2048), THD_PRIO_SHELL);
+        } else if (shelltp != NULL && chThdTerminatedX(shelltp)) {
             chThdRelease(shelltp);
             shelltp = NULL;
         }
+
+        sdcard_automount();
+
         chThdSleepMilliseconds(500);
     }
 }
