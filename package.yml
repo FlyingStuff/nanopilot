@@ -22,6 +22,7 @@ target.arm:
     - src/stream.c
     - src/fault.c
     - src/log.c
+    - src/sdcard.c
     - src/attitude_determination.cpp
     - src/flight-stack/src/attitude_estimation/ekf_gyro_acc.cpp
     - src/flight-stack/src/attitude_estimation/ekf_gyro_acc_mag.cpp

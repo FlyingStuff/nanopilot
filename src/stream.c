@@ -162,5 +162,8 @@ bool msg_header_write(cmp_ctx_t *cmp, const char *msg_id)
 
 void stream_start(BaseSequentialStream *out)
 {
+    if (out == NULL) {
+        return;
+    }
     chThdCreateStatic(stream_wa, sizeof(stream_wa), THD_PRIO_STREAM, stream, out);
 }

@@ -8,6 +8,7 @@
 #include "log.h"
 #include "git_revision.h"
 #include "thread_prio.h"
+#include "sdcard.h"
 #include "shell_cmds.h"
 #include "sumd_input.h"
 #include "onboardsensors.h"
@@ -72,78 +73,6 @@ static THD_FUNCTION(led_task, arg)
 }
 
 
-
-#include <ff.h>
-static FATFS SDC_FS;
-bool fatfs_mounted = false;
-
-void sdcard_mount(void)
-{
-    if (palReadPad(GPIOC, GPIOC_SDCARD_DETECT)) {
-        log_warning("SD card not found");
-        return;
-    }
-    if (sdcConnect(&SDCD1)) {
-        log_error("SD card connection failed");
-        return;
-    }
-    FRESULT err;
-    err = f_mount(&SDC_FS, "", 0);
-    if (err != FR_OK) {
-        log_error("SD card filesystem mount failed");
-        sdcDisconnect(&SDCD1);
-        return;
-    }
-    fatfs_mounted = true;
-    palSetPad(GPIOB, GPIOB_LED_SDCARD);
-    log_info("SD card filesystem mounted");
-}
-
-void sdcard_unmount(void)
-{
-    f_mount(NULL, "", 0); // unmount
-    palClearPad(GPIOB, GPIOB_LED_SDCARD);
-    sdcDisconnect(&SDCD1);
-    fatfs_mounted = false;
-}
-
-void sdcard_automount(void)
-{
-    if (palReadPad(GPIOC, GPIOC_SDCARD_DETECT)) {
-        if (fatfs_mounted) {
-            sdcard_unmount();
-        }
-    } else {
-        if (!fatfs_mounted) {
-            sdcard_mount();
-        }
-    }
-}
-
-void file_cat(BaseSequentialStream *out, const char *file_path)
-{
-    static FIL f;
-    FRESULT res = f_open(&f, file_path, FA_READ);
-    if (res) {
-        log_error("error %d opening %s\n", res, file_path);
-        return;
-    }
-    static char line[80];
-    while (f_gets(line, sizeof(line), &f)) {
-        chprintf(out, line);
-    }
-    f_close(&f);
-}
-
-static SerialConfig uart_config =
-{
-    115200,
-    0,
-    USART_CR2_STOP1_BITS,
-    0
-};
-
-
 static void boot_message(void)
 {
     chprintf(stdout, "\n\n\n");
@@ -162,24 +91,117 @@ static void boot_message(void)
 }
 
 
+BaseSequentialStream *get_base_seq_stream_device_from_str(const char *name)
+{
+    if (strcmp(name, "CONN1") == 0) {
+        return (BaseSequentialStream*)&UART_CONN1;
+    }
+    if (strcmp(name, "CONN2") == 0) {
+        return (BaseSequentialStream*)&UART_CONN2;
+    }
+    if (strcmp(name, "CONN3") == 0) {
+        return (BaseSequentialStream*)&UART_CONN3;
+    }
+    if (strcmp(name, "CONN4") == 0) {
+        return (BaseSequentialStream*)&UART_CONN4;
+    }
+    if (strcmp(name, "USB") == 0) {
+        return (BaseSequentialStream*)&SDU1;
+    }
+    if (strcmp(name, "CONN_I2C") == 0) {
+        return (BaseSequentialStream*)&UART_CONN_I2C;
+    }
+    log_warning("unknown io port %s", name);
+    return NULL;
+}
+
+
+static parameter_namespace_t service_param;
+static parameter_t shell_port;
+static char shell_port_buf[10];
+static parameter_t sumd_in_uart;
+static char sumd_in_uart_buf[10];
+static parameter_t stream_out;
+static char stream_out_buf[10];
+
+
+static void service_parameters_declare(parameter_namespace_t *root)
+{
+    parameter_namespace_declare(&service_param, root, "service");
+
+    parameter_string_declare_with_default(&shell_port,
+            &service_param, "shell_port", shell_port_buf,
+            sizeof(shell_port_buf), "");
+    parameter_string_declare_with_default(&sumd_in_uart,
+            &service_param, "sumd_input", sumd_in_uart_buf,
+            sizeof(sumd_in_uart_buf), "");
+    parameter_string_declare_with_default(&stream_out,
+            &service_param, "stream_output", stream_out_buf,
+            sizeof(stream_out_buf), "");
+}
+
+
+static parameter_namespace_t io_param;
+static parameter_t uart_conn2_baud;
+static parameter_t uart_conn3_baud;
+static parameter_t uart_conn4_baud;
+static parameter_t uart_conn_i2c_baud;
+
+static void io_parameters_declare(parameter_namespace_t *root)
+{
+    parameter_namespace_declare(&service_param, root, "io");
+
+    parameter_integer_declare_with_default(&uart_conn2_baud,
+            &io_param, "conn2_baud", SERIAL_DEFAULT_BITRATE);
+    parameter_integer_declare_with_default(&uart_conn3_baud,
+            &io_param, "conn3_baud", SERIAL_DEFAULT_BITRATE);
+    parameter_integer_declare_with_default(&uart_conn4_baud,
+            &io_param, "conn4_baud", SERIAL_DEFAULT_BITRATE);
+    parameter_integer_declare_with_default(&uart_conn_i2c_baud,
+            &io_param, "conn_i2c_baud", SERIAL_DEFAULT_BITRATE);
+}
+
+static void io_setup(void)
+{
+    SerialConfig uart_config =
+    {
+        115200,
+        0,
+        USART_CR2_STOP1_BITS,
+        0
+    };
+    uart_config.speed = SERIAL_DEFAULT_BITRATE;
+    sdStart(&UART_CONN2, &uart_config);
+    sdStart(&UART_CONN3, &uart_config);
+    sdStart(&UART_CONN4, &uart_config);
+    sdStart(&UART_CONN_I2C, &uart_config);
+}
+
+
 static void services_init(void)
 {
+    service_parameters_declare(&parameters);
+    io_parameters_declare(&parameters);
     onboardsensors_declare_parameters(&parameters);
 }
 
 
 static void services_start(void)
 {
+    static char buf[10];
     onboard_sensors_start();
 
-    sumd_input_start((BaseSequentialStream*)&UART_CONN2);
+    parameter_string_get(&sumd_in_uart, buf, sizeof(buf));
+    sumd_input_start(get_base_seq_stream_device_from_str(buf));
 
     sdlog_start();
 
-    stream_start((BaseSequentialStream*)&UART_CONN4);
+    parameter_string_get(&stream_out, buf, sizeof(buf));
+    stream_start(get_base_seq_stream_device_from_str(buf));
 
     run_attitude_determination();
 }
+
 
 int main(void)
 {
@@ -196,7 +218,7 @@ int main(void)
     chThdCreateStatic(led_task_wa, sizeof(led_task_wa), THD_PRIO_LED, led_task, NULL);
 
     // standard output
-    sdStart(&UART_CONN1, &uart_config);
+    sdStart(&UART_CONN1, NULL);
     stdout = (BaseSequentialStream*)&UART_CONN1;
 
     boot_message();
@@ -215,11 +237,7 @@ int main(void)
     file_cat(stdout, "/test.txt");
 
     // UART driver
-    uart_config.speed = 230400;
-    sdStart(&UART_CONN2, &uart_config);
-    sdStart(&UART_CONN3, &uart_config);
-    sdStart(&UART_CONN4, &uart_config);
-    sdStart(&UART_CONN_I2C, &uart_config);
+    io_setup();
 
     // USB serial driver
     sduObjectInit(&SDU1);

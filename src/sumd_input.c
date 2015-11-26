@@ -41,5 +41,8 @@ static THD_FUNCTION(sumd_input_task, arg)
 
 void sumd_input_start(BaseSequentialStream *input)
 {
+    if (input == NULL) {
+        return;
+    }
     chThdCreateStatic(sumd_input_task_wa, sizeof(sumd_input_task_wa), THD_PRIO_RC_SUMD_IN, sumd_input_task, input);
 }
