@@ -29,6 +29,24 @@ SerialUSBDriver SDU1;
 parameter_namespace_t parameters;
 
 
+void sd_card_activity(void)
+{
+    chSysLock();
+    palTogglePad(GPIOB, GPIOB_LED_SDCARD);
+    chSysUnlock();
+}
+
+
+static void sd_card_activity_periodic_reset(void)
+{
+    if (fatfs_mounted) {
+        palSetPad(GPIOB, GPIOB_LED_SDCARD);
+    } else {
+        palClearPad(GPIOB, GPIOB_LED_SDCARD);
+    }
+}
+
+
 /*
  *  Heartbeat, Error LED thread
  *
@@ -70,6 +88,7 @@ static THD_FUNCTION(led_task, arg)
                 chThdSleepMilliseconds(760);
             }
         }
+        sd_card_activity_periodic_reset();
     }
 }
 

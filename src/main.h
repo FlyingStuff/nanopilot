@@ -12,6 +12,8 @@ extern BaseSequentialStream* stdout;
 
 extern parameter_namespace_t parameters;
 
+void sd_card_activity(void);
+
 #ifdef __cplusplus
 }
 #endif

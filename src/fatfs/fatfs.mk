@@ -1,8 +1,8 @@
 # FATFS files.
 # http://elm-chan.org/fsw/ff/00index_e.html
 
-FATFSSRC = ${CHIBIOS}/os/various/fatfs_bindings/fatfs_diskio.c \
-           ${CHIBIOS}/os/various/fatfs_bindings/fatfs_syscall.c \
+FATFSSRC = src/fatfs/fatfs_diskio.c \
+           src/fatfs/fatfs_syscall.c \
            src/fatfs/src/ff.c \
            src/fatfs/src/option/unicode.c
 

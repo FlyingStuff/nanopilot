@@ -29,14 +29,12 @@ void sdcard_mount(void)
         return;
     }
     fatfs_mounted = true;
-    palSetPad(GPIOB, GPIOB_LED_SDCARD);
     log_info("SD card filesystem mounted");
 }
 
 void sdcard_unmount(void)
 {
     f_mount(NULL, "", 0); // unmount
-    palClearPad(GPIOB, GPIOB_LED_SDCARD);
     sdcDisconnect(&SDCD1);
     fatfs_mounted = false;
 }

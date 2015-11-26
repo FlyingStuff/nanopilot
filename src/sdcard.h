@@ -8,6 +8,8 @@ extern "C" {
 #include <ch.h>
 #include "parameter/parameter.h"
 
+extern bool fatfs_mounted;
+
 void sdcard_mount(void);
 void sdcard_unmount(void);
 void sdcard_automount(void);
