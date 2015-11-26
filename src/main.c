@@ -227,6 +227,7 @@ int main(void)
     services_init();
 
     // mount SD card
+    chThdSleepMilliseconds(100);
     board_sdcard_pwr_en(true);
     chThdSleepMilliseconds(100);
     sdcStart(&SDCD1, NULL);
