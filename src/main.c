@@ -150,7 +150,7 @@ static parameter_t uart_conn_i2c_baud;
 
 static void io_parameters_declare(parameter_namespace_t *root)
 {
-    parameter_namespace_declare(&service_param, root, "io");
+    parameter_namespace_declare(&io_param, root, "io");
 
     parameter_integer_declare_with_default(&uart_conn2_baud,
             &io_param, "conn2_baud", SERIAL_DEFAULT_BITRATE);
