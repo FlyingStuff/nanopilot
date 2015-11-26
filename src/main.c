@@ -132,13 +132,13 @@ static void service_parameters_declare(parameter_namespace_t *root)
 
     parameter_string_declare_with_default(&shell_port,
             &service_param, "shell_port", shell_port_buf,
-            sizeof(shell_port_buf), "");
+            sizeof(shell_port_buf), "USB");
     parameter_string_declare_with_default(&sumd_in_uart,
             &service_param, "sumd_input", sumd_in_uart_buf,
-            sizeof(sumd_in_uart_buf), "");
+            sizeof(sumd_in_uart_buf), "CONN2");
     parameter_string_declare_with_default(&stream_out,
             &service_param, "stream_output", stream_out_buf,
-            sizeof(stream_out_buf), "");
+            sizeof(stream_out_buf), "CONN3");
 }
 
 
@@ -164,17 +164,15 @@ static void io_parameters_declare(parameter_namespace_t *root)
 
 static void io_setup(void)
 {
-    SerialConfig uart_config =
-    {
-        115200,
-        0,
-        USART_CR2_STOP1_BITS,
-        0
-    };
-    uart_config.speed = SERIAL_DEFAULT_BITRATE;
+    SerialConfig uart_config = { SERIAL_DEFAULT_BITRATE, 0,
+                                 USART_CR2_STOP1_BITS, 0 };
+    uart_config.speed = parameter_integer_get(&uart_conn2_baud);
     sdStart(&UART_CONN2, &uart_config);
+    uart_config.speed = parameter_integer_get(&uart_conn3_baud);
     sdStart(&UART_CONN3, &uart_config);
+    uart_config.speed = parameter_integer_get(&uart_conn4_baud);
     sdStart(&UART_CONN4, &uart_config);
+    uart_config.speed = parameter_integer_get(&uart_conn_i2c_baud);
     sdStart(&UART_CONN_I2C, &uart_config);
 }
 
