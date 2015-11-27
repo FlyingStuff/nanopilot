@@ -13,17 +13,9 @@
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 static void cmd_mem(BaseSequentialStream *chp, int argc, char *argv[]) {
-    size_t n, size;
-
+    (void)argc;
     (void)argv;
-    if (argc > 0) {
-        chprintf(chp, "Usage: mem\r\n");
-        return;
-    }
-    n = chHeapStatus(NULL, &size);
     chprintf(chp, "core free memory : %u bytes\r\n", chCoreGetStatusX());
-    chprintf(chp, "heap fragments   : %u\r\n", n);
-    chprintf(chp, "heap free total  : %u bytes\r\n", size);
 }
 
 static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {

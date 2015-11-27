@@ -283,9 +283,9 @@ int main(void)
 
     while (true) {
         if (shelltp == NULL && shell_dev != NULL) {
-            shelltp = shellCreate(&shell_cfg, THD_WORKING_AREA_SIZE(2048), THD_PRIO_SHELL);
+            static THD_WORKING_AREA(shell_wa, 2048);
+            shelltp = shellCreateStatic(&shell_cfg, shell_wa, sizeof(shell_wa), THD_PRIO_SHELL);
         } else if (shelltp != NULL && chThdTerminatedX(shelltp)) {
-            chThdRelease(shelltp);
             shelltp = NULL;
         }
 
