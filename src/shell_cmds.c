@@ -25,18 +25,23 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
 
     (void)argv;
     if (argc > 0) {
-        chprintf(chp, "Usage: threads\r\n");
+        chprintf(chp, "Usage: threads\n");
         return;
     }
-    chprintf(chp, "    addr    stack prio     state name\r\n");
+    chprintf(chp, "    addr    stack  free prio     state     time name\n");
     tp = chRegFirstThread();
     do {
-        chprintf(chp, "%08lx %08lx %4lu %9s %s\r\n",
-                 (uint32_t)tp, (uint32_t)tp->p_ctx.r13,
+        chprintf(chp, "%08lx %08lx %5u %4lu %9s %8lu %s\n",
+                 (uint32_t)tp,
+                 (uint32_t)tp->p_ctx.r13,
+                 (char *)tp->p_ctx.r13 - (char *)tp->p_stklimit,
                  (uint32_t)tp->p_prio,
-                 states[tp->p_state], tp->p_name);
+                 states[tp->p_state],
+                 chThdGetTicksX(tp),
+                 tp->p_name);
         tp = chRegNextThread(tp);
     } while (tp != NULL);
+    chprintf(chp, "[sytick %d @ %d Hz]\n", chVTGetSystemTime(), CH_CFG_ST_FREQUENCY);
 }
 
 static void cmd_version(BaseSequentialStream *chp, int argc, char *argv[]) {
