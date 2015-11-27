@@ -66,9 +66,10 @@ int _close_r(struct _reent *r, int file)
 }
 
 
+#if CH_CFG_USE_MEMCORE
+
 caddr_t _sbrk_r(struct _reent *r, int incr)
 {
-#if CH_CFG_USE_MEMCORE
     void *p;
 
     chDbgCheck(incr > 0);
@@ -79,12 +80,44 @@ caddr_t _sbrk_r(struct _reent *r, int incr)
         return (caddr_t)-1;
     }
     return (caddr_t)p;
-#else
-    (void)incr;
-    __errno_r(r) = ENOMEM;
-    return (caddr_t)-1;
-#endif
 }
+
+#else
+
+extern char __heap_base__[];
+extern char __heap_end__[];
+static char *heap_end = &__heap_base__[0];
+
+size_t sbrk_stat_free(void)
+{
+    return &__heap_end__[0] - heap_end;
+}
+
+size_t sbrk_stat_used(void)
+{
+    return heap_end - &__heap_base__[0];
+}
+
+caddr_t _sbrk_r(struct _reent *r, int incr)
+{
+    char *prev_heap_end;
+
+    if (heap_end == 0) {
+        heap_end = __heap_base__;
+    }
+    prev_heap_end = heap_end;
+    if (heap_end + incr > __heap_end__) {
+        __errno_r(r) = ENOMEM;
+        return (caddr_t)-1;
+    }
+
+    heap_end += incr;
+    chDbgCheck(heap_end >= __heap_base__);
+
+    return (caddr_t) prev_heap_end;
+}
+
+#endif
 
 
 int _fstat_r(struct _reent *r, int file, struct stat * st)

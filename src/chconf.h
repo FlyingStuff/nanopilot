@@ -276,7 +276,7 @@
  *
  * @note    The default is @p TRUE.
  */
-#define CH_CFG_USE_MEMCORE                  TRUE // used for malloc (sbrk syscall)
+#define CH_CFG_USE_MEMCORE                  FALSE
 
 /**
  * @brief   Heap Allocator APIs.
@@ -297,7 +297,7 @@
  *
  * @note    The default is @p TRUE.
  */
-#define CH_CFG_USE_MEMPOOLS                 TRUE
+#define CH_CFG_USE_MEMPOOLS                 FALSE
 
 /**
  * @brief   Dynamic Threads APIs.
@@ -308,7 +308,7 @@
  * @note    Requires @p CH_CFG_USE_WAITEXIT.
  * @note    Requires @p CH_CFG_USE_HEAP and/or @p CH_CFG_USE_MEMPOOLS.
  */
-#define CH_CFG_USE_DYNAMIC                  TRUE
+#define CH_CFG_USE_DYNAMIC                  FALSE
 
 /** @} */
 
