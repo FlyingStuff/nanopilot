@@ -1,8 +1,6 @@
 #ifndef THREAD_PRIO_H
 #define THREAD_PRIO_H
 
-#include <ch.h>
-
 // use priorities in the range of 2 to 127, higher number means higher priority
 
 #define THD_PRIO_LED                                    2
