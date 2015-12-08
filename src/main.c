@@ -111,7 +111,7 @@ static void boot_message(void)
     log_info("built: %s", build_date);
 }
 
-
+#define STREAM_DEV_STR_SIZE 10
 BaseSequentialStream *get_base_seq_stream_device_from_str(const char *name)
 {
     if (strcmp(name, "CONN1") == 0) {
@@ -139,11 +139,11 @@ BaseSequentialStream *get_base_seq_stream_device_from_str(const char *name)
 
 static parameter_namespace_t service_param;
 static parameter_t shell_port;
-static char shell_port_buf[10];
+static char shell_port_buf[STREAM_DEV_STR_SIZE];
 static parameter_t sumd_in_uart;
-static char sumd_in_uart_buf[10];
+static char sumd_in_uart_buf[STREAM_DEV_STR_SIZE];
 static parameter_t datagram_message_port;
-static char datagram_message_port_buf[10];
+static char datagram_message_port_buf[STREAM_DEV_STR_SIZE];
 
 
 static void service_parameters_declare(parameter_namespace_t *root)
@@ -208,7 +208,7 @@ static void services_init(void)
 
 static void services_start(void)
 {
-    char buf[10];
+    char buf[STREAM_DEV_STR_SIZE];
     onboard_sensors_start();
 
     parameter_string_get(&sumd_in_uart, buf, sizeof(buf));
@@ -276,7 +276,7 @@ int main(void)
     services_start();
 
     shellInit();
-    char buf[10];
+    char buf[STREAM_DEV_STR_SIZE];
     parameter_string_get(&shell_port, buf, sizeof(buf));
     BaseSequentialStream* shell_dev = get_base_seq_stream_device_from_str(buf);
     static thread_t *shelltp = NULL;
