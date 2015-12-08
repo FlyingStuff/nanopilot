@@ -20,6 +20,7 @@
 #include "parameter/parameter_print.h"
 #include "sdlog.h"
 #include "stream.h"
+#include "datagram_message_comm.h"
 #include "timestamp/timestamp_stm32.h"
 #include "attitude_determination.h"
 
@@ -141,8 +142,8 @@ static parameter_t shell_port;
 static char shell_port_buf[10];
 static parameter_t sumd_in_uart;
 static char sumd_in_uart_buf[10];
-static parameter_t stream_out;
-static char stream_out_buf[10];
+static parameter_t datagram_message_port;
+static char datagram_message_port_buf[10];
 
 
 static void service_parameters_declare(parameter_namespace_t *root)
@@ -155,9 +156,9 @@ static void service_parameters_declare(parameter_namespace_t *root)
     parameter_string_declare_with_default(&sumd_in_uart,
             &service_param, "sumd_input", sumd_in_uart_buf,
             sizeof(sumd_in_uart_buf), "CONN2");
-    parameter_string_declare_with_default(&stream_out,
-            &service_param, "stream_output", stream_out_buf,
-            sizeof(stream_out_buf), "CONN3");
+    parameter_string_declare_with_default(&datagram_message_port,
+            &service_param, "datagram_message_port", datagram_message_port_buf,
+            sizeof(datagram_message_port_buf), "CONN3");
 }
 
 
@@ -201,6 +202,7 @@ static void services_init(void)
     service_parameters_declare(&parameters);
     io_parameters_declare(&parameters);
     onboardsensors_declare_parameters(&parameters);
+    datagram_message_init();
 }
 
 
@@ -214,8 +216,9 @@ static void services_start(void)
 
     sdlog_start();
 
-    parameter_string_get(&stream_out, buf, sizeof(buf));
-    stream_start(get_base_seq_stream_device_from_str(buf));
+    parameter_string_get(&datagram_message_port, buf, sizeof(buf));
+    datagram_message_start(get_base_seq_stream_device_from_str(buf));
+    stream_start();
 
     run_attitude_determination();
 }

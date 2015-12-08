@@ -43,3 +43,6 @@
 [submodule "src/eigen"]
 	path = src/eigen
 	url = https://github.com/Stapelzeiger/eigen.git
+[submodule "src/datagram-messages"]
+	path = src/datagram-messages
+	url = https://github.com/Stapelzeiger/datagram-messages.git

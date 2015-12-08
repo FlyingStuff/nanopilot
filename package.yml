@@ -23,6 +23,7 @@ target.arm:
     - src/fault.c
     - src/log.c
     - src/sdcard.c
+    - src/datagram_message_comm.c
     - src/attitude_determination.cpp
     - src/flight-stack/src/attitude_estimation/ekf_gyro_acc.cpp
     - src/flight-stack/src/attitude_estimation/ekf_gyro_acc_mag.cpp
@@ -45,6 +46,7 @@ depends:
         fork: stapelzeiger
     - parameter
     - timestamp
+    - datagram-messages
 
 #tests:
 

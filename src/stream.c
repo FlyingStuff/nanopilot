@@ -7,13 +7,13 @@
 #include "cmp_mem_access/cmp_mem_access.h"
 #include "serial-datagram/serial_datagram.h"
 #include "attitude_determination.h"
+#include "datagram_message_comm.h"
 
 #include "stream.h"
 
 #define ONBOARDSENSOR_EVENT     1
 
 static bool msg_header_write(cmp_ctx_t *cmp, const char *msg_id);
-static void _stream_imu_values_sndfn(void *arg, const void *p, size_t len);
 
 
 #define CMP_WRITE_C_STRING(cmp, str) cmp_write_str(&cmp, str, strlen(str))
@@ -21,7 +21,7 @@ static void _stream_imu_values_sndfn(void *arg, const void *p, size_t len);
 static THD_WORKING_AREA(stream_wa, 512);
 static THD_FUNCTION(stream, arg)
 {
-    BaseSequentialStream *out = (BaseSequentialStream*)arg;
+    (void)arg;
     chRegSetThreadName("stream");
     static event_listener_t sensor_event_listener;
     chEvtRegisterMaskWithFlags(&sensor_events, &sensor_event_listener,
@@ -60,7 +60,7 @@ static THD_FUNCTION(stream, arg)
                 err = err || !CMP_WRITE_C_STRING(cmp, "time");
                 err = err || !cmp_write_uint(&cmp, gyro.timestamp);
                 if (!err) {
-                    serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
+                    datagram_message_send(dtgrm, cmp_mem_access_get_pos(&mem));
                 }
 
 
@@ -75,7 +75,7 @@ static THD_FUNCTION(stream, arg)
                 err = err || !cmp_write_float(&cmp, att[2]);
                 err = err || !cmp_write_float(&cmp, att[3]);
                 if (!err) {
-                    serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
+                    datagram_message_send(dtgrm, cmp_mem_access_get_pos(&mem));
                 }
 
             }
@@ -96,7 +96,7 @@ static THD_FUNCTION(stream, arg)
                 err = err || !CMP_WRITE_C_STRING(cmp, "time");
                 err = err || !cmp_write_uint(&cmp, magnetometer.timestamp);
                 if (!err) {
-                    serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
+                    datagram_message_send(dtgrm, cmp_mem_access_get_pos(&mem));
                 }
             }
             if (event_flags & SENSOR_EVENT_H3LIS331DL) {
@@ -116,7 +116,7 @@ static THD_FUNCTION(stream, arg)
                 err = err || !CMP_WRITE_C_STRING(cmp, "time");
                 err = err || !cmp_write_uint(&cmp, acc.timestamp);
                 if (!err) {
-                    serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
+                    datagram_message_send(dtgrm, cmp_mem_access_get_pos(&mem));
                 }
             }
             if (event_flags & SENSOR_EVENT_MS5611) {
@@ -135,18 +135,10 @@ static THD_FUNCTION(stream, arg)
                 err = err || !CMP_WRITE_C_STRING(cmp, "time");
                 err = err || !cmp_write_uint(&cmp, baro.timestamp);
                 if (!err) {
-                    serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_imu_values_sndfn, out);
+                    datagram_message_send(dtgrm, cmp_mem_access_get_pos(&mem));
                 }
             }
         } // ONBOARDSENSOR_EVENT
-    }
-}
-
-
-static void _stream_imu_values_sndfn(void *arg, const void *p, size_t len)
-{
-    if (len > 0) {
-        chSequentialStreamWrite((BaseSequentialStream*)arg, (const uint8_t*)p, len);
     }
 }
 
@@ -160,10 +152,7 @@ bool msg_header_write(cmp_ctx_t *cmp, const char *msg_id)
 }
 
 
-void stream_start(BaseSequentialStream *out)
+void stream_start()
 {
-    if (out == NULL) {
-        return;
-    }
-    chThdCreateStatic(stream_wa, sizeof(stream_wa), THD_PRIO_STREAM, stream, out);
+    chThdCreateStatic(stream_wa, sizeof(stream_wa), THD_PRIO_STREAM, stream, NULL);
 }
