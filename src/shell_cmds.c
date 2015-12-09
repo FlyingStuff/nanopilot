@@ -32,7 +32,7 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
     tp = chRegFirstThread();
     do {
         chprintf(chp, "%08lx %08lx %5u %4lu %9s %8lu %s\n",
-                 (uint32_t)tp,
+                 (uint32_t)tp->p_ctx.r13->lr,
                  (uint32_t)tp->p_ctx.r13,
                  (char *)tp->p_ctx.r13 - (char *)tp->p_stklimit,
                  (uint32_t)tp->p_prio,
