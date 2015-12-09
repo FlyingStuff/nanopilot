@@ -1,3 +1,4 @@
+#if CORTEX_USE_FPU == 1
 /*
  * use hardware float for sqrtf
  */
@@ -11,3 +12,4 @@ float sqrtf(float x)
     );
     return x;
 }
+#endif

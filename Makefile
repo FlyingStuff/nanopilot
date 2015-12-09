@@ -64,7 +64,7 @@ ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
   USE_EXCEPTIONS_STACKSIZE = 0x400
 endif
 
-# Enables the use of FPU on Cortex-M4 (no, softfp, hard).
+# Enables the use of FPU on Cortex-M4 (no, hard).
 ifeq ($(USE_FPU),)
   USE_FPU = hard
 endif
