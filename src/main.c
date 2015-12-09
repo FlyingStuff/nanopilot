@@ -152,7 +152,7 @@ static void service_parameters_declare(parameter_namespace_t *root)
 
     parameter_string_declare_with_default(&shell_port,
             &service_param, "shell_port", shell_port_buf,
-            sizeof(shell_port_buf), "USB");
+            sizeof(shell_port_buf), "CONN1");
     parameter_string_declare_with_default(&sumd_in_uart,
             &service_param, "sumd_input", sumd_in_uart_buf,
             sizeof(sumd_in_uart_buf), "CONN2");
