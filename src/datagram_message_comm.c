@@ -4,7 +4,7 @@
 #include "datagram-messages/msg_dispatcher.h"
 #include "datagram-messages/service_call.h"
 #include "datagram_message_comm.h"
-
+#include "log.h"
 
 static void _serial_datagram_write_cb(void *arg, const void *p, size_t len)
 {
@@ -29,6 +29,18 @@ static bool ping_service(cmp_ctx_t *cmp_in, cmp_ctx_t *cmp_out, void *arg)
 }
 
 
+void test_cb(cmp_ctx_t *cmp, void *arg)
+{
+    (void)arg;
+    int32_t i = 0;
+    if (cmp_read_int(cmp, &i)) {
+        log_info("test called with %d", i);
+    } else {
+        log_info("test called");
+    }
+}
+
+
 static struct service_entry_s service_table[] = {
     {.id="ping", ping_service, NULL},
     {NULL, NULL, NULL}
@@ -46,6 +58,7 @@ static struct service_call_handler_s service_call_handler = {
 
 
 static struct msg_dispatcher_entry_s dispatcher_table[] = {
+    {.id="test", .cb=test_cb, .arg=NULL},
     // don't modify these last two entries.
     {.id="req", .cb=service_call_msg_cb, .arg=&service_call_handler},
     {NULL, NULL, NULL}
