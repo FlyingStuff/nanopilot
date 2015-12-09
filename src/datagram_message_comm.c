@@ -85,7 +85,18 @@ static THD_FUNCTION(stream, arg)
                                      dispatcher_table);
     while (true) {
         char c = chSequentialStreamGet(in);
-        serial_datagram_receive(&rcv_handler, &c, 1);
+        int ret = serial_datagram_receive(&rcv_handler, &c, 1);
+        switch (ret) {
+        case SERIAL_DATAGRAM_RCV_CRC_MISMATCH:
+            log_warning("SERIAL_DATAGRAM_RCV_CRC_MISMATCH");
+            break;
+        case SERIAL_DATAGRAM_RCV_PROTOCOL_ERROR:
+            log_warning("SERIAL_DATAGRAM_RCV_PROTOCOL_ERROR");
+            break;
+        case SERIAL_DATAGRAM_RCV_DATAGRAM_TOO_LONG:
+            log_warning("SERIAL_DATAGRAM_RCV_DATAGRAM_TOO_LONG");
+            break;
+        }
     }
 }
 
