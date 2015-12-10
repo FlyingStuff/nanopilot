@@ -3,8 +3,13 @@
 #include "serial-datagram/serial_datagram.h"
 #include "datagram-messages/msg_dispatcher.h"
 #include "datagram-messages/service_call.h"
-#include "datagram_message_comm.h"
+#include "parameter/parameter_msgpack.h"
+#include <chprintf.h>
+#include <memstreams.h>
+#include "main.h"
 #include "log.h"
+#include "datagram_message_comm.h"
+
 
 static void _serial_datagram_write_cb(void *arg, const void *p, size_t len)
 {
@@ -29,7 +34,39 @@ static bool ping_service(cmp_ctx_t *cmp_in, cmp_ctx_t *cmp_out, void *arg)
 }
 
 
-void test_cb(cmp_ctx_t *cmp, void *arg)
+static void parameter_set_err_cb(void *arg, const char *id, const char *err)
+{
+    MemoryStream *stream = (MemoryStream*)arg;
+    chprintf((BaseSequentialStream*)stream, "parameter %s: %s\n", id, err);
+}
+
+
+static bool parameter_set_service(cmp_ctx_t *cmp_in, cmp_ctx_t *cmp_out, void *arg)
+{
+    (void)arg;
+    static uint8_t parameter_set_err_buf[512];
+    MemoryStream parameter_set_err_buf_stream;
+
+    msObjectInit(&parameter_set_err_buf_stream,
+                 parameter_set_err_buf,
+                 sizeof(parameter_set_err_buf), 0);
+
+    int ret = parameter_msgpack_read_cmp(&parameters,
+                                         cmp_in,
+                                         parameter_set_err_cb,
+                                         &parameter_set_err_buf_stream);
+
+    bool err = false;
+    err = err || !cmp_write_array(cmp_out, 2);
+    err = err || !cmp_write_int(cmp_out, ret);
+    err = err || !cmp_write_str(cmp_out,
+                                (char*)parameter_set_err_buf,
+                                parameter_set_err_buf_stream.eos);
+    return !err;
+}
+
+
+void test_msg_cb(cmp_ctx_t *cmp, void *arg)
 {
     (void)arg;
     int32_t i = 0;
@@ -42,7 +79,8 @@ void test_cb(cmp_ctx_t *cmp, void *arg)
 
 
 static struct service_entry_s service_table[] = {
-    {.id="ping", ping_service, NULL},
+    {.id="parameter_set", .cb=parameter_set_service, .arg=NULL},
+    {.id="ping", .cb=ping_service, .arg=NULL},
     {NULL, NULL, NULL}
 };
 
@@ -58,7 +96,7 @@ static struct service_call_handler_s service_call_handler = {
 
 
 static struct msg_dispatcher_entry_s dispatcher_table[] = {
-    {.id="test", .cb=test_cb, .arg=NULL},
+    {.id="test", .cb=test_msg_cb, .arg=NULL},
     // don't modify these last two entries.
     {.id="req", .cb=service_call_msg_cb, .arg=&service_call_handler},
     {NULL, NULL, NULL}
