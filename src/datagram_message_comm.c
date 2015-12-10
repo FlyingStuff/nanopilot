@@ -44,12 +44,22 @@ static void parameter_set_err_cb(void *arg, const char *id, const char *err)
 static bool parameter_set_service(cmp_ctx_t *cmp_in, cmp_ctx_t *cmp_out, void *arg)
 {
     (void)arg;
-    static uint8_t parameter_set_err_buf[512];
-    MemoryStream parameter_set_err_buf_stream;
+    const size_t buf_size = 512;
+    uint8_t *parameter_set_err_buf = malloc(buf_size);
+    if (parameter_set_err_buf == NULL) {
+        bool err = false;
+        err = err || !cmp_write_array(cmp_out, 2);
+        err = err || !cmp_write_int(cmp_out, -1);
+        err = err || !cmp_write_str(cmp_out,
+                                    "malloc failed",
+                                    strlen("malloc failed"));
+        return !err;
+    }
 
+    MemoryStream parameter_set_err_buf_stream;
     msObjectInit(&parameter_set_err_buf_stream,
                  parameter_set_err_buf,
-                 sizeof(parameter_set_err_buf), 0);
+                 buf_size, 0);
 
     int ret = parameter_msgpack_read_cmp(&parameters,
                                          cmp_in,
@@ -62,6 +72,8 @@ static bool parameter_set_service(cmp_ctx_t *cmp_in, cmp_ctx_t *cmp_out, void *a
     err = err || !cmp_write_str(cmp_out,
                                 (char*)parameter_set_err_buf,
                                 parameter_set_err_buf_stream.eos);
+
+    free(parameter_set_err_buf);
     return !err;
 }
 
