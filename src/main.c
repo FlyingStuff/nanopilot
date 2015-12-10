@@ -28,6 +28,8 @@ BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
 
 parameter_namespace_t parameters;
+parameter_t board_name;
+char board_name_p_buf[32];
 
 
 void sd_card_activity(void)
@@ -246,6 +248,12 @@ int main(void)
 
     // initialization
     parameter_namespace_declare(&parameters, NULL, NULL); // root namespace
+    parameter_string_declare_with_default(&board_name,
+                                          &parameters,
+                                          "name",
+                                          board_name_p_buf,
+                                          sizeof(board_name_p_buf),
+                                          "ins-board");
     services_init();
 
     // mount SD card

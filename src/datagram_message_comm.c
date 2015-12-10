@@ -26,6 +26,17 @@ static void datagram_send(const void *dtgrm, size_t len, void *arg)
 }
 
 
+static bool name_service(cmp_ctx_t *cmp_in, cmp_ctx_t *cmp_out, void *arg)
+{
+    (void)cmp_in;
+    (void)arg;
+
+    char buf[32];
+    int len = parameter_string_get(&board_name, buf, sizeof(buf));
+    return cmp_write_str(cmp_out, buf, len);
+}
+
+
 static bool ping_service(cmp_ctx_t *cmp_in, cmp_ctx_t *cmp_out, void *arg)
 {
     (void)cmp_in;
@@ -91,6 +102,7 @@ void test_msg_cb(cmp_ctx_t *cmp, void *arg)
 
 
 static struct service_entry_s service_table[] = {
+    {.id="name", .cb=name_service, .arg=NULL},
     {.id="parameter_set", .cb=parameter_set_service, .arg=NULL},
     {.id="ping", .cb=ping_service, .arg=NULL},
     {NULL, NULL, NULL}
