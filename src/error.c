@@ -2,7 +2,8 @@
 #include <hal.h>
 #include <crc/crc32.h>
 #include <string.h>
-
+#include <arm-cortex-tools/mpu.h>
+#include <arm-cortex-tools/fault.h>
 #include <memstreams.h>
 #include <chprintf.h>
 #include "error.h"
@@ -83,7 +84,7 @@ void reboot_in_safemode(void)
  */
 
 #define PANIC_CRC_INIT 0x1aaadc37 // random value
-static __attribute__((section(".noinit"))) char panic_buffer[300];
+static __attribute__((section(".noinit"))) char panic_buffer[700];
 static __attribute__((section(".noinit"))) uint32_t panic_buffer_crc;
 MemoryStream panic_bss;
 
@@ -105,9 +106,14 @@ void panic_handler(const char *reason)
     (void)msg;
     (void)ipsr;
 
-    panic_printf("%s", reason);
+    chprintf((BaseSequentialStream *)&panic_bss, "%s", reason);
 
-    panic_buffer[sizeof(panic_buffer) - 1] = '\0';
+    // add terminating '\0' character
+    if (panic_bss.eos < sizeof(panic_buffer)) {
+        panic_buffer[panic_bss.eos] = '\0';
+    } else {
+        panic_buffer[sizeof(panic_buffer) - 1] = '\0';
+    }
     panic_buffer_crc = crc32(PANIC_CRC_INIT, panic_buffer, sizeof(panic_buffer));
 
 #ifdef DEBUG // debug builds block to be able to connect a debugger
@@ -120,7 +126,7 @@ void panic_handler(const char *reason)
 #endif
 }
 
-void panic_printf(const char *fmt, ...)
+void fault_printf(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -149,9 +155,10 @@ static void panic_msg_init(void)
     panic_buffer_crc = ~panic_buffer_crc; // clear crc
 }
 
-
 void error_init(void)
 {
     safemode_read();
     panic_msg_init();
+    mpu_init();
+    fault_init();
 }

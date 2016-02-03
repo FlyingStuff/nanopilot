@@ -20,7 +20,6 @@ target.arm:
     - src/sumd_input.c
     - src/sdlog.c
     - src/stream.c
-    - src/fault.c
     - src/log.c
     - src/sdcard.c
     - src/attitude_determination.cpp
@@ -43,6 +42,7 @@ depends:
         fork: stapelzeiger
     - cmp_mem_access:
         fork: stapelzeiger
+    - arm-cortex-tools
     - parameter
     - timestamp
 
