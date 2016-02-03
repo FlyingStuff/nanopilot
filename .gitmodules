@@ -46,3 +46,6 @@
 [submodule "src/datagram-messages"]
 	path = src/datagram-messages
 	url = https://github.com/Stapelzeiger/datagram-messages.git
+[submodule "python/zmqmsgbus"]
+	path = python/zmqmsgbus
+	url = https://github.com/stapelzeiger/zmqmsgbus.git
