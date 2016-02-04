@@ -232,19 +232,8 @@ POST_MAKE_ALL_RULE_HOOK:
 packager:
 	python packager/packager.py
 
-CMakeLists.txt: package.yml
-	python packager/packager.py
-
 src/src.mk: package.yml
 	python packager/packager.py
-
-.PHONY: tests
-tests: CMakeLists.txt
-	@mkdir -p build/tests
-	@cd build/tests; \
-	cmake ../..; \
-	make ; \
-	./tests;
 
 # Generates a ctags file containing the correct definition for the build
 .PHONY: ctags
