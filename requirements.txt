@@ -1,0 +1,7 @@
+nose
+pyserial
+msgpack-python
+zmq
+./src/serial-datagram/python
+./src/datagram-messages/python
+./python/zmqmsgbus

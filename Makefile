@@ -64,7 +64,7 @@ ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
   USE_EXCEPTIONS_STACKSIZE = 0x400
 endif
 
-# Enables the use of FPU on Cortex-M4 (no, softfp, hard).
+# Enables the use of FPU on Cortex-M4 (no, hard).
 ifeq ($(USE_FPU),)
   USE_FPU = hard
 endif
@@ -185,7 +185,7 @@ AOPT =
 TOPT = -mthumb -DTHUMB
 
 # Define C warning options here
-CWARN = -Wall -Wextra -Wstrict-prototypes
+CWARN = -Wall -Wextra -Wstrict-prototypes -Werror
 
 # Define C++ warning options here
 CPPWARN = -Wall -Wextra -std=c++11

@@ -46,3 +46,9 @@
 [submodule "src/arm-cortex-tools"]
 	path = src/arm-cortex-tools
 	url = https://github.com/cvra/arm-cortex-tools.git
+[submodule "src/datagram-messages"]
+	path = src/datagram-messages
+	url = https://github.com/Stapelzeiger/datagram-messages.git
+[submodule "python/zmqmsgbus"]
+	path = python/zmqmsgbus
+	url = https://github.com/stapelzeiger/zmqmsgbus.git

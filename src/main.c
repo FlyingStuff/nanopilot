@@ -20,6 +20,7 @@
 #include "parameter/parameter_print.h"
 #include "sdlog.h"
 #include "stream.h"
+#include "datagram_message_comm.h"
 #include "timestamp/timestamp_stm32.h"
 #include "attitude_determination.h"
 
@@ -27,6 +28,8 @@ BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
 
 parameter_namespace_t parameters;
+parameter_t board_name;
+char board_name_p_buf[32];
 
 
 void sd_card_activity(void)
@@ -110,7 +113,7 @@ static void boot_message(void)
     log_info("built: %s", build_date);
 }
 
-
+#define STREAM_DEV_STR_SIZE 10
 BaseSequentialStream *get_base_seq_stream_device_from_str(const char *name)
 {
     if (strcmp(name, "CONN1") == 0) {
@@ -138,11 +141,11 @@ BaseSequentialStream *get_base_seq_stream_device_from_str(const char *name)
 
 static parameter_namespace_t service_param;
 static parameter_t shell_port;
-static char shell_port_buf[10];
+static char shell_port_buf[STREAM_DEV_STR_SIZE];
 static parameter_t sumd_in_uart;
-static char sumd_in_uart_buf[10];
-static parameter_t stream_out;
-static char stream_out_buf[10];
+static char sumd_in_uart_buf[STREAM_DEV_STR_SIZE];
+static parameter_t datagram_message_port;
+static char datagram_message_port_buf[STREAM_DEV_STR_SIZE];
 
 
 static void service_parameters_declare(parameter_namespace_t *root)
@@ -151,13 +154,13 @@ static void service_parameters_declare(parameter_namespace_t *root)
 
     parameter_string_declare_with_default(&shell_port,
             &service_param, "shell_port", shell_port_buf,
-            sizeof(shell_port_buf), "USB");
+            sizeof(shell_port_buf), "CONN1");
     parameter_string_declare_with_default(&sumd_in_uart,
             &service_param, "sumd_input", sumd_in_uart_buf,
             sizeof(sumd_in_uart_buf), "CONN2");
-    parameter_string_declare_with_default(&stream_out,
-            &service_param, "stream_output", stream_out_buf,
-            sizeof(stream_out_buf), "CONN3");
+    parameter_string_declare_with_default(&datagram_message_port,
+            &service_param, "datagram_message_port", datagram_message_port_buf,
+            sizeof(datagram_message_port_buf), "CONN3");
 }
 
 
@@ -201,12 +204,13 @@ static void services_init(void)
     service_parameters_declare(&parameters);
     io_parameters_declare(&parameters);
     onboardsensors_declare_parameters(&parameters);
+    datagram_message_init();
 }
 
 
 static void services_start(void)
 {
-    char buf[10];
+    char buf[STREAM_DEV_STR_SIZE];
     onboard_sensors_start();
 
     parameter_string_get(&sumd_in_uart, buf, sizeof(buf));
@@ -214,8 +218,9 @@ static void services_start(void)
 
     sdlog_start();
 
-    parameter_string_get(&stream_out, buf, sizeof(buf));
-    stream_start(get_base_seq_stream_device_from_str(buf));
+    parameter_string_get(&datagram_message_port, buf, sizeof(buf));
+    datagram_message_start(get_base_seq_stream_device_from_str(buf));
+    stream_start();
 
     run_attitude_determination();
 }
@@ -243,6 +248,12 @@ int main(void)
 
     // initialization
     parameter_namespace_declare(&parameters, NULL, NULL); // root namespace
+    parameter_string_declare_with_default(&board_name,
+                                          &parameters,
+                                          "name",
+                                          board_name_p_buf,
+                                          sizeof(board_name_p_buf),
+                                          "ins-board");
     services_init();
 
     // mount SD card
@@ -273,7 +284,7 @@ int main(void)
     services_start();
 
     shellInit();
-    char buf[10];
+    char buf[STREAM_DEV_STR_SIZE];
     parameter_string_get(&shell_port, buf, sizeof(buf));
     BaseSequentialStream* shell_dev = get_base_seq_stream_device_from_str(buf);
     static thread_t *shelltp = NULL;

@@ -34,7 +34,7 @@ static bool magneto_calibration_update(magneto_calib_t *calib, float *mag)
         }
     }
 
-    const float EARTH_MAG_FIELD_TH = 0.8*0.4;
+    const float EARTH_MAG_FIELD_TH = 0.8 * 0.4 * 0.0001;
     if (calib->max[0] - calib->min[0] > 2*EARTH_MAG_FIELD_TH
         && calib->max[1] - calib->min[1] > EARTH_MAG_FIELD_TH
         && calib->max[2] - calib->min[2] > EARTH_MAG_FIELD_TH) {
