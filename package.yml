@@ -51,6 +51,8 @@ depends:
 
 tests:
     - src/tests/rate_limiter_test.cpp
+    - src/tests/timestamp_mock.c
+    - src/tests/timestamp_mock_test.cpp
 
 templates:
     Makefile.include.jinja: src/src.mk
