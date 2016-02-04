@@ -2,6 +2,7 @@ dependency-dir: ./src/
 
 source:
     - src/cmp/cmp.c
+    - src/rate_limiter.c
 
 target.arm:
     - src/syscalls.c
@@ -48,7 +49,10 @@ depends:
     - timestamp
     - datagram-messages
 
-#tests:
+tests:
+    - src/tests/rate_limiter_test.cpp
+    - src/tests/timestamp_mock.c
+    - src/tests/timestamp_mock_test.cpp
 
 templates:
     Makefile.include.jinja: src/src.mk
