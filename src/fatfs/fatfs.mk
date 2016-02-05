@@ -1,9 +1,9 @@
 # FATFS files.
 # http://elm-chan.org/fsw/ff/00index_e.html
 
-FATFSSRC = src/fatfs/fatfs_diskio.c \
-           src/fatfs/fatfs_syscall.c \
-           src/fatfs/src/ff.c \
-           src/fatfs/src/option/unicode.c
+FATFSSRC = $(PROJROOT)/src/fatfs/fatfs_diskio.c \
+           $(PROJROOT)/src/fatfs/fatfs_syscall.c \
+           $(PROJROOT)/src/fatfs/src/ff.c \
+           $(PROJROOT)/src/fatfs/src/option/unicode.c
 
-FATFSINC = src/fatfs/src
+FATFSINC = $(PROJROOT)/src/fatfs/src

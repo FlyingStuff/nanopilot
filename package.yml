@@ -6,11 +6,8 @@ source:
 
 target.arm:
     - src/syscalls.c
-    - src/board.c
     - src/error.c
-    - src/main.c
     - src/usbcfg.c
-    - src/exti.c
     - src/sensors/mpu60X0.c
     - src/sensors/ms5611.c
     - src/sensors/hmc5883l.c
