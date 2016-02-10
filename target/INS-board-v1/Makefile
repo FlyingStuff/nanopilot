@@ -80,8 +80,10 @@ endif
 # Define project name here
 PROJECT = ins-board
 
+PROJROOT = ../..
+
 # Imported source files and paths
-CHIBIOS = ChibiOS
+CHIBIOS = $(PROJROOT)/ChibiOS
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
@@ -91,8 +93,8 @@ include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 include $(CHIBIOS)/test/rt/test.mk
 # ChibiOS C++ bindings
 include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
-include src/fatfs/fatfs.mk
-include src/src.mk
+include $(PROJROOT)/src/fatfs/fatfs.mk
+include $(PROJROOT)/src/src.mk
 
 # Define linker script file here
 LDSCRIPT= STM32F405xG.ld
@@ -112,7 +114,8 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/various/shell.c \
        $(FATFSSRC) \
        $(PROJCSRC) \
-       src/git_revision.c
+       $(PROJROOT)/src/git_revision.c \
+       board.c main.c exti.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -143,12 +146,13 @@ ASMSRC = $(PORTASM) $(OSALASM)
 # Note: Using custom crt0_v7m.s instead of $(STARTUPASM)
 #       This might create problems if the original crt0_v7m.s is updated or
 # 		further startup assembly sources are added to STARTUPASM.
-ASMSRC += $(PROJASMSRC) src/crt0_v7m.s #$(STARTUPASM)
+ASMSRC += $(PROJASMSRC) crt0_v7m.s #$(STARTUPASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) $(STARTUPINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
          $(FATFSINC) $(CHIBIOS)/os/various $(CHCPPINC) \
-         $(PROJINC) $(CHIBIOS)/os/hal/lib/streams
+         $(CHIBIOS)/os/hal/lib/streams \
+         $(PROJINC)
 
 #
 # Project, sources and paths
@@ -219,21 +223,22 @@ ULIBS = -lm
 
 GLOBAL_SRC_DEP = src/src.mk
 
-include rules.mk
+RULESPATH = $(PROJROOT)
+include $(PROJROOT)/rules.mk
 -include tools.mk
 
 PRE_MAKE_ALL_RULE_HOOK:
-	cd src/flight-stack && ./code_gen.sh
-	./git_revision.sh
+	cd $(PROJROOT)/src/flight-stack && ./code_gen.sh
+	cd $(PROJROOT) && ./git_revision.sh
 
 POST_MAKE_ALL_RULE_HOOK:
 
 .PHONY: packager
 packager:
-	python packager/packager.py
+	cd $(PROJROOT) && python packager/packager.py
 
-src/src.mk: package.yml
-	python packager/packager.py
+src/src.mk: $(PROJROOT)/package.yml
+	cd $(PROJROOT) && python packager/packager.py
 
 # Generates a ctags file containing the correct definition for the build
 .PHONY: ctags
