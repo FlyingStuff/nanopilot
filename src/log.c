@@ -17,7 +17,7 @@ static void write_entry_format(const char *loglevel)
 
     uint32_t ts = timestamp_get();
     uint32_t s = ts / 1000000;
-    uint32_t us = ts - s;
+    uint32_t us = ts - s * 1000000;
     chprintf(stdout, LOG_COLOR_BLUE "[%4d.%06d] %s: %s" LOG_COLOR_CLEAR,
              s, us, thread_name, loglevel);
 }
