@@ -7,9 +7,6 @@
 [submodule "src/serial-datagram"]
 	path = src/serial-datagram
 	url = https://github.com/Stapelzeiger/serial-datagram.git
-[submodule "src/rcservo"]
-	path = src/rcservo
-	url = https://github.com/Stapelzeiger/rcservo.git
 [submodule "src/test-runner"]
 	path = src/test-runner
 	url = https://github.com/cvra/test-runner.git
