@@ -16,9 +16,6 @@
 [submodule "packager"]
 	path = packager
 	url = https://github.com/cvra/packager.git
-[submodule "src/math"]
-	path = src/math
-	url = https://github.com/Stapelzeiger/math.git
 [submodule "src/hott"]
 	path = src/hott
 	url = https://github.com/Stapelzeiger/HoTT.git

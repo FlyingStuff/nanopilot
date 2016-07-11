@@ -33,8 +33,6 @@ depends:
     - crc
     - serial-datagram:
         fork: stapelzeiger
-    - math:
-        fork: stapelzeiger
     - rcservo:
         fork: stapelzeiger
     - hott:
