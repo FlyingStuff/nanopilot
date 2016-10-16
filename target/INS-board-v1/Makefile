@@ -221,7 +221,7 @@ ULIBS = -lm
 # End of user defines
 ##############################################################################
 
-GLOBAL_SRC_DEP = src/src.mk
+GLOBAL_SRC_DEP =
 
 RULESPATH = $(PROJROOT)
 include $(PROJROOT)/rules.mk
@@ -235,10 +235,7 @@ POST_MAKE_ALL_RULE_HOOK:
 
 .PHONY: packager
 packager:
-	cd $(PROJROOT) && python packager/packager.py
-
-src/src.mk: $(PROJROOT)/package.yml
-	cd $(PROJROOT) && python packager/packager.py
+	cd $(PROJROOT) && python packager/cvra_packager/packager.py
 
 # Generates a ctags file containing the correct definition for the build
 .PHONY: ctags
