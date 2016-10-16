@@ -51,14 +51,10 @@ static void sd_card_activity_periodic_reset(void)
 
 
 /*
- *  Heartbeat, Error LED thread
+ *  Heartbeat LED thread
  *
  * The Heartbeat-LED double-flashes every second in normal mode and continuously
- *  flashes in safemode. If the error level is above NORMAL, the Heartbeat-LED
- *  is off and the Error-LED indicates the error level.
- * If the error level is WARNING, the Error-LED blinks slowly (once per second)
- * If the error level is CRITICAL, the Error-LED blinks rapidly (10 times per second)
- * If a kernel panic occurs the Error-LED is on and all LEDs are off.
+ *  flashes in safemode.
  */
 static THD_WORKING_AREA(led_task_wa, 128);
 static THD_FUNCTION(led_task, arg)
@@ -66,30 +62,17 @@ static THD_FUNCTION(led_task, arg)
     (void)arg;
     chRegSetThreadName("led_task");
     while (1) {
-        int err = error_level_get();
-        if (err == ERROR_LEVEL_WARNING) {
-            palSetPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(500);
-            palClearPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(500);
-        } else if (err == ERROR_LEVEL_CRITICAL) {
-            palSetPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(50);
-            palClearPad(GPIOA, GPIOA_LED_ERROR);
-            chThdSleepMilliseconds(50);
+        palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
+        chThdSleepMilliseconds(80);
+        palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
+        chThdSleepMilliseconds(80);
+        palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
+        chThdSleepMilliseconds(80);
+        palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
+        if (safemode_active()) {
+            chThdSleepMilliseconds(80);
         } else {
-            palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
-            chThdSleepMilliseconds(80);
-            palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-            chThdSleepMilliseconds(80);
-            palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
-            chThdSleepMilliseconds(80);
-            palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-            if (safemode_active()) {
-                chThdSleepMilliseconds(80);
-            } else {
-                chThdSleepMilliseconds(760);
-            }
+            chThdSleepMilliseconds(760);
         }
         sd_card_activity_periodic_reset();
     }

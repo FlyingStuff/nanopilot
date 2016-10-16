@@ -8,45 +8,6 @@
 #include <chprintf.h>
 #include "error.h"
 
-/*
- * Error levels
- */
-
-static int error_level_cnt[2] = {0,0};
-
-void error_set(int level)
-{
-    if (level > ERROR_LEVEL_NORMAL && level <= ERROR_LEVEL_CRITICAL) {
-        chSysLock();
-        error_level_cnt[level - 1]++;
-        chSysUnlock();
-    }
-}
-
-void error_clear(int level)
-{
-    if (level > ERROR_LEVEL_NORMAL && level <= ERROR_LEVEL_CRITICAL) {
-        chSysLock();
-        if (error_level_cnt[level - 1] > 0) {
-            error_level_cnt[level - 1]--;
-        }
-        chSysUnlock();
-    }
-}
-
-int error_level_get(void)
-{
-    int lvl = ERROR_LEVEL_NORMAL;
-    chSysLock();
-    if (error_level_cnt[ERROR_LEVEL_CRITICAL - 1]) {
-        lvl = ERROR_LEVEL_CRITICAL;
-    } else if (error_level_cnt[ERROR_LEVEL_WARNING - 1]) {
-        lvl = ERROR_LEVEL_WARNING;
-    }
-    chSysUnlock();
-    return lvl;
-}
-
 
 /*
  * Safemode

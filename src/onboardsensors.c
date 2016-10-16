@@ -1,7 +1,7 @@
 #include <math.h>
 #include <ch.h>
 #include "thread_prio.h"
-#include "error.h"
+#include "log.h"
 #include "sensors/mpu60X0.h"
 #include "sensors/hmc5883l.h"
 #include "sensors/ms5611.h"
@@ -169,7 +169,7 @@ static THD_FUNCTION(spi_sensors, arg)
     onboard_mpu6000_acc_sample.sensor = &mpu_acc;
 
     if (mpu6000_init(&mpu6000, &mpu_gyro, &mpu_acc) != 0) {
-        error_set(ERROR_LEVEL_CRITICAL);
+        log_error("mpu6000 init failed");
         return;
     }
 
@@ -261,9 +261,7 @@ static THD_FUNCTION(i2c_sensors, arg)
     int init = ms5611_i2c_init(&barometer, i2c_driver, 0);
     i2cReleaseBus(i2c_driver);
     if (init != 0) {
-        // i2cflags_t flags = i2cGetErrors(i2c_driver);
-        // chprintf(out, "ms5611 init failed: %d, %u\r\n", init, (uint32_t)flags);
-        error_set(ERROR_LEVEL_WARNING);
+        log_error("ms5611 init failed");
     }
 
     chThdCreateStatic(i2c_barometer_wa, sizeof(i2c_barometer_wa), THD_PRIO_SENSOR_DRV_I2C_BARO, i2c_barometer, &barometer);
@@ -274,7 +272,7 @@ static THD_FUNCTION(i2c_sensors, arg)
     h3lis331dl_init_using_i2c(&high_g_acc, i2c_driver, H3LIS331DL_ADDR_SA0_HIGH);
     i2cAcquireBus(i2c_driver);
     if (!h3lis331dl_ping(&high_g_acc)) {
-        error_set(ERROR_LEVEL_WARNING);
+        log_error("h3lis331dl init failed");
     }
     i2cReleaseBus(i2c_driver);
 
@@ -290,7 +288,7 @@ static THD_FUNCTION(i2c_sensors, arg)
     hmc5883l_init(&magnetometer, i2c_driver);
     i2cAcquireBus(i2c_driver);
     if (!hmc5883l_ping(&magnetometer)) {
-        error_set(ERROR_LEVEL_WARNING);
+        log_error("hmc5883l init failed");
     }
     i2cReleaseBus(i2c_driver);
 
