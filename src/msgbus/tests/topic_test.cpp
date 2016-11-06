@@ -10,12 +10,12 @@ TEST_GROUP(TopicTests)
 {
     msgbus_t bus;
     msgbus_topic_t topic;
-    uint8_t buffer[128];
+    simple_t buffer;
 
     void setup()
     {
         msgbus_init(&bus);
-        msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+        msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
     }
 
     void teardown()
@@ -34,9 +34,9 @@ TEST(TopicTests, Initializer)
     mock().expectOneCall("messagebus_lock_init").withParameter("lock", &topic.lock);
     condvar_init_mock_enable(true);
 
-    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
 
-    POINTERS_EQUAL(buffer, topic.buffer);
+    POINTERS_EQUAL(&buffer, topic.buffer);
     POINTERS_EQUAL(&simple_type, topic.type);
     CHECK_EQUAL(0, topic.pub_seq_nbr);
     STRCMP_EQUAL("topic", topic.name);
@@ -71,6 +71,7 @@ TEST(TopicTests, PublishSequenceNbrCorrectlyOverflows)
 }
 
 
+// todo delete
 TEST(TopicTests, PublishAndReadBack)
 {
     simple_t tx = {42};
@@ -84,6 +85,7 @@ TEST(TopicTests, PublishAndReadBack)
     CHECK_EQUAL(tx.x, rx.x);
 }
 
+// todo delete
 TEST(TopicTests, WontReadUnpublishedtopic)
 {
     simple_t rx = {42};
@@ -93,6 +95,7 @@ TEST(TopicTests, WontReadUnpublishedtopic)
     CHECK_FALSE(res);
 }
 
+// todo delete
 TEST(TopicTests, WaitForUpdate)
 {
     simple_t tx = {42};
@@ -102,5 +105,15 @@ TEST(TopicTests, WaitForUpdate)
     messagebus_topic_wait(&topic, &rx);
 
     CHECK_EQUAL(tx.x, rx.x);
+}
+
+TEST(TopicTests, GetTopicType)
+{
+    POINTERS_EQUAL(&simple_type, msgbus_topic_get_type(&topic));
+}
+
+TEST(TopicTests, GetTopicName)
+{
+    STRCMP_EQUAL("topic", msgbus_topic_get_name(&topic));
 }
 

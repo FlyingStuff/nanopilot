@@ -9,7 +9,7 @@ TEST_GROUP(BusTests)
 {
     msgbus_t bus;
     msgbus_topic_t topic;
-    uint8_t buffer[128];
+    simple_t buffer;
     msgbus_topic_t second_topic;
 
     void setup()
@@ -38,36 +38,36 @@ TEST(BusTests, Initializer)
 
 TEST(BusTests, FirstTopicGoesToHead)
 {
-    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
 
     POINTERS_EQUAL(&topic, bus.topics.head);
 }
 
 TEST(BusTests, NextofListIsOkToo)
 {
-    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "first");
-    msgbus_topic_create(&second_topic, &bus, &simple_type, buffer, "second");
+    msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "first");
+    msgbus_topic_create(&second_topic, &bus, &simple_type, &buffer, "second");
 
     POINTERS_EQUAL(&second_topic, bus.topics.head);
     POINTERS_EQUAL(&topic, bus.topics.head->next);
 }
 
-TEST(BusTests, TopicNotFound)
+TEST(BusTests, FindTopicNotFound)
 {
     msgbus_find_topic(&bus, "topic");
     POINTERS_EQUAL(NULL, msgbus_find_topic(&bus, "topic"));
 }
 
-TEST(BusTests, TopicFound)
+TEST(BusTests, FindTopicFound)
 {
-    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
     POINTERS_EQUAL(&topic, msgbus_find_topic(&bus, "topic"));
 }
 
-TEST(BusTests, CanScanBus)
+TEST(BusTests, FindOnBusWithMultipleTopics)
 {
-    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "first");
-    msgbus_topic_create(&second_topic, &bus, &simple_type, buffer, "second");
+    msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "first");
+    msgbus_topic_create(&second_topic, &bus, &simple_type, &buffer, "second");
 
     POINTERS_EQUAL(&topic, msgbus_find_topic(&bus, "first"));
     POINTERS_EQUAL(&second_topic, msgbus_find_topic(&bus, "second"));
@@ -79,8 +79,20 @@ TEST(BusTests, FindTopicBlocking)
     /* This is a partial test only: we cannot test that the behavior is correct
      * when the topic is not on the bus yes without additional thread and I
      * don't like threading in tests. */
-    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
     res = msgbus_find_topic_blocking(&bus, "topic", MSGBUS_TIMEOUT_NEVER);
     POINTERS_EQUAL(&topic, res);
 }
 
+TEST(BusTests, IterateTopics)
+{
+    msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "first");
+    msgbus_topic_create(&second_topic, &bus, &simple_type, &buffer, "second");
+
+    msgbus_topic_t *i = msgbus_iterate_topics(&bus);
+    POINTERS_EQUAL(&second_topic, i);
+    i = msgbus_iterate_topics_next(i);
+    POINTERS_EQUAL(&topic, i);
+    i = msgbus_iterate_topics_next(i);
+    POINTERS_EQUAL(NULL, i);
+}
