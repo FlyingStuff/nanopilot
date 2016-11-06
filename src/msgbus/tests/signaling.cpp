@@ -6,7 +6,6 @@
 TEST_GROUP(SignalingTestGroup)
 {
     messagebus_t bus;
-    int bus_lock, bus_condvar;
     messagebus_topic_t topic;
     uint8_t buffer[128];
     int topic_lock;
@@ -15,7 +14,7 @@ TEST_GROUP(SignalingTestGroup)
     void setup()
     {
         mock().strictOrder();
-        messagebus_init(&bus, &bus_lock, &bus_condvar);
+        messagebus_init(&bus);
         messagebus_topic_init(&topic, &topic_lock, &topic_condvar, buffer, sizeof buffer);
     }
 

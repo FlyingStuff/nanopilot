@@ -6,6 +6,7 @@ extern "C" {
 
 #include <unistd.h>
 #include <stdbool.h>
+#include <messagebus_port.h>
 
 #define TOPIC_NAME_MAX_LENGTH 64
 
@@ -17,6 +18,7 @@ typedef struct topic_s {
     char name[TOPIC_NAME_MAX_LENGTH+1];
     struct topic_s *next;
     bool published;
+    messagebus_condvar_wrapper_t cond;
 } messagebus_topic_t;
 
 typedef struct {
@@ -25,6 +27,7 @@ typedef struct {
     } topics;
     void *lock;
     void *condvar;
+    messagebus_condvar_wrapper_t cond;
 } messagebus_t;
 
 #define MESSAGEBUS_TOPIC_FOREACH(_bus, _topic_var_name) \
@@ -52,11 +55,8 @@ void messagebus_topic_init(messagebus_topic_t *topic, void *topic_lock, void *to
 /** Initializes a new message bus with no topics.
  *
  * @parameter [in] bus The messagebus to init.
- * @parameter [in] lock The lock to use for this bus.
- * @parameter [in] condvar The condition variable used to signal threads
- * waiting on this bus.
  */
-void messagebus_init(messagebus_t *bus, void *lock, void *condvar);
+void messagebus_init(messagebus_t *bus);
 
 /** Initializes the presence of the topic on the bus.
  *

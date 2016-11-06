@@ -11,19 +11,18 @@ TEST_GROUP(MsgBusForeachTestGroup)
 
    void setup()
    {
-       int bus_lock;
-       messagebus_init(&bus, &bus_lock, NULL);
-       messagebus_topic_init(&foo, NULL, NULL, NULL, 0);
-       messagebus_topic_init(&bar, NULL, NULL, NULL, 0);
-       messagebus_advertise_topic(&bus, &foo, "foo");
-       messagebus_advertise_topic(&bus, &bar, "bar");
+        messagebus_init(&bus);
+        messagebus_topic_init(&foo, NULL, NULL, NULL, 0);
+        messagebus_topic_init(&bar, NULL, NULL, NULL, 0);
+        messagebus_advertise_topic(&bus, &foo, "foo");
+        messagebus_advertise_topic(&bus, &bar, "bar");
    }
 
    void teardown()
    {
-       lock_mocks_enable(false);
-       mock().checkExpectations();
-       mock().clear();
+        lock_mocks_enable(false);
+        mock().checkExpectations();
+        mock().clear();
    }
 };
 

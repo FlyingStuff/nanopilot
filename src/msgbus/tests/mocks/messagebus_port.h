@@ -4,7 +4,7 @@
 #include <pthread.h>
 
 typedef struct {
-    int mutex;
+    int lock;
     int cond;
 } messagebus_condvar_wrapper_t;
 

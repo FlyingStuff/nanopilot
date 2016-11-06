@@ -3,5 +3,6 @@
 
 void lock_mocks_enable(bool enabled);
 void condvar_mocks_enable(bool enabled);
+void condvar_init_mock_enable(bool enabled);
 
 #endif

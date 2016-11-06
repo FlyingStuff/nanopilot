@@ -5,10 +5,15 @@
 
 static bool lock_enabled = false;
 static bool condvar_enabled = false;
+static bool init_enabled = false;
 
 extern "C"
 void messagebus_condvar_wrapper_init(messagebus_condvar_wrapper_t *c)
 {
+    if (init_enabled) {
+        mock().actualCall("messagebus_condvar_wrapper_init")
+            .withPointerParameter("c", c);
+    }
 }
 
 void messagebus_lock_acquire(void *lock)
@@ -51,6 +56,11 @@ void lock_mocks_enable(bool enabled)
 void condvar_mocks_enable(bool enabled)
 {
     condvar_enabled = enabled;
+}
+
+void condvar_init_mock_enable(bool enabled)
+{
+    init_enabled = enabled;
 }
 
 TEST_GROUP(LockTestGroup)

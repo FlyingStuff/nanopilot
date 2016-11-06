@@ -27,7 +27,6 @@ typedef struct {
 
 typedef struct {
     messagebus_t bus;
-    messagebus_condvar_wrapper_t sync;
 } msgbus_t;
 
 

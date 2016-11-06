@@ -3,8 +3,7 @@
 
 void msgbus_init(msgbus_t *bus)
 {
-    messagebus_condvar_wrapper_init(&bus->sync);
-    messagebus_init(&bus->bus, &bus->sync, &bus->sync);
+    messagebus_init(&bus->bus);
 }
 
 

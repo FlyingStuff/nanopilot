@@ -1,6 +1,7 @@
 #include "messagebus.h"
 #include <string.h>
 
+
 static messagebus_topic_t *topic_by_name(messagebus_t *bus, const char *name)
 {
     messagebus_topic_t *t;
@@ -13,11 +14,12 @@ static messagebus_topic_t *topic_by_name(messagebus_t *bus, const char *name)
     return NULL;
 }
 
-void messagebus_init(messagebus_t *bus, void *lock, void *condvar)
+void messagebus_init(messagebus_t *bus)
 {
     memset(bus, 0, sizeof(messagebus_t));
-    bus->lock = lock;
-    bus->condvar = condvar;
+    messagebus_condvar_wrapper_init(&bus->cond);
+    bus->lock = &bus->cond.lock;
+    bus->condvar = &bus->cond.cond;
 }
 
 void messagebus_topic_init(messagebus_topic_t *topic, void *topic_lock, void *topic_condvar,

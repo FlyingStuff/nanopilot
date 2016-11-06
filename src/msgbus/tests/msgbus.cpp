@@ -1,12 +1,11 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 #include "../messagebus.h"
+#include "mocks/synchronization.hpp"
 
 TEST_GROUP(MessageBusTestGroup)
 {
     messagebus_t bus;
-    int bus_lock;
-    int bus_condvar;
     messagebus_topic_t topic;
     uint8_t buffer[128];
     int topic_lock;
@@ -15,9 +14,16 @@ TEST_GROUP(MessageBusTestGroup)
 
     void setup()
     {
-        messagebus_init(&bus, &bus_lock, &bus_condvar);
+        messagebus_init(&bus);
         messagebus_topic_init(&topic, &topic_lock, &topic_condvar, buffer, sizeof buffer);
         messagebus_topic_init(&second_topic, NULL, NULL, NULL, 0);
+    }
+
+    void teardown()
+    {
+        condvar_init_mock_enable(false);
+        mock().checkExpectations();
+        mock().clear();
     }
 };
 
@@ -31,9 +37,12 @@ TEST(MessageBusTestGroup, CanCreateTopicWithBuffer)
 
 TEST(MessageBusTestGroup, CanCreateBus)
 {
+    mock().expectOneCall("messagebus_condvar_wrapper_init").withParameter("c", &bus.cond);
+    condvar_init_mock_enable(true);
+    messagebus_init(&bus);
     POINTERS_EQUAL(NULL, bus.topics.head);
-    POINTERS_EQUAL(&bus_lock, bus.lock);
-    POINTERS_EQUAL(&bus_condvar, bus.condvar);
+    POINTERS_EQUAL(&bus.cond.lock, bus.lock);
+    POINTERS_EQUAL(&bus.cond.cond, bus.condvar);
 }
 
 TEST(MessageBusTestGroup, AdvertiseTopicName)
