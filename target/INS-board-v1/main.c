@@ -24,6 +24,8 @@
 #include "timestamp/timestamp_stm32.h"
 #include "attitude_determination.h"
 
+#include "main.h"
+
 BaseSequentialStream* stdout;
 SerialUSBDriver SDU1;
 
@@ -31,6 +33,7 @@ parameter_namespace_t parameters;
 parameter_t board_name;
 char board_name_p_buf[32];
 
+msgbus_t bus;
 
 void sd_card_activity(void)
 {
@@ -237,6 +240,9 @@ int main(void)
                                           board_name_p_buf,
                                           sizeof(board_name_p_buf),
                                           "ins-board");
+
+    msgbus_init(&bus);
+
     services_init();
 
     // mount SD card

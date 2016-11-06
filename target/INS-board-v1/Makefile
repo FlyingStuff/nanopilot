@@ -96,6 +96,8 @@ include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
 include $(PROJROOT)/src/fatfs/fatfs.mk
 include $(PROJROOT)/src/src.mk
 
+include $(PROJROOT)/types/types.mk
+
 # Define linker script file here
 LDSCRIPT= STM32F405xG.ld
 
@@ -113,6 +115,7 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
        $(CHIBIOS)/os/various/shell.c \
        $(FATFSSRC) \
+       $(TYPECSRC) \
        $(PROJCSRC) \
        $(PROJROOT)/src/git_revision.c \
        board.c main.c exti.c
@@ -152,6 +155,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) $(STARTUPINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
          $(FATFSINC) $(CHIBIOS)/os/various $(CHCPPINC) \
          $(CHIBIOS)/os/hal/lib/streams \
+         $(TYPEINC) \
          $(PROJINC)
 
 #

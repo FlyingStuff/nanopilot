@@ -7,11 +7,14 @@ extern "C" {
 
 #include <ch.h>
 #include "parameter/parameter.h"
+#include "msgbus/msgbus.h"
 
 extern BaseSequentialStream* stdout;
 
 extern parameter_namespace_t parameters;
 extern parameter_t board_name;
+
+extern msgbus_t bus;
 
 void sd_card_activity(void);
 

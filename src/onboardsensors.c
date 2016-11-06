@@ -1,5 +1,6 @@
 #include <math.h>
 #include <ch.h>
+#include "main.h"
 #include "thread_prio.h"
 #include "log.h"
 #include "sensors/mpu60X0.h"
@@ -10,18 +11,9 @@
 #include "parameter/parameter.h"
 #include "sensors.h"
 #include "timestamp/timestamp.h"
-
+#include "msgbus/msgbus.h"
+#include "types/sensors.h"
 #include "onboardsensors.h"
-
-static rate_gyro_sample_t onboard_mpu6000_gyro_sample;
-static accelerometer_sample_t onboard_mpu6000_acc_sample;
-static float onboard_mpu6000_temp;
-static accelerometer_sample_t onboard_h3lis331dl_acc_sample;
-static magnetometer_sample_t onboard_hmc5883l_mag_sample;
-static barometer_sample_t onboard_ms5511_baro_sample;
-
-event_source_t sensor_events;
-
 
 #define EXTI_INTERRUPT_EVENT    1
 
@@ -29,51 +21,6 @@ static parameter_namespace_t sensor_param;
 static parameter_namespace_t mpu6000_param;
 static parameter_t mpu6000_gyro_full_scale;
 static parameter_t mpu6000_acc_full_scale;
-
-
-void onboard_sensor_get_mpu6000_gyro_sample(rate_gyro_sample_t *out)
-
-{
-    chSysLock();
-    *out = onboard_mpu6000_gyro_sample;
-    chSysUnlock();
-}
-
-void onboard_sensor_get_mpu6000_acc_sample(accelerometer_sample_t *out)
-{
-    chSysLock();
-    *out = onboard_mpu6000_acc_sample;
-    chSysUnlock();
-}
-
-float onboard_sensor_get_mpu6000_temp(void)
-{
-    chSysLock();
-    float out = onboard_mpu6000_temp;
-    chSysUnlock();
-    return out;
-}
-
-void onboard_sensor_get_h3lis331dl_acc_sample(accelerometer_sample_t *out)
-{
-    chSysLock();
-    *out = onboard_h3lis331dl_acc_sample;
-    chSysUnlock();
-}
-
-void onboard_sensor_get_hmc5883l_mag_sample(magnetometer_sample_t *out)
-{
-    chSysLock();
-    *out = onboard_hmc5883l_mag_sample;
-    chSysUnlock();
-}
-
-void onboard_sensor_get_ms5511_baro_sample(barometer_sample_t *out)
-{
-    chSysLock();
-    *out = onboard_ms5511_baro_sample;
-    chSysUnlock();
-}
 
 
 
@@ -149,7 +96,7 @@ static int mpu6000_init(mpu60X0_t *dev, rate_gyro_t *gyro, accelerometer_t *acc)
 }
 
 
-static THD_WORKING_AREA(spi_sensors_wa, 256);
+static THD_WORKING_AREA(spi_sensors_wa, 512);
 static THD_FUNCTION(spi_sensors, arg)
 {
     (void)arg;
@@ -165,13 +112,14 @@ static THD_FUNCTION(spi_sensors, arg)
     static rate_gyro_t mpu_gyro = { .device = "MPU6000", .update_rate = 1000};
     static accelerometer_t mpu_acc = { .device = "MPU6000", .update_rate = 1000};
 
-    onboard_mpu6000_gyro_sample.sensor = &mpu_gyro;
-    onboard_mpu6000_acc_sample.sensor = &mpu_acc;
-
     if (mpu6000_init(&mpu6000, &mpu_gyro, &mpu_acc) != 0) {
         log_error("mpu6000 init failed");
         return;
     }
+
+    msgbus_topic_t mpu6000_topic;
+    mems_imu_sample_t mpu6000_topic_buf;
+    msgbus_topic_create(&mpu6000_topic, &bus, &mems_imu_sample_type, &mpu6000_topic_buf, "/sensors/mpu6000");
 
     while (1) {
         float gyro[3], acc[3], temp;
@@ -179,30 +127,32 @@ static THD_FUNCTION(spi_sensors, arg)
         chEvtGetAndClearFlags(&sensor_int);
         timestamp_t t = timestamp_get();
         mpu60X0_read(&mpu6000, gyro, acc, &temp);
-        chSysLock();
         // the mpu6000 is mounted with an offset of -90deg around z
-        onboard_mpu6000_gyro_sample.rate[0] = gyro[1];
-        onboard_mpu6000_gyro_sample.rate[1] = -gyro[0];
-        onboard_mpu6000_gyro_sample.rate[2] = gyro[2];
-        onboard_mpu6000_gyro_sample.timestamp = t;
-        onboard_mpu6000_acc_sample.acceleration[0] = acc[1];
-        onboard_mpu6000_acc_sample.acceleration[1] = -acc[0];
-        onboard_mpu6000_acc_sample.acceleration[2] = acc[2];
-        onboard_mpu6000_acc_sample.timestamp = t;
-        onboard_mpu6000_temp = temp;
-        chSysUnlock();
-        chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MPU6000);
+        mems_imu_sample_t mpu6000_sample;
+        mpu6000_sample.rate[0] = gyro[1];
+        mpu6000_sample.rate[1] = -gyro[0];
+        mpu6000_sample.rate[2] = gyro[2];
+        mpu6000_sample.timestamp = t;
+        mpu6000_sample.acceleration[0] = acc[1];
+        mpu6000_sample.acceleration[1] = -acc[0];
+        mpu6000_sample.acceleration[2] = acc[2];
+        mpu6000_sample.die_temp = temp;
+        msgbus_topic_publish(&mpu6000_topic, &mpu6000_sample);
     }
 }
 
 
 
-static THD_WORKING_AREA(i2c_barometer_wa, 256);
+static THD_WORKING_AREA(i2c_barometer_wa, 512);
 static THD_FUNCTION(i2c_barometer, arg)
 {
     chRegSetThreadName("onboard-sensors-i2c-baro");
     I2CDriver *i2c_driver = &I2CD1;
     ms5611_t *barometer = (ms5611_t*)arg;
+
+    msgbus_topic_t ms5611_topic;
+    barometer_sample_t ms5611_topic_buf;
+    msgbus_topic_create(&ms5611_topic, &bus, &barometer_sample_type, &ms5611_topic_buf, "/sensors/ms5611");
 
     while (1) {
         uint32_t raw_t, raw_p, press;
@@ -230,16 +180,16 @@ static THD_FUNCTION(i2c_barometer, arg)
         }
         press = ms5611_calc_press(barometer, raw_p, raw_t, &temp);
 
-        chSysLock();
-        onboard_ms5511_baro_sample.pressure = press;
-        onboard_ms5511_baro_sample.temperature = (float)temp/100;
-        onboard_ms5511_baro_sample.timestamp = timestamp;
-        chSysUnlock();
-        chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_MS5611);
+
+        barometer_sample_t ms5611_sample;
+        ms5611_sample.static_pressure = press;
+        ms5611_sample.temperature = (float)temp/100;
+        ms5611_sample.timestamp = timestamp;
+        msgbus_topic_publish(&ms5611_topic, &ms5611_sample);
     }
 }
 
-static THD_WORKING_AREA(i2c_sensors_wa, 256);
+static THD_WORKING_AREA(i2c_sensors_wa, 512);
 static THD_FUNCTION(i2c_sensors, arg)
 {
     chRegSetThreadName("onboard-sensors-i2c");
@@ -276,14 +226,12 @@ static THD_FUNCTION(i2c_sensors, arg)
     }
     i2cReleaseBus(i2c_driver);
 
-    onboard_h3lis331dl_acc_sample.sensor = NULL; // todo
     i2cAcquireBus(i2c_driver);
     h3lis331dl_setup(&high_g_acc, H3LIS331DL_CONFIG_ODR_400HZ | H3LIS331DL_CONFIG_FS_400G);
     i2cReleaseBus(i2c_driver);
 
     // Magnetometer setup
 
-    onboard_hmc5883l_mag_sample.sensor = NULL; // todo
     static hmc5883l_t magnetometer;
     hmc5883l_init(&magnetometer, i2c_driver);
     i2cAcquireBus(i2c_driver);
@@ -303,6 +251,14 @@ static THD_FUNCTION(i2c_sensors, arg)
                                (eventmask_t)EXTI_INTERRUPT_EVENT,
                                (eventflags_t)EXTI_EVENT_H3LIS331DL_INT | EXTI_EVENT_HMC5883L_DRDY);
 
+    msgbus_topic_t h3lis331dl_topic;
+    mems_imu_sample_t h3lis331dl_topic_buf;
+    msgbus_topic_create(&h3lis331dl_topic, &bus, &mems_imu_sample_type, &h3lis331dl_topic_buf, "/sensors/h3lis331dl");
+
+    msgbus_topic_t hmc5883l_topic;
+    magnetometer_sample_t hmc5883l_topic_buf;
+    msgbus_topic_create(&hmc5883l_topic, &bus, &magnetometer_sample_type, &hmc5883l_topic_buf, "/sensors/hmc5883l");
+
     while (1) {
         chEvtWaitAny(EXTI_INTERRUPT_EVENT);
         timestamp_t t = timestamp_get();
@@ -312,26 +268,30 @@ static THD_FUNCTION(i2c_sensors, arg)
             i2cAcquireBus(i2c_driver);
             h3lis331dl_read(&high_g_acc, acc);
             i2cReleaseBus(i2c_driver);
-            chSysLock();
-            onboard_h3lis331dl_acc_sample.acceleration[0] = acc[0];
-            onboard_h3lis331dl_acc_sample.acceleration[1] = acc[1];
-            onboard_h3lis331dl_acc_sample.acceleration[2] = acc[2];
-            onboard_h3lis331dl_acc_sample.timestamp = t;
-            chSysUnlock();
-            chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_H3LIS331DL);
+
+            mems_imu_sample_t h3lis331dl_sample;
+            h3lis331dl_sample.rate[0] = NAN;
+            h3lis331dl_sample.rate[1] = NAN;
+            h3lis331dl_sample.rate[2] = NAN;
+            h3lis331dl_sample.timestamp = t;
+            h3lis331dl_sample.acceleration[0] = acc[0];
+            h3lis331dl_sample.acceleration[1] = acc[1];
+            h3lis331dl_sample.acceleration[2] = acc[2];
+            h3lis331dl_sample.die_temp = NAN;
+            msgbus_topic_publish(&h3lis331dl_topic, &h3lis331dl_sample);
         }
         if (event_flag & EXTI_EVENT_HMC5883L_DRDY) {
             static float mag[3];
             i2cAcquireBus(i2c_driver);
             hmc5883l_read(&magnetometer, mag);
             i2cReleaseBus(i2c_driver);
-            chSysLock();
-            onboard_hmc5883l_mag_sample.magnetic_field[0] = mag[0];
-            onboard_hmc5883l_mag_sample.magnetic_field[1] = mag[1];
-            onboard_hmc5883l_mag_sample.magnetic_field[2] = mag[2];
-            onboard_hmc5883l_mag_sample.timestamp = t;
-            chSysUnlock();
-            chEvtBroadcastFlags(&sensor_events, SENSOR_EVENT_HMC5883L);
+
+            magnetometer_sample_t hmc5883l_sample;
+            hmc5883l_sample.magnetic_field[0] = mag[0];
+            hmc5883l_sample.magnetic_field[1] = mag[1];
+            hmc5883l_sample.magnetic_field[2] = mag[2];
+            hmc5883l_sample.timestamp = t;
+            msgbus_topic_publish(&hmc5883l_topic, &hmc5883l_sample);
         }
     }
 }
@@ -339,7 +299,6 @@ static THD_FUNCTION(i2c_sensors, arg)
 
 void onboard_sensors_start(void)
 {
-    chEvtObjectInit(&sensor_events);
     exti_setup();
     chThdCreateStatic(spi_sensors_wa, sizeof(spi_sensors_wa), THD_PRIO_SENSOR_DRV_SPI, spi_sensors, NULL);
     chThdCreateStatic(i2c_sensors_wa, sizeof(i2c_sensors_wa), THD_PRIO_SENSOR_DRV_I2C, i2c_sensors, NULL);

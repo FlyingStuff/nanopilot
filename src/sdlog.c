@@ -11,7 +11,7 @@
 #include "sdlog.h"
 
 #define ONBOARDSENSOR_EVENT 1
-
+/*
 static THD_WORKING_AREA(sdlog_wa, 512);
 static THD_FUNCTION(sdlog, arg)
 {
@@ -114,8 +114,8 @@ static THD_FUNCTION(sdlog, arg)
         }
     }
 }
-
+*/
 void sdlog_start(void)
 {
-    chThdCreateStatic(sdlog_wa, sizeof(sdlog_wa), LOWPRIO, sdlog, NULL);
+    // chThdCreateStatic(sdlog_wa, sizeof(sdlog_wa), LOWPRIO, sdlog, NULL);
 }

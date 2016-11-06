@@ -20,6 +20,7 @@ target.arm:
     - src/stream.c
     - src/log.c
     - src/sdcard.c
+    - src/messagebus_port.c
     - src/datagram_message_comm.c
     - src/attitude_determination.cpp
     - src/flight-stack/src/attitude_estimation/ekf_gyro_acc.cpp
@@ -43,6 +44,7 @@ depends:
     - parameter
     - timestamp
     - datagram-messages
+    - msgbus
 
 tests:
     - src/tests/rate_limiter_test.cpp

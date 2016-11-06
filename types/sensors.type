@@ -1,0 +1,15 @@
+
+mems_imu_sample:
+    float32 rate[3] # [rad/s]
+    float32 acceleration[3] # [m/s^2]
+    uint64 timestamp # [us]
+    float32 die_temp # [deg C] for temperature compensation
+
+magnetometer_sample:
+    float32 magnetic_field[3] # [T]
+    uint64 timestamp # [us]
+
+barometer_sample:
+    float32 static_pressure # [Pa]
+    float32 temperature # [deg C]
+    uint64 timestamp # [us]

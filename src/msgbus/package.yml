@@ -19,15 +19,11 @@ tests:
     - tests/foreach.cpp
     - tests/serialization_msgpack_test.cpp
     - tests/type_print_test.cpp
-    - dependencies/cmp/cmp.c
 
 target.demo:
     - examples/posix/demo.c
     - examples/posix/messagebus_port.c
     - dependencies/cmp/cmp.c
-
-target.arm:
-    - examples/chibios/messagebus_port.c
 
 templates:
     demo.jinja: CMakeLists.txt

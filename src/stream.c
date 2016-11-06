@@ -11,8 +11,8 @@
 
 #include "stream.h"
 
+/*
 #define ONBOARDSENSOR_EVENT     1
-
 static bool msg_header_write(cmp_ctx_t *cmp, const char *msg_id);
 
 
@@ -150,9 +150,9 @@ bool msg_header_write(cmp_ctx_t *cmp, const char *msg_id)
     err = err || !cmp_write_str(cmp, msg_id, strlen(msg_id));
     return !err;
 }
-
+*/
 
 void stream_start()
 {
-    chThdCreateStatic(stream_wa, sizeof(stream_wa), THD_PRIO_STREAM, stream, NULL);
+    // chThdCreateStatic(stream_wa, sizeof(stream_wa), THD_PRIO_STREAM, stream, NULL);
 }

@@ -9,7 +9,7 @@
 static Eigen::Quaternionf attitude;
 
 
-
+/*
 typedef struct {
     float max[3];
     float min[3];
@@ -108,10 +108,10 @@ static THD_FUNCTION(attitude_determination, arg)
         }
     }
 }
-
+*/
 extern "C" void run_attitude_determination(void)
 {
-    chThdCreateStatic(attitude_determination_wa, sizeof(attitude_determination_wa), THD_PRIO_SENSOR_ATTITUDE_DETERMINATION, attitude_determination, NULL);
+    // chThdCreateStatictic(attitude_determination_wa, sizeof(attitude_determination_wa), THD_PRIO_SENSOR_ATTITUDE_DETERMINATION, attitude_determination, NULL);
 }
 
 

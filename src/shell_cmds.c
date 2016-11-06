@@ -7,6 +7,7 @@
 #include "onboardsensors.h"
 #include "serial-datagram/serial_datagram.h"
 #include "parameter/parameter_print.h"
+#include "msgbus/type_print.h"
 #include "git_revision.h"
 #include "syscalls.h"
 #include "error.h"
@@ -113,6 +114,44 @@ static void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv
 }
 
 
+static void cmd_topic_print(BaseSequentialStream *stream, int argc, char *argv[]) {
+    if (argc != 1) {
+        chprintf(stream, "usage: topic_print name\n");
+        return;
+    }
+    msgbus_subscriber_t sub;
+    if (msgbus_topic_subscribe(&sub, &bus, argv[0], MSGBUS_TIMEOUT_IMMEDIATE)) {
+        if (msgbus_subscriber_topic_is_valid(&sub)) {
+            msgbus_topic_t *topic = msgbus_subscriber_get_topic(&sub);
+            const msgbus_type_definition_t *type = msgbus_topic_get_type(topic);
+            void *buf = malloc(type->struct_size);
+            if (buf == NULL) {
+                chprintf(stream, "malloc failed\n");
+                return;
+            }
+            msgbus_subscriber_read(&sub, buf);
+            msgbus_print_type((void (*)(void *, const char *, ...))chprintf,
+                              stream, type, buf);
+        } else {
+            chprintf(stream, "topic not published yet\n");
+            return;
+        }
+    } else {
+        chprintf(stream, "topic doesn't exist\n");
+        return;
+    }
+}
+
+static void cmd_topic_list(BaseSequentialStream *stream, int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+    msgbus_topic_t *topic = msgbus_iterate_topics(&bus);
+    while (topic != NULL) {
+        chprintf(stream, "%s\n", msgbus_topic_get_name(topic));
+        topic = msgbus_iterate_topics_next(topic);
+    }
+}
+
 const ShellCommand shell_commands[] = {
   {"mem", cmd_mem},
   {"threads", cmd_threads},
@@ -124,6 +163,8 @@ const ShellCommand shell_commands[] = {
   {"panic_get", cmd_panic_get},
   {"parameter_list", cmd_parameter_list},
   {"parameter_set", cmd_parameter_set},
+  {"topic_print", cmd_topic_print},
+  {"topic_list", cmd_topic_list},
   {NULL, NULL}
 };
 
