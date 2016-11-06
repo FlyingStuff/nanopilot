@@ -36,7 +36,7 @@ TEST(SignalingTestGroup, TopicPublish)
           .withPointerParameter("lock", &topic.lock);
 
     mock().expectOneCall("messagebus_condvar_broadcast")
-          .withPointerParameter("var", &topic.condvar);
+          .withPointerParameter("cond", &topic.condvar);
 
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &topic.lock);
@@ -53,7 +53,8 @@ TEST(SignalingTestGroup, TopicWait)
           .withPointerParameter("lock", &topic.lock);
 
     mock().expectOneCall("messagebus_condvar_wait")
-          .withPointerParameter("var", &topic.condvar);
+          .withPointerParameter("cond", &topic.condvar)
+          .withParameter("timeout_us", MSGBUS_TIMEOUT_NEVER);
 
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &topic.lock);
@@ -70,7 +71,7 @@ TEST(SignalingTestGroup, Advertise)
           .withPointerParameter("lock", &bus.lock);
 
     mock().expectOneCall("messagebus_condvar_broadcast")
-          .withPointerParameter("var", &bus.condvar);
+          .withPointerParameter("cond", &bus.condvar);
 
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &bus.lock);

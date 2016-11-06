@@ -60,7 +60,7 @@ extern void messagebus_condvar_init(msgbus_cond_t *cond);
 extern void messagebus_condvar_broadcast(msgbus_cond_t *cond);
 
 /** Wait on the given condition variable. */
-extern void messagebus_condvar_wait(msgbus_cond_t *cond);
+extern void messagebus_condvar_wait(msgbus_cond_t *cond, uint64_t timeout_us);
 
 /** @} */
 

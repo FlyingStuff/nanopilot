@@ -83,7 +83,7 @@ msgbus_topic_t *msgbus_find_topic_blocking(msgbus_t *bus,
         res = topic_by_name(bus, name);
 
         if (res == NULL) {
-            messagebus_condvar_wait(&bus->condvar);
+            messagebus_condvar_wait(&bus->condvar, timeout_us);
         }
     }
 
