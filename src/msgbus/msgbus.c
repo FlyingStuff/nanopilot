@@ -142,9 +142,13 @@ bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
         topic = msgbus_find_topic_blocking(bus, name, MSGBUS_TIMEOUT_IMMEDIATE);
     }
     sub->topic = topic;
-    sub->pub_seq_nbr = 0; // TODO: init to topic seq_nbr - 1
     if (topic == NULL) {
         return false;
+    }
+    if (topic->published) {
+        sub->pub_seq_nbr = topic->pub_seq_nbr - 1;
+    } else {
+        sub->pub_seq_nbr = 0;
     }
     return true;
 }
@@ -169,11 +173,15 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
 
 uint32_t msgbus_subscriber_has_update(msgbus_subscriber_t *sub)
 {
-    // todo does not handle overflow
-    if (sub->topic->pub_seq_nbr > sub->pub_seq_nbr) {
-        return sub->topic->pub_seq_nbr - sub->pub_seq_nbr;
-    }
-    return 0;
+    uint32_t ret;
+
+    messagebus_lock_acquire(&sub->topic->lock);
+
+    ret = sub->topic->pub_seq_nbr - sub->pub_seq_nbr;
+
+    messagebus_lock_release(&sub->topic->lock);
+
+    return ret;
 }
 
 

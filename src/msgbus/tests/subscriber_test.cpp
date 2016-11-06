@@ -91,6 +91,32 @@ TEST(SubscriberTests, SubscriberUpdateCountResetsAfterRead)
     CHECK_EQUAL(0, msgbus_subscriber_has_update(&sub));
 }
 
+TEST(SubscriberTests, SubscriberUpdateCountIsExactlyOneIfSubscribedAfterPublish)
+{
+    simple_t val;
+    topic.pub_seq_nbr = 1234;
+    msgbus_topic_publish(&topic, &val);
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+    CHECK_EQUAL(1, msgbus_subscriber_has_update(&sub));
+
+    topic.pub_seq_nbr = 0; // even in case of overflow
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+    CHECK_EQUAL(1, msgbus_subscriber_has_update(&sub));
+}
+
+TEST(SubscriberTests, HasUpdateHandlesPublishSequenceOverflowCorrectly)
+{
+    simple_t val;
+    msgbus_topic_publish(&topic, &val);
+    topic.pub_seq_nbr = UINT32_MAX; // start before overflow
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+    msgbus_subscriber_read(&sub, &val); // get subscriber to same count
+    topic.pub_seq_nbr = 2;
+    CHECK_EQUAL(3, msgbus_subscriber_has_update(&sub));
+    topic.pub_seq_nbr = UINT32_MAX-1;
+    CHECK_EQUAL(UINT32_MAX, msgbus_subscriber_has_update(&sub));
+}
+
 TEST(SubscriberTests, SubscriberGetTopic)
 {
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
