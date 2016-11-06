@@ -1,6 +1,8 @@
 #include "messagebus.h"
 #include <string.h>
 
+static void _messagebus_advertise_topic(messagebus_t *bus, messagebus_topic_t *topic, const char *name);
+
 
 static messagebus_topic_t *topic_by_name(messagebus_t *bus, const char *name)
 {
@@ -21,16 +23,24 @@ void messagebus_init(messagebus_t *bus)
     messagebus_lock_init(&bus->lock);
 }
 
-void messagebus_topic_init(messagebus_topic_t *topic, void *buffer, size_t buffer_len)
+
+void messagebus_topic_create(messagebus_topic_t *topic,
+                             messagebus_t *bus,
+                             void *buffer,
+                             size_t buffer_len,
+                             const char *name)
 {
     memset(topic, 0, sizeof(messagebus_topic_t));
     topic->buffer = buffer;
     topic->buffer_len = buffer_len;
     messagebus_condvar_init(&topic->condvar);
     messagebus_lock_init(&topic->lock);
+
+    _messagebus_advertise_topic(bus, topic, name);
 }
 
-void messagebus_advertise_topic(messagebus_t *bus, messagebus_topic_t *topic, const char *name)
+
+static void _messagebus_advertise_topic(messagebus_t *bus, messagebus_topic_t *topic, const char *name)
 {
     memset(topic->name, 0, sizeof(topic->name));
     strncpy(topic->name, name, TOPIC_NAME_MAX_LENGTH);

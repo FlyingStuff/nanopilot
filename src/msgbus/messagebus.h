@@ -41,32 +41,28 @@ typedef struct {
                     topic != NULL; \
                     (_topic_var_name) = (_topic_var_name)->next)
 
-/** Initializes a topic object
+/** Create a new topic
  *
  * @parameter [in] topic The topic object to create.
+ * @parameter [in] bus The bus on which the topic will be advertised.
  * @parameter [in] buffer,buffer_len The buffer where the topic messages will
- * @parameter [in] topic_lock The lock to use for this topic.
- * @parameter [in] topic_condvar The condition variable to use for this topic.
  * be stored.
+ * @parameter [in] name The topic name, used to refer to it from the rest
+ * of the application.
+ *
+ * @note The topic name will be truncated to TOPIC_NAME_MAX_LENGTH characters.
  */
-void messagebus_topic_init(messagebus_topic_t *topic, void *buffer, size_t buffer_len);
+void messagebus_topic_create(messagebus_topic_t *topic,
+                             messagebus_t *bus,
+                             void *buffer,
+                             size_t buffer_len,
+                             const char *name);
 
 /** Initializes a new message bus with no topics.
  *
  * @parameter [in] bus The messagebus to init.
  */
 void messagebus_init(messagebus_t *bus);
-
-/** Initializes the presence of the topic on the bus.
- *
- * @parameter [in] bus The bus on which the topic must be advertised.
- * @parameter [in] topic The topic object to advertise.
- * @parameter [in] name The topic name, used to refer to it from the rest
- * of the application.
- *
- * @note The topic name will be truncated to TOPIC_NAME_MAX_LENGTH characters.
- */
-void messagebus_advertise_topic(messagebus_t *bus, messagebus_topic_t *topic, const char *name);
 
 /** Finds a topic on the bus.
  *

@@ -13,7 +13,7 @@ TEST_GROUP(TopicTests)
     void setup()
     {
         messagebus_init(&bus);
-        messagebus_topic_init(&topic, buffer, sizeof buffer);
+        messagebus_topic_create(&topic, &bus, buffer, sizeof buffer, "topic");
     }
 
     void teardown()
@@ -32,11 +32,12 @@ TEST(TopicTests, Initializer)
     mock().expectOneCall("messagebus_lock_init").withParameter("lock", &topic.lock);
     condvar_init_mock_enable(true);
 
-    messagebus_topic_init(&topic, buffer, sizeof buffer);
+    messagebus_topic_create(&topic, &bus, buffer, sizeof buffer, "topic");
 
     POINTERS_EQUAL(buffer, topic.buffer);
     CHECK_EQUAL(sizeof(buffer), topic.buffer_len);
     CHECK_EQUAL(0, topic.pub_seq_nbr);
+    STRCMP_EQUAL("topic", topic.name);
 }
 
 TEST(TopicTests, PublishCopiesData)

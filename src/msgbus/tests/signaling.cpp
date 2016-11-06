@@ -13,7 +13,7 @@ TEST_GROUP(SignalingTestGroup)
     {
         mock().strictOrder();
         messagebus_init(&bus);
-        messagebus_topic_init(&topic, buffer, sizeof buffer);
+        messagebus_topic_create(&topic, &bus, buffer, sizeof(buffer), "topic");
     }
 
     void teardown()
@@ -73,5 +73,5 @@ TEST(SignalingTestGroup, Advertise)
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
-    messagebus_advertise_topic(&bus, &topic, "topic");
+    messagebus_topic_create(&topic, &bus, buffer, sizeof(buffer), "topic");
 }

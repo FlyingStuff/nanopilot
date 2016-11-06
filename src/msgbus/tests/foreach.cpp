@@ -12,10 +12,8 @@ TEST_GROUP(MsgBusForeachTestGroup)
    void setup()
    {
         messagebus_init(&bus);
-        messagebus_topic_init(&foo, NULL, 0);
-        messagebus_topic_init(&bar, NULL, 0);
-        messagebus_advertise_topic(&bus, &foo, "foo");
-        messagebus_advertise_topic(&bus, &bar, "bar");
+        messagebus_topic_create(&foo, &bus, NULL, 0, "foo");
+        messagebus_topic_create(&bar, &bus, NULL, 0, "bar");
    }
 
    void teardown()

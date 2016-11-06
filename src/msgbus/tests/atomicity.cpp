@@ -14,7 +14,7 @@ TEST_GROUP(MessageBusAtomicityTestGroup)
         mock().strictOrder();
 
         messagebus_init(&bus);
-        messagebus_topic_init(&topic, buffer, sizeof buffer);
+        messagebus_topic_create(&topic, &bus, buffer, sizeof buffer, "topic");
     }
 
     void teardown()
@@ -33,7 +33,8 @@ TEST(MessageBusAtomicityTestGroup, AdvertiseIsLockedProperly)
           .withPointerParameter("lock", &bus.lock);
 
     lock_mocks_enable(true);
-    messagebus_advertise_topic(&bus, &topic, "topic");
+    messagebus_init(&bus);
+    messagebus_topic_create(&topic, &bus, buffer, sizeof buffer, "topic");
 }
 
 TEST(MessageBusAtomicityTestGroup, FindNoneIsLockedProperly)
@@ -54,7 +55,6 @@ TEST(MessageBusAtomicityTestGroup, FindExistingTopicIsLockedProperly)
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
-    messagebus_advertise_topic(&bus, &topic, "topic");
     lock_mocks_enable(true);
     messagebus_find_topic(&bus, "topic");
 }
@@ -118,7 +118,6 @@ TEST(MessageBusAtomicityTestGroup, Wait)
 
 TEST(MessageBusAtomicityTestGroup, FindBlocking)
 {
-    messagebus_advertise_topic(&bus, &topic, "topic");
     lock_mocks_enable(true);
 
     mock().expectOneCall("messagebus_lock_acquire")

@@ -14,8 +14,7 @@ void msgbus_topic_create(msgbus_topic_t *topic,
                          const char *name)
 {
     topic->type = type;
-    messagebus_topic_init(&topic->topic, buffer, type->struct_size);
-    messagebus_advertise_topic(&bus->bus, &topic->topic, name);
+    messagebus_topic_create(&topic->topic, &bus->bus, buffer, type->struct_size, name);
 }
 
 
