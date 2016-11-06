@@ -39,8 +39,8 @@ TEST(MsgBusForeachTestGroup, CanIterate)
 TEST(MsgBusForeachTestGroup, CanLock)
 {
     lock_mocks_enable(true);
-    mock().expectOneCall("messagebus_lock_acquire").withPointerParameter("lock", bus.lock);
-    mock().expectOneCall("messagebus_lock_release").withPointerParameter("lock", bus.lock);
+    mock().expectOneCall("messagebus_lock_acquire").withPointerParameter("lock", &bus.lock);
+    mock().expectOneCall("messagebus_lock_release").withPointerParameter("lock", &bus.lock);
 
     MESSAGEBUS_TOPIC_FOREACH(&bus, topic) {
     }
@@ -49,8 +49,8 @@ TEST(MsgBusForeachTestGroup, CanLock)
 TEST(MsgBusForeachTestGroup, CanBreak)
 {
     lock_mocks_enable(true);
-    mock().expectOneCall("messagebus_lock_acquire").withPointerParameter("lock", bus.lock);
-    mock().expectOneCall("messagebus_lock_release").withPointerParameter("lock", bus.lock);
+    mock().expectOneCall("messagebus_lock_acquire").withPointerParameter("lock", &bus.lock);
+    mock().expectOneCall("messagebus_lock_release").withPointerParameter("lock", &bus.lock);
 
     MESSAGEBUS_TOPIC_FOREACH(&bus, topic) {
         break;

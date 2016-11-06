@@ -5,6 +5,9 @@
 #if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 // this is for the unit tests
 
+typedef int msgbus_cond_t;
+typedef int msgbus_mutex_t;
+
 typedef struct {
     int lock;
     int cond;

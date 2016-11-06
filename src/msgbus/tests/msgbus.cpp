@@ -27,23 +27,21 @@ TEST_GROUP(MessageBusTestGroup)
 
 TEST(MessageBusTestGroup, CanCreateTopicWithBuffer)
 {
-    mock().expectOneCall("messagebus_condvar_wrapper_init").withParameter("c", &topic.cond);
+    mock().expectOneCall("messagebus_condvar_init").withParameter("cond", &topic.condvar);
+    mock().expectOneCall("messagebus_lock_init").withParameter("lock", &topic.lock);
     condvar_init_mock_enable(true);
     messagebus_topic_init(&topic, buffer, sizeof buffer);
     POINTERS_EQUAL(buffer, topic.buffer);
-    POINTERS_EQUAL(&topic.cond.lock, topic.lock);
-    POINTERS_EQUAL(&topic.cond.cond, topic.condvar);
     CHECK_EQUAL(topic.buffer_len, sizeof(buffer));
 }
 
 TEST(MessageBusTestGroup, CanCreateBus)
 {
-    mock().expectOneCall("messagebus_condvar_wrapper_init").withParameter("c", &bus.cond);
+    mock().expectOneCall("messagebus_condvar_init").withParameter("cond", &bus.condvar);
+    mock().expectOneCall("messagebus_lock_init").withParameter("lock", &bus.lock);
     condvar_init_mock_enable(true);
     messagebus_init(&bus);
     POINTERS_EQUAL(NULL, bus.topics.head);
-    POINTERS_EQUAL(&bus.cond.lock, bus.lock);
-    POINTERS_EQUAL(&bus.cond.cond, bus.condvar);
 }
 
 TEST(MessageBusTestGroup, AdvertiseTopicName)

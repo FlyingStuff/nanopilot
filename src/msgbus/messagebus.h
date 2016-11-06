@@ -13,29 +13,27 @@ extern "C" {
 typedef struct topic_s {
     void *buffer;
     size_t buffer_len;
-    void *lock;
-    void *condvar;
+    msgbus_mutex_t lock;
+    msgbus_cond_t condvar;
     char name[TOPIC_NAME_MAX_LENGTH+1];
     struct topic_s *next;
     bool published;
-    messagebus_condvar_wrapper_t cond;
 } messagebus_topic_t;
 
 typedef struct {
     struct {
         messagebus_topic_t *head;
     } topics;
-    void *lock;
-    void *condvar;
-    messagebus_condvar_wrapper_t cond;
+    msgbus_mutex_t lock;
+    msgbus_cond_t condvar;
 } messagebus_t;
 
 #define MESSAGEBUS_TOPIC_FOREACH(_bus, _topic_var_name) \
     for(int __control = -1; __control < 2 ; __control++) \
         if(__control < 0) { \
-            messagebus_lock_acquire((_bus)->lock); \
+            messagebus_lock_acquire(&(_bus)->lock); \
         } else if(__control > 0) { \
-            messagebus_lock_release((_bus)->lock); \
+            messagebus_lock_release(&(_bus)->lock); \
         } else  \
             for (messagebus_topic_t *(_topic_var_name) = (_bus)->topics.head; \
                     topic != NULL; \
@@ -118,17 +116,23 @@ void messagebus_topic_wait(messagebus_topic_t *topic, void *buf, size_t buf_len)
 /** @defgroup portable Portable functions, platform specific.
  * @{*/
 
-/** Acquire a reentrant lock (mutex). */
-extern void messagebus_lock_acquire(void *lock);
+/** Initialize a mutex */
+extern void messagebus_lock_init(msgbus_mutex_t *mutex);
 
-/** Release a lock previously acquired by messagebus_lock_acquire. */
-extern void messagebus_lock_release(void *lock);
+/** Acquire a reentrant mutex. */
+extern void messagebus_lock_acquire(msgbus_mutex_t *mutex);
+
+/** Release a mutex previously acquired by messagebus_lock_acquire. */
+extern void messagebus_lock_release(msgbus_mutex_t *mutex);
+
+/** Initialize a condition variable */
+extern void messagebus_condvar_init(msgbus_cond_t *cond);
 
 /** Signal all tasks waiting on the given condition variable. */
-extern void messagebus_condvar_broadcast(void *var);
+extern void messagebus_condvar_broadcast(msgbus_cond_t *cond);
 
 /** Wait on the given condition variable. */
-extern void messagebus_condvar_wait(void *var);
+extern void messagebus_condvar_wait(msgbus_cond_t *cond);
 
 /** @} */
 

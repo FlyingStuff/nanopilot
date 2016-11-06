@@ -28,9 +28,9 @@ TEST_GROUP(MessageBusAtomicityTestGroup)
 TEST(MessageBusAtomicityTestGroup, AdvertiseIsLockedProperly)
 {
     mock().expectOneCall("messagebus_lock_acquire")
-          .withPointerParameter("lock", bus.lock);
+          .withPointerParameter("lock", &bus.lock);
     mock().expectOneCall("messagebus_lock_release")
-          .withPointerParameter("lock", bus.lock);
+          .withPointerParameter("lock", &bus.lock);
 
     lock_mocks_enable(true);
     messagebus_advertise_topic(&bus, &topic, "topic");
@@ -39,9 +39,9 @@ TEST(MessageBusAtomicityTestGroup, AdvertiseIsLockedProperly)
 TEST(MessageBusAtomicityTestGroup, FindNoneIsLockedProperly)
 {
     mock().expectOneCall("messagebus_lock_acquire")
-          .withPointerParameter("lock", bus.lock);
+          .withPointerParameter("lock", &bus.lock);
     mock().expectOneCall("messagebus_lock_release")
-          .withPointerParameter("lock", bus.lock);
+          .withPointerParameter("lock", &bus.lock);
 
     lock_mocks_enable(true);
     messagebus_find_topic(&bus, "topic");
@@ -50,9 +50,9 @@ TEST(MessageBusAtomicityTestGroup, FindNoneIsLockedProperly)
 TEST(MessageBusAtomicityTestGroup, FindExistingTopicIsLockedProperly)
 {
     mock().expectOneCall("messagebus_lock_acquire")
-          .withPointerParameter("lock", bus.lock);
+          .withPointerParameter("lock", &bus.lock);
     mock().expectOneCall("messagebus_lock_release")
-          .withPointerParameter("lock", bus.lock);
+          .withPointerParameter("lock", &bus.lock);
 
     messagebus_advertise_topic(&bus, &topic, "topic");
     lock_mocks_enable(true);
@@ -63,9 +63,9 @@ TEST(MessageBusAtomicityTestGroup, PublishIsAtomic)
 {
     uint8_t data[4];
     mock().expectOneCall("messagebus_lock_acquire")
-          .withPointerParameter("lock", topic.lock);
+          .withPointerParameter("lock", &topic.lock);
     mock().expectOneCall("messagebus_lock_release")
-          .withPointerParameter("lock", topic.lock);
+          .withPointerParameter("lock", &topic.lock);
 
     lock_mocks_enable(true);
     messagebus_topic_publish(&topic, data, 4);
@@ -77,9 +77,9 @@ TEST(MessageBusAtomicityTestGroup, ReadPublished)
     bool res;
 
     mock().expectOneCall("messagebus_lock_acquire")
-          .withPointerParameter("lock", topic.lock);
+          .withPointerParameter("lock", &topic.lock);
     mock().expectOneCall("messagebus_lock_release")
-          .withPointerParameter("lock", topic.lock);
+          .withPointerParameter("lock", &topic.lock);
 
     messagebus_topic_publish(&topic, buffer, sizeof(buffer));
 
@@ -94,9 +94,9 @@ TEST(MessageBusAtomicityTestGroup, ReadUnpublished)
     uint8_t buffer[128];
     bool res;
     mock().expectOneCall("messagebus_lock_acquire")
-          .withPointerParameter("lock", topic.lock);
+          .withPointerParameter("lock", &topic.lock);
     mock().expectOneCall("messagebus_lock_release")
-          .withPointerParameter("lock", topic.lock);
+          .withPointerParameter("lock", &topic.lock);
 
     lock_mocks_enable(true);
     res = messagebus_topic_read(&topic, buffer, sizeof(buffer));
@@ -108,9 +108,9 @@ TEST(MessageBusAtomicityTestGroup, Wait)
 {
     uint8_t buffer[128];
     mock().expectOneCall("messagebus_lock_acquire")
-          .withPointerParameter("lock", topic.lock);
+          .withPointerParameter("lock", &topic.lock);
     mock().expectOneCall("messagebus_lock_release")
-          .withPointerParameter("lock", topic.lock);
+          .withPointerParameter("lock", &topic.lock);
 
     lock_mocks_enable(true);
     messagebus_topic_wait(&topic, buffer, sizeof(buffer));
@@ -122,10 +122,10 @@ TEST(MessageBusAtomicityTestGroup, FindBlocking)
     lock_mocks_enable(true);
 
     mock().expectOneCall("messagebus_lock_acquire")
-          .withPointerParameter("lock", bus.lock);
+          .withPointerParameter("lock", &bus.lock);
 
     mock().expectOneCall("messagebus_lock_release")
-          .withPointerParameter("lock", bus.lock);
+          .withPointerParameter("lock", &bus.lock);
 
     messagebus_find_topic_blocking(&bus, "topic");
 }

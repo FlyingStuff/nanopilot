@@ -1,22 +1,31 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 #include "../../messagebus.h"
-#include "messagebus_port.h"
+#include <messagebus_port.h>
 
 static bool lock_enabled = false;
 static bool condvar_enabled = false;
 static bool init_enabled = false;
 
-extern "C"
-void messagebus_condvar_wrapper_init(messagebus_condvar_wrapper_t *c)
+
+void messagebus_lock_init(msgbus_mutex_t *lock)
 {
     if (init_enabled) {
-        mock().actualCall("messagebus_condvar_wrapper_init")
-            .withPointerParameter("c", c);
+        mock().actualCall("messagebus_lock_init")
+            .withPointerParameter("lock", lock);
     }
 }
 
-void messagebus_lock_acquire(void *lock)
+void messagebus_condvar_init(msgbus_cond_t *cond)
+{
+    if (init_enabled) {
+        mock().actualCall("messagebus_condvar_init")
+            .withPointerParameter("cond", cond);
+    }
+}
+
+
+void messagebus_lock_acquire(msgbus_mutex_t *lock)
 {
     if (lock_enabled) {
         mock().actualCall("messagebus_lock_acquire")
@@ -24,7 +33,7 @@ void messagebus_lock_acquire(void *lock)
     }
 }
 
-void messagebus_lock_release(void *lock)
+void messagebus_lock_release(msgbus_mutex_t *lock)
 {
     if (lock_enabled) {
         mock().actualCall("messagebus_lock_release")
@@ -32,7 +41,7 @@ void messagebus_lock_release(void *lock)
     }
 }
 
-void messagebus_condvar_broadcast(void *var)
+void messagebus_condvar_broadcast(msgbus_cond_t *var)
 {
     if (condvar_enabled) {
         mock().actualCall("messagebus_condvar_broadcast")
@@ -40,7 +49,7 @@ void messagebus_condvar_broadcast(void *var)
     }
 }
 
-void messagebus_condvar_wait(void *var)
+void messagebus_condvar_wait(msgbus_cond_t *var)
 {
     if (condvar_enabled) {
         mock().actualCall("messagebus_condvar_wait")
