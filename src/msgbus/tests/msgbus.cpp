@@ -8,15 +8,13 @@ TEST_GROUP(MessageBusTestGroup)
     messagebus_t bus;
     messagebus_topic_t topic;
     uint8_t buffer[128];
-    int topic_lock;
-    int topic_condvar;
     messagebus_topic_t second_topic;
 
     void setup()
     {
         messagebus_init(&bus);
-        messagebus_topic_init(&topic, &topic_lock, &topic_condvar, buffer, sizeof buffer);
-        messagebus_topic_init(&second_topic, NULL, NULL, NULL, 0);
+        messagebus_topic_init(&topic, buffer, sizeof buffer);
+        messagebus_topic_init(&second_topic, NULL, 0);
     }
 
     void teardown()
@@ -29,9 +27,12 @@ TEST_GROUP(MessageBusTestGroup)
 
 TEST(MessageBusTestGroup, CanCreateTopicWithBuffer)
 {
+    mock().expectOneCall("messagebus_condvar_wrapper_init").withParameter("c", &topic.cond);
+    condvar_init_mock_enable(true);
+    messagebus_topic_init(&topic, buffer, sizeof buffer);
     POINTERS_EQUAL(buffer, topic.buffer);
-    POINTERS_EQUAL(&topic_lock, topic.lock);
-    POINTERS_EQUAL(&topic_condvar, topic.condvar);
+    POINTERS_EQUAL(&topic.cond.lock, topic.lock);
+    POINTERS_EQUAL(&topic.cond.cond, topic.condvar);
     CHECK_EQUAL(topic.buffer_len, sizeof(buffer));
 }
 

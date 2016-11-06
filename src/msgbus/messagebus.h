@@ -49,8 +49,7 @@ typedef struct {
  * @parameter [in] topic_condvar The condition variable to use for this topic.
  * be stored.
  */
-void messagebus_topic_init(messagebus_topic_t *topic, void *topic_lock, void *topic_condvar,
-                void *buffer, size_t buffer_len);
+void messagebus_topic_init(messagebus_topic_t *topic, void *buffer, size_t buffer_len);
 
 /** Initializes a new message bus with no topics.
  *

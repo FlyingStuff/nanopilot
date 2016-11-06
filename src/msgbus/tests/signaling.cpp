@@ -8,14 +8,12 @@ TEST_GROUP(SignalingTestGroup)
     messagebus_t bus;
     messagebus_topic_t topic;
     uint8_t buffer[128];
-    int topic_lock;
-    int topic_condvar;
 
     void setup()
     {
         mock().strictOrder();
         messagebus_init(&bus);
-        messagebus_topic_init(&topic, &topic_lock, &topic_condvar, buffer, sizeof buffer);
+        messagebus_topic_init(&topic, buffer, sizeof buffer);
     }
 
     void teardown()

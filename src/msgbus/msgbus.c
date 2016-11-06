@@ -15,8 +15,7 @@ void msgbus_topic_create(msgbus_topic_t *topic,
 {
     topic->type = type;
     topic->pub_seq_nbr = 0;
-    messagebus_condvar_wrapper_init(&topic->sync);
-    messagebus_topic_init(&topic->topic, &topic->sync, &topic->sync, buffer, type->struct_size);
+    messagebus_topic_init(&topic->topic, buffer, type->struct_size);
     messagebus_advertise_topic(&bus->bus, &topic->topic, name);
 }
 

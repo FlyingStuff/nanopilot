@@ -14,7 +14,6 @@ typedef struct {
     const msgbus_type_definition_t *type;
     uint32_t pub_seq_nbr;
     // wrapped topic
-    messagebus_condvar_wrapper_t sync;
     messagebus_topic_t topic;
 } msgbus_topic_t;
 

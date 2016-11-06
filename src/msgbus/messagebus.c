@@ -22,14 +22,14 @@ void messagebus_init(messagebus_t *bus)
     bus->condvar = &bus->cond.cond;
 }
 
-void messagebus_topic_init(messagebus_topic_t *topic, void *topic_lock, void *topic_condvar,
-                void *buffer, size_t buffer_len)
+void messagebus_topic_init(messagebus_topic_t *topic, void *buffer, size_t buffer_len)
 {
     memset(topic, 0, sizeof(messagebus_topic_t));
     topic->buffer = buffer;
     topic->buffer_len = buffer_len;
-    topic->lock = topic_lock;
-    topic->condvar = topic_condvar;
+    messagebus_condvar_wrapper_init(&topic->cond);
+    topic->lock = &topic->cond.lock;
+    topic->condvar = &topic->cond.cond;
 }
 
 void messagebus_advertise_topic(messagebus_t *bus, messagebus_topic_t *topic, const char *name)
