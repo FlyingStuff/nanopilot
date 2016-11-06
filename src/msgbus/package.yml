@@ -6,6 +6,7 @@ depends:
 
 source:
     - messagebus.c
+    - msgbus.c
     - serialization_msgpack.c
     - type_print.c
 
@@ -13,6 +14,7 @@ tests:
     - tests/mocks/synchronization.cpp
     - tests/atomicity.cpp
     - tests/msgbus.cpp
+    - tests/msgbus_wrapper.cpp
     - tests/signaling.cpp
     - tests/foreach.cpp
     - tests/serialization_msgpack_test.cpp

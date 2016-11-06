@@ -1,6 +1,10 @@
 {% extends "CMakeLists.txt.jinja" %}
 
+
 {% block additional_targets %}
+target_include_directories(tests PUBLIC tests/mocks/)
+
+
 add_executable(
     demo
     {% for s in source + target.demo -%}
@@ -12,5 +16,7 @@ target_link_libraries(
     demo
     pthread
     )
+
+target_include_directories(demo PUBLIC examples/posix)
 
 {% endblock %}

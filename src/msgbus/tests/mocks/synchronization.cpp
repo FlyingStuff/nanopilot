@@ -1,9 +1,15 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 #include "../../messagebus.h"
+#include "messagebus_port.h"
 
 static bool lock_enabled = false;
 static bool condvar_enabled = false;
+
+extern "C"
+void messagebus_condvar_wrapper_init(messagebus_condvar_wrapper_t *c)
+{
+}
 
 void messagebus_lock_acquire(void *lock)
 {
