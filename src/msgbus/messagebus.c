@@ -89,6 +89,7 @@ bool messagebus_topic_publish(messagebus_topic_t *topic, void *buf, size_t buf_l
 
     memcpy(topic->buffer, buf, buf_len);
     topic->published = true;
+    topic->pub_seq_nbr++;
     messagebus_condvar_broadcast(&topic->condvar);
 
     messagebus_lock_release(&topic->lock);

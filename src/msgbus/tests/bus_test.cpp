@@ -3,7 +3,8 @@
 #include "../messagebus.h"
 #include "mocks/synchronization.hpp"
 
-TEST_GROUP(MessageBusTestGroup)
+
+TEST_GROUP(BusTests)
 {
     messagebus_t bus;
     messagebus_topic_t topic;
@@ -25,17 +26,8 @@ TEST_GROUP(MessageBusTestGroup)
     }
 };
 
-TEST(MessageBusTestGroup, CanCreateTopicWithBuffer)
-{
-    mock().expectOneCall("messagebus_condvar_init").withParameter("cond", &topic.condvar);
-    mock().expectOneCall("messagebus_lock_init").withParameter("lock", &topic.lock);
-    condvar_init_mock_enable(true);
-    messagebus_topic_init(&topic, buffer, sizeof buffer);
-    POINTERS_EQUAL(buffer, topic.buffer);
-    CHECK_EQUAL(topic.buffer_len, sizeof(buffer));
-}
 
-TEST(MessageBusTestGroup, CanCreateBus)
+TEST(BusTests, CanCreateBus)
 {
     mock().expectOneCall("messagebus_condvar_init").withParameter("cond", &bus.condvar);
     mock().expectOneCall("messagebus_lock_init").withParameter("lock", &bus.lock);
@@ -44,21 +36,21 @@ TEST(MessageBusTestGroup, CanCreateBus)
     POINTERS_EQUAL(NULL, bus.topics.head);
 }
 
-TEST(MessageBusTestGroup, AdvertiseTopicName)
+TEST(BusTests, AdvertiseTopicName)
 {
     messagebus_advertise_topic(&bus, &topic, "/imu/raw");
 
     STRCMP_EQUAL("/imu/raw", topic.name);
 }
 
-TEST(MessageBusTestGroup, FirstTopicGoesToHead)
+TEST(BusTests, FirstTopicGoesToHead)
 {
     messagebus_advertise_topic(&bus, &topic, "/imu/raw");
 
     POINTERS_EQUAL(&topic, bus.topics.head);
 }
 
-TEST(MessageBusTestGroup, NextofListIsOkToo)
+TEST(BusTests, NextofListIsOkToo)
 {
     messagebus_advertise_topic(&bus, &topic, "first");
     messagebus_advertise_topic(&bus, &second_topic, "second");
@@ -67,19 +59,19 @@ TEST(MessageBusTestGroup, NextofListIsOkToo)
     POINTERS_EQUAL(&topic, bus.topics.head->next);
 }
 
-TEST(MessageBusTestGroup, TopicNotFound)
+TEST(BusTests, TopicNotFound)
 {
     messagebus_find_topic(&bus, "topic");
     POINTERS_EQUAL(NULL, messagebus_find_topic(&bus, "topic"));
 }
 
-TEST(MessageBusTestGroup, TopicFound)
+TEST(BusTests, TopicFound)
 {
     messagebus_advertise_topic(&bus, &topic, "topic");
     POINTERS_EQUAL(&topic, messagebus_find_topic(&bus, "topic"));
 }
 
-TEST(MessageBusTestGroup, CanScanBus)
+TEST(BusTests, CanScanBus)
 {
     messagebus_advertise_topic(&bus, &topic, "first");
     messagebus_advertise_topic(&bus, &second_topic, "second");
@@ -88,7 +80,7 @@ TEST(MessageBusTestGroup, CanScanBus)
     POINTERS_EQUAL(&second_topic, messagebus_find_topic(&bus, "second"));
 }
 
-TEST(MessageBusTestGroup, FindTopicBlocking)
+TEST(BusTests, FindTopicBlocking)
 {
     messagebus_topic_t *res;
     /* This is a partial test only: we cannot test that the behavior is correct
@@ -97,58 +89,5 @@ TEST(MessageBusTestGroup, FindTopicBlocking)
     messagebus_advertise_topic(&bus, &topic, "topic");
     res = messagebus_find_topic_blocking(&bus, "topic");
     POINTERS_EQUAL(&topic, res);
-}
-
-TEST(MessageBusTestGroup, CanPublish)
-{
-    uint8_t data[] = {1, 2, 3};
-    bool res;
-
-    res = messagebus_topic_publish(&topic, data, sizeof(data));
-
-    MEMCMP_EQUAL(topic.buffer, data, sizeof(data));
-    CHECK_TRUE(res);
-}
-
-TEST(MessageBusTestGroup, WontPublishTooBigMessage)
-{
-    uint8_t data[] = {1, 2, 3};
-    bool res;
-
-    topic.buffer_len = 1;
-    res = messagebus_topic_publish(&topic, data, sizeof(data));
-
-    CHECK_FALSE(res);
-}
-
-TEST(MessageBusTestGroup, CanRead)
-{
-    int tx=42, rx;
-    bool res;
-
-    messagebus_topic_publish(&topic, &tx, sizeof(int));
-    res = messagebus_topic_read(&topic, &rx, sizeof(int));
-
-    CHECK_TRUE(res);
-    CHECK_EQUAL(tx, rx);
-}
-
-TEST(MessageBusTestGroup, WontReadUnpublishedtopic)
-{
-    int rx;
-    bool res;
-
-    res = messagebus_topic_read(&topic, &rx, sizeof(int));
-    CHECK_FALSE(res);
-}
-
-TEST(MessageBusTestGroup, WaitForUpdate)
-{
-    int tx=42, rx;
-
-    messagebus_topic_publish(&topic, &tx, sizeof(int));
-    messagebus_topic_wait(&topic, &rx, sizeof(int));
-
-    CHECK_EQUAL(tx, rx);
 }
 

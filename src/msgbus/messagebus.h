@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include <unistd.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <messagebus_port.h>
 
@@ -18,6 +19,7 @@ typedef struct topic_s {
     char name[TOPIC_NAME_MAX_LENGTH+1];
     struct topic_s *next;
     bool published;
+    uint32_t pub_seq_nbr;
 } messagebus_topic_t;
 
 typedef struct {

@@ -13,7 +13,8 @@ source:
 tests:
     - tests/mocks/synchronization.cpp
     - tests/atomicity.cpp
-    - tests/msgbus.cpp
+    - tests/bus_test.cpp
+    - tests/topic_test.cpp
     - tests/msgbus_wrapper.cpp
     - tests/signaling.cpp
     - tests/foreach.cpp

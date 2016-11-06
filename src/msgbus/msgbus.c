@@ -14,7 +14,6 @@ void msgbus_topic_create(msgbus_topic_t *topic,
                          const char *name)
 {
     topic->type = type;
-    topic->pub_seq_nbr = 0;
     messagebus_topic_init(&topic->topic, buffer, type->struct_size);
     messagebus_advertise_topic(&bus->bus, &topic->topic, name);
 }
@@ -54,7 +53,6 @@ msgbus_topic_t *msgbus_iterate_topics_next(msgbus_topic_t *topic)
 void msgbus_topic_publish(msgbus_topic_t *topic, const void *val)
 {
     messagebus_topic_publish(&topic->topic, (void*)val, topic->type->struct_size);
-    topic->pub_seq_nbr++;
 }
 
 
@@ -88,7 +86,7 @@ bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
         }
     }
     sub->topic = topic;
-    sub->pub_seq_nbr = 0;
+    sub->pub_seq_nbr = 0; // TODO: init to topic seq_nbr - 1
     if (topic == NULL) {
         return false;
     }
@@ -116,8 +114,8 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
 uint32_t msgbus_subscriber_has_update(msgbus_subscriber_t *sub)
 {
     // todo does not handle overflow
-    if (sub->topic->pub_seq_nbr > sub->pub_seq_nbr) {
-        return sub->topic->pub_seq_nbr - sub->pub_seq_nbr;
+    if (sub->topic->topic.pub_seq_nbr > sub->pub_seq_nbr) {
+        return sub->topic->topic.pub_seq_nbr - sub->pub_seq_nbr;
     }
     return 0;
 }
@@ -125,7 +123,7 @@ uint32_t msgbus_subscriber_has_update(msgbus_subscriber_t *sub)
 
 bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub)
 {
-    if (sub->topic->pub_seq_nbr > 0) {
+    if (sub->topic->topic.pub_seq_nbr > 0) {
         return true;
     }
     return false;
@@ -134,7 +132,7 @@ bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub)
 
 void msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest)
 {
-    sub->pub_seq_nbr = sub->topic->pub_seq_nbr;
+    sub->pub_seq_nbr = sub->topic->topic.pub_seq_nbr;
     messagebus_topic_read(&sub->topic->topic, dest, sub->topic->type->struct_size);
 }
 
