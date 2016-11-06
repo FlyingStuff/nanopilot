@@ -1,12 +1,12 @@
 #include "messagebus.h"
 #include <string.h>
 
-static void _messagebus_advertise_topic(messagebus_t *bus, messagebus_topic_t *topic, const char *name);
+static void _messagebus_advertise_topic(msgbus_t *bus, msgbus_topic_t *topic, const char *name);
 
 
-static messagebus_topic_t *topic_by_name(messagebus_t *bus, const char *name)
+static msgbus_topic_t *topic_by_name(msgbus_t *bus, const char *name)
 {
-    messagebus_topic_t *t;
+    msgbus_topic_t *t;
     for (t=bus->topics.head; t!=NULL; t=t->next) {
         if (!strcmp(name, t->name)) {
             return t;
@@ -16,21 +16,21 @@ static messagebus_topic_t *topic_by_name(messagebus_t *bus, const char *name)
     return NULL;
 }
 
-void messagebus_init(messagebus_t *bus)
+void messagebus_init(msgbus_t *bus)
 {
-    memset(bus, 0, sizeof(messagebus_t));
+    memset(bus, 0, sizeof(msgbus_t));
     messagebus_condvar_init(&bus->condvar);
     messagebus_lock_init(&bus->lock);
 }
 
 
-void messagebus_topic_create(messagebus_topic_t *topic,
-                             messagebus_t *bus,
+void messagebus_topic_create(msgbus_topic_t *topic,
+                             msgbus_t *bus,
                              const msgbus_type_definition_t *type,
                              void *buffer,
                              const char *name)
 {
-    memset(topic, 0, sizeof(messagebus_topic_t));
+    memset(topic, 0, sizeof(msgbus_topic_t));
     topic->buffer = buffer;
     topic->type = type;
     messagebus_condvar_init(&topic->condvar);
@@ -40,7 +40,7 @@ void messagebus_topic_create(messagebus_topic_t *topic,
 }
 
 
-static void _messagebus_advertise_topic(messagebus_t *bus, messagebus_topic_t *topic, const char *name)
+static void _messagebus_advertise_topic(msgbus_t *bus, msgbus_topic_t *topic, const char *name)
 {
     memset(topic->name, 0, sizeof(topic->name));
     strncpy(topic->name, name, TOPIC_NAME_MAX_LENGTH);
@@ -57,9 +57,9 @@ static void _messagebus_advertise_topic(messagebus_t *bus, messagebus_topic_t *t
     messagebus_lock_release(&bus->lock);
 }
 
-messagebus_topic_t *messagebus_find_topic(messagebus_t *bus, const char *name)
+msgbus_topic_t *messagebus_find_topic(msgbus_t *bus, const char *name)
 {
-    messagebus_topic_t *res;
+    msgbus_topic_t *res;
 
     messagebus_lock_acquire(&bus->lock);
 
@@ -70,9 +70,9 @@ messagebus_topic_t *messagebus_find_topic(messagebus_t *bus, const char *name)
     return res;
 }
 
-messagebus_topic_t *messagebus_find_topic_blocking(messagebus_t *bus, const char *name)
+msgbus_topic_t *messagebus_find_topic_blocking(msgbus_t *bus, const char *name)
 {
-    messagebus_topic_t *res = NULL;
+    msgbus_topic_t *res = NULL;
 
     messagebus_lock_acquire(&bus->lock);
 
@@ -89,7 +89,7 @@ messagebus_topic_t *messagebus_find_topic_blocking(messagebus_t *bus, const char
     return res;
 }
 
-void messagebus_topic_publish(messagebus_topic_t *topic, void *buf)
+void messagebus_topic_publish(msgbus_topic_t *topic, void *buf)
 {
     messagebus_lock_acquire(&topic->lock);
 
@@ -101,7 +101,7 @@ void messagebus_topic_publish(messagebus_topic_t *topic, void *buf)
     messagebus_lock_release(&topic->lock);
 }
 
-bool messagebus_topic_read(messagebus_topic_t *topic, void *buf)
+bool messagebus_topic_read(msgbus_topic_t *topic, void *buf)
 {
     bool success = false;
     messagebus_lock_acquire(&topic->lock);
@@ -116,7 +116,7 @@ bool messagebus_topic_read(messagebus_topic_t *topic, void *buf)
     return success;
 }
 
-void messagebus_topic_wait(messagebus_topic_t *topic, void *buf)
+void messagebus_topic_wait(msgbus_topic_t *topic, void *buf)
 {
     messagebus_lock_acquire(&topic->lock);
     messagebus_condvar_wait(&topic->condvar);

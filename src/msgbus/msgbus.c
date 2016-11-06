@@ -3,7 +3,7 @@
 
 void msgbus_init(msgbus_t *bus)
 {
-    messagebus_init(&bus->bus);
+    messagebus_init(bus);
 }
 
 
@@ -13,56 +13,44 @@ void msgbus_topic_create(msgbus_topic_t *topic,
                          void *buffer,
                          const char *name)
 {
-    messagebus_topic_create(&topic->topic, &bus->bus, type, buffer, name);
+    messagebus_topic_create(topic, bus, type, buffer, name);
 }
 
 
 msgbus_topic_t *msgbus_find_topic(msgbus_t *bus, const char *name)
 {
-    messagebus_topic_t *wrapped_topic;
-    wrapped_topic = messagebus_find_topic(&bus->bus, name);
-    if (wrapped_topic == NULL) {
-        return NULL;
-    }
-    return (msgbus_topic_t *) ((void*)wrapped_topic - offsetof(msgbus_topic_t,topic));
+
+    return messagebus_find_topic(bus, name);
 }
 
 
 msgbus_topic_t *msgbus_iterate_topics(msgbus_t *bus)
 {
-    messagebus_topic_t *wrapped_topic = bus->bus.topics.head;
-    if (wrapped_topic == NULL) {
-        return NULL;
-    }
-    return ((void*)wrapped_topic - offsetof(msgbus_topic_t,topic));
+    return bus->topics.head;
 }
 
 
 msgbus_topic_t *msgbus_iterate_topics_next(msgbus_topic_t *topic)
 {
-    messagebus_topic_t *wrapped_topic = topic->topic.next;
-    if (wrapped_topic == NULL) {
-        return NULL;
-    }
-    return ((void*)wrapped_topic - offsetof(msgbus_topic_t,topic));
+    return topic->next;
 }
 
 
 void msgbus_topic_publish(msgbus_topic_t *topic, const void *val)
 {
-    messagebus_topic_publish(&topic->topic, (void*)val);
+    messagebus_topic_publish(topic, (void*)val);
 }
 
 
 const msgbus_type_definition_t *msgbus_topic_get_type(msgbus_topic_t *topic)
 {
-    return topic->topic.type;
+    return topic->type;
 }
 
 
 const char *msgbus_topic_get_name(msgbus_topic_t *topic)
 {
-    return topic->topic.name;
+    return topic->name;
 }
 
 
@@ -75,13 +63,7 @@ bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
     if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
         topic = msgbus_find_topic(bus, name);
     } else { // todo timeout not working with current implementation
-        messagebus_topic_t *wrapped_topic;
-        wrapped_topic = messagebus_find_topic_blocking(&bus->bus, name);
-        if (wrapped_topic == NULL) {
-            topic = NULL;
-        } else {
-            topic = (msgbus_topic_t *) ((void*)wrapped_topic - offsetof(msgbus_topic_t,topic));
-        }
+        topic = messagebus_find_topic_blocking(bus, name);
     }
     sub->topic = topic;
     sub->pub_seq_nbr = 0; // TODO: init to topic seq_nbr - 1
@@ -102,7 +84,7 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
         if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
             return false;
         } else { // todo timeout not working with current implementation
-            messagebus_topic_wait(&sub->topic->topic, NULL);
+            messagebus_topic_wait(sub->topic, NULL);
             return true;
         }
     }
@@ -112,8 +94,8 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
 uint32_t msgbus_subscriber_has_update(msgbus_subscriber_t *sub)
 {
     // todo does not handle overflow
-    if (sub->topic->topic.pub_seq_nbr > sub->pub_seq_nbr) {
-        return sub->topic->topic.pub_seq_nbr - sub->pub_seq_nbr;
+    if (sub->topic->pub_seq_nbr > sub->pub_seq_nbr) {
+        return sub->topic->pub_seq_nbr - sub->pub_seq_nbr;
     }
     return 0;
 }
@@ -121,7 +103,7 @@ uint32_t msgbus_subscriber_has_update(msgbus_subscriber_t *sub)
 
 bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub)
 {
-    if (sub->topic->topic.pub_seq_nbr > 0) {
+    if (sub->topic->pub_seq_nbr > 0) {
         return true;
     }
     return false;
@@ -130,8 +112,8 @@ bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub)
 
 void msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest)
 {
-    sub->pub_seq_nbr = sub->topic->topic.pub_seq_nbr;
-    messagebus_topic_read(&sub->topic->topic, dest);
+    sub->pub_seq_nbr = sub->topic->pub_seq_nbr;
+    messagebus_topic_read(sub->topic, dest);
 }
 
 

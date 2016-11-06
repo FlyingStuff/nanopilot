@@ -10,20 +10,12 @@
 #include "messagebus.h"
 #include <messagebus_port.h>
 
-typedef struct {
-    messagebus_topic_t topic;
-} msgbus_topic_t;
-
 
 typedef struct {
     uint32_t pub_seq_nbr;
     msgbus_topic_t *topic;
 } msgbus_subscriber_t;
 
-
-typedef struct {
-    messagebus_t bus;
-} msgbus_t;
 
 
 #define MSGBUS_TIMEOUT_NEVER UINT32_MAX

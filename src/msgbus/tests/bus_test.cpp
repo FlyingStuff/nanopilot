@@ -7,10 +7,10 @@
 
 TEST_GROUP(BusTests)
 {
-    messagebus_t bus;
-    messagebus_topic_t topic;
+    msgbus_t bus;
+    msgbus_topic_t topic;
     uint8_t buffer[128];
-    messagebus_topic_t second_topic;
+    msgbus_topic_t second_topic;
 
     void setup()
     {
@@ -75,7 +75,7 @@ TEST(BusTests, CanScanBus)
 
 TEST(BusTests, FindTopicBlocking)
 {
-    messagebus_topic_t *res;
+    msgbus_topic_t *res;
     /* This is a partial test only: we cannot test that the behavior is correct
      * when the topic is not on the bus yes without additional thread and I
      * don't like threading in tests. */

@@ -21,15 +21,15 @@ typedef struct topic_s {
     struct topic_s *next;
     bool published;
     uint32_t pub_seq_nbr;
-} messagebus_topic_t;
+} msgbus_topic_t;
 
 typedef struct {
     struct {
-        messagebus_topic_t *head;
+        msgbus_topic_t *head;
     } topics;
     msgbus_mutex_t lock;
     msgbus_cond_t condvar;
-} messagebus_t;
+} msgbus_t;
 
 #define MESSAGEBUS_TOPIC_FOREACH(_bus, _topic_var_name) \
     for(int __control = -1; __control < 2 ; __control++) \
@@ -38,7 +38,7 @@ typedef struct {
         } else if(__control > 0) { \
             messagebus_lock_release(&(_bus)->lock); \
         } else  \
-            for (messagebus_topic_t *(_topic_var_name) = (_bus)->topics.head; \
+            for (msgbus_topic_t *(_topic_var_name) = (_bus)->topics.head; \
                     topic != NULL; \
                     (_topic_var_name) = (_topic_var_name)->next)
 
@@ -53,8 +53,8 @@ typedef struct {
  *
  * @note The topic name will be truncated to TOPIC_NAME_MAX_LENGTH characters.
  */
-void messagebus_topic_create(messagebus_topic_t *topic,
-                             messagebus_t *bus,
+void messagebus_topic_create(msgbus_topic_t *topic,
+                             msgbus_t *bus,
                              const msgbus_type_definition_t *type,
                              void *buffer,
                              const char *name);
@@ -63,7 +63,7 @@ void messagebus_topic_create(messagebus_topic_t *topic,
  *
  * @parameter [in] bus The messagebus to init.
  */
-void messagebus_init(messagebus_t *bus);
+void messagebus_init(msgbus_t *bus);
 
 /** Finds a topic on the bus.
  *
@@ -72,14 +72,14 @@ void messagebus_init(messagebus_t *bus);
  *
  * @return A pointer to the topic if it is found, NULL otherwise.
  */
-messagebus_topic_t *messagebus_find_topic(messagebus_t *bus, const char *name);
+msgbus_topic_t *messagebus_find_topic(msgbus_t *bus, const char *name);
 
 /** Waits until a topic is found on the bus.
  *
  * @parameter [in] bus The bus to scan.
  * @parameter [in] name The name of the topic to search.
  */
-messagebus_topic_t *messagebus_find_topic_blocking(messagebus_t *bus, const char *name);
+msgbus_topic_t *messagebus_find_topic_blocking(msgbus_t *bus, const char *name);
 
 /** Publish a topics on the bus.
  *
@@ -87,7 +87,7 @@ messagebus_topic_t *messagebus_find_topic_blocking(messagebus_t *bus, const char
  * @parameter [in] buf Pointer to a buffer containing the data to publish.
  *
  */
-void messagebus_topic_publish(messagebus_topic_t *topic, void *buf);
+void messagebus_topic_publish(msgbus_topic_t *topic, void *buf);
 
 
 /** Reads the content of a single topic.
@@ -98,14 +98,14 @@ void messagebus_topic_publish(messagebus_topic_t *topic, void *buf);
  * @returns true if the topic was published on at least once.
  * @returns false if the topic was never published to
  */
-bool messagebus_topic_read(messagebus_topic_t *topic, void *buf);
+bool messagebus_topic_read(msgbus_topic_t *topic, void *buf);
 
 /** Wait for an update to be published on the topic.
  *
  * @parameter [in] topic A pointer to the topic to read.
  * @parameter [out] buf Pointer where the read data will be stored.
  */
-void messagebus_topic_wait(messagebus_topic_t *topic, void *buf);
+void messagebus_topic_wait(msgbus_topic_t *topic, void *buf);
 
 /** @defgroup portable Portable functions, platform specific.
  * @{*/

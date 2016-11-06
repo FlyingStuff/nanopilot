@@ -7,8 +7,8 @@
 
 TEST_GROUP(MsgBusForeachTestGroup)
 {
-   messagebus_t bus;
-   messagebus_topic_t foo, bar;
+   msgbus_t bus;
+   msgbus_topic_t foo, bar;
 
    void setup()
    {

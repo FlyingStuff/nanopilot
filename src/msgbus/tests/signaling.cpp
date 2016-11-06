@@ -6,8 +6,8 @@
 
 TEST_GROUP(SignalingTestGroup)
 {
-    messagebus_t bus;
-    messagebus_topic_t topic;
+    msgbus_t bus;
+    msgbus_topic_t topic;
     uint8_t buffer[128];
 
     void setup()
