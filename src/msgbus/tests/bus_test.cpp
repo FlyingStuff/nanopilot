@@ -1,6 +1,6 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
-#include "../messagebus.h"
+#include "../msgbus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
 
@@ -14,7 +14,7 @@ TEST_GROUP(BusTests)
 
     void setup()
     {
-        messagebus_init(&bus);
+        msgbus_init(&bus);
     }
 
     void teardown()
@@ -31,22 +31,22 @@ TEST(BusTests, Initializer)
     mock().expectOneCall("messagebus_condvar_init").withParameter("cond", &bus.condvar);
     mock().expectOneCall("messagebus_lock_init").withParameter("lock", &bus.lock);
     condvar_init_mock_enable(true);
-    messagebus_init(&bus);
+    msgbus_init(&bus);
     POINTERS_EQUAL(NULL, bus.topics.head);
 }
 
 
 TEST(BusTests, FirstTopicGoesToHead)
 {
-    messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
 
     POINTERS_EQUAL(&topic, bus.topics.head);
 }
 
 TEST(BusTests, NextofListIsOkToo)
 {
-    messagebus_topic_create(&topic, &bus, &simple_type, buffer, "first");
-    messagebus_topic_create(&second_topic, &bus, &simple_type, buffer, "second");
+    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "first");
+    msgbus_topic_create(&second_topic, &bus, &simple_type, buffer, "second");
 
     POINTERS_EQUAL(&second_topic, bus.topics.head);
     POINTERS_EQUAL(&topic, bus.topics.head->next);
@@ -54,23 +54,23 @@ TEST(BusTests, NextofListIsOkToo)
 
 TEST(BusTests, TopicNotFound)
 {
-    messagebus_find_topic(&bus, "topic");
-    POINTERS_EQUAL(NULL, messagebus_find_topic(&bus, "topic"));
+    msgbus_find_topic(&bus, "topic");
+    POINTERS_EQUAL(NULL, msgbus_find_topic(&bus, "topic"));
 }
 
 TEST(BusTests, TopicFound)
 {
-    messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
-    POINTERS_EQUAL(&topic, messagebus_find_topic(&bus, "topic"));
+    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    POINTERS_EQUAL(&topic, msgbus_find_topic(&bus, "topic"));
 }
 
 TEST(BusTests, CanScanBus)
 {
-    messagebus_topic_create(&topic, &bus, &simple_type, buffer, "first");
-    messagebus_topic_create(&second_topic, &bus, &simple_type, buffer, "second");
+    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "first");
+    msgbus_topic_create(&second_topic, &bus, &simple_type, buffer, "second");
 
-    POINTERS_EQUAL(&topic, messagebus_find_topic(&bus, "first"));
-    POINTERS_EQUAL(&second_topic, messagebus_find_topic(&bus, "second"));
+    POINTERS_EQUAL(&topic, msgbus_find_topic(&bus, "first"));
+    POINTERS_EQUAL(&second_topic, msgbus_find_topic(&bus, "second"));
 }
 
 TEST(BusTests, FindTopicBlocking)
@@ -79,8 +79,8 @@ TEST(BusTests, FindTopicBlocking)
     /* This is a partial test only: we cannot test that the behavior is correct
      * when the topic is not on the bus yes without additional thread and I
      * don't like threading in tests. */
-    messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
-    res = messagebus_find_topic_blocking(&bus, "topic");
+    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    res = msgbus_find_topic_blocking(&bus, "topic", MSGBUS_TIMEOUT_NEVER);
     POINTERS_EQUAL(&topic, res);
 }
 

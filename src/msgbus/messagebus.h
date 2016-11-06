@@ -9,27 +9,8 @@ extern "C" {
 #include <stdbool.h>
 #include <messagebus_port.h>
 #include "type_definition.h"
+#include "msgbus.h"
 
-#define TOPIC_NAME_MAX_LENGTH 64
-
-typedef struct topic_s {
-    void *buffer;
-    const msgbus_type_definition_t *type;
-    msgbus_mutex_t lock;
-    msgbus_cond_t condvar;
-    char name[TOPIC_NAME_MAX_LENGTH+1];
-    struct topic_s *next;
-    bool published;
-    uint32_t pub_seq_nbr;
-} msgbus_topic_t;
-
-typedef struct {
-    struct {
-        msgbus_topic_t *head;
-    } topics;
-    msgbus_mutex_t lock;
-    msgbus_cond_t condvar;
-} msgbus_t;
 
 #define MESSAGEBUS_TOPIC_FOREACH(_bus, _topic_var_name) \
     for(int __control = -1; __control < 2 ; __control++) \
@@ -41,53 +22,6 @@ typedef struct {
             for (msgbus_topic_t *(_topic_var_name) = (_bus)->topics.head; \
                     topic != NULL; \
                     (_topic_var_name) = (_topic_var_name)->next)
-
-/** Create a new topic
- *
- * @parameter [in] topic The topic object to create.
- * @parameter [in] bus The bus on which the topic will be advertised.
- * @parameter [in] type The type of the published data
- * @parameter [in] buffer The buffer where the topic messages will be stored.
- * @parameter [in] name The topic name, used to refer to it from the rest
- * of the application.
- *
- * @note The topic name will be truncated to TOPIC_NAME_MAX_LENGTH characters.
- */
-void messagebus_topic_create(msgbus_topic_t *topic,
-                             msgbus_t *bus,
-                             const msgbus_type_definition_t *type,
-                             void *buffer,
-                             const char *name);
-
-/** Initializes a new message bus with no topics.
- *
- * @parameter [in] bus The messagebus to init.
- */
-void messagebus_init(msgbus_t *bus);
-
-/** Finds a topic on the bus.
- *
- * @parameter [in] bus The bus to scan.
- * @parameter [in] name The name of the topic to search.
- *
- * @return A pointer to the topic if it is found, NULL otherwise.
- */
-msgbus_topic_t *messagebus_find_topic(msgbus_t *bus, const char *name);
-
-/** Waits until a topic is found on the bus.
- *
- * @parameter [in] bus The bus to scan.
- * @parameter [in] name The name of the topic to search.
- */
-msgbus_topic_t *messagebus_find_topic_blocking(msgbus_t *bus, const char *name);
-
-/** Publish a topics on the bus.
- *
- * @parameter [in] topic A pointer to the topic to publish.
- * @parameter [in] buf Pointer to a buffer containing the data to publish.
- *
- */
-void messagebus_topic_publish(msgbus_topic_t *topic, void *buf);
 
 
 /** Reads the content of a single topic.

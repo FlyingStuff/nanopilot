@@ -1,6 +1,7 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 #include "../messagebus.h"
+#include "../msgbus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
 
@@ -15,8 +16,8 @@ TEST_GROUP(MessageBusAtomicityTestGroup)
     {
         mock().strictOrder();
 
-        messagebus_init(&bus);
-        messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+        msgbus_init(&bus);
+        msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
     }
 
     void teardown()
@@ -35,8 +36,8 @@ TEST(MessageBusAtomicityTestGroup, AdvertiseIsLockedProperly)
           .withPointerParameter("lock", &bus.lock);
 
     lock_mocks_enable(true);
-    messagebus_init(&bus);
-    messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    msgbus_init(&bus);
+    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
 }
 
 TEST(MessageBusAtomicityTestGroup, FindNoneIsLockedProperly)
@@ -47,7 +48,7 @@ TEST(MessageBusAtomicityTestGroup, FindNoneIsLockedProperly)
           .withPointerParameter("lock", &bus.lock);
 
     lock_mocks_enable(true);
-    messagebus_find_topic(&bus, "topic");
+    msgbus_find_topic(&bus, "topic");
 }
 
 TEST(MessageBusAtomicityTestGroup, FindExistingTopicIsLockedProperly)
@@ -58,7 +59,7 @@ TEST(MessageBusAtomicityTestGroup, FindExistingTopicIsLockedProperly)
           .withPointerParameter("lock", &bus.lock);
 
     lock_mocks_enable(true);
-    messagebus_find_topic(&bus, "topic");
+    msgbus_find_topic(&bus, "topic");
 }
 
 TEST(MessageBusAtomicityTestGroup, PublishIsAtomic)
@@ -70,7 +71,7 @@ TEST(MessageBusAtomicityTestGroup, PublishIsAtomic)
           .withPointerParameter("lock", &topic.lock);
 
     lock_mocks_enable(true);
-    messagebus_topic_publish(&topic, data);
+    msgbus_topic_publish(&topic, data);
 }
 
 TEST(MessageBusAtomicityTestGroup, ReadPublished)
@@ -83,7 +84,7 @@ TEST(MessageBusAtomicityTestGroup, ReadPublished)
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
-    messagebus_topic_publish(&topic, buffer);
+    msgbus_topic_publish(&topic, buffer);
 
     lock_mocks_enable(true);
     res = messagebus_topic_read(&topic, buffer);
@@ -128,5 +129,5 @@ TEST(MessageBusAtomicityTestGroup, FindBlocking)
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
-    messagebus_find_topic_blocking(&bus, "topic");
+    msgbus_find_topic_blocking(&bus, "topic", MSGBUS_TIMEOUT_NEVER);
 }

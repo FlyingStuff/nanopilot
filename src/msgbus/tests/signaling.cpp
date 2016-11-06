@@ -1,5 +1,6 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
+#include "../msgbus.h"
 #include "../messagebus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
@@ -13,8 +14,8 @@ TEST_GROUP(SignalingTestGroup)
     void setup()
     {
         mock().strictOrder();
-        messagebus_init(&bus);
-        messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+        msgbus_init(&bus);
+        msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
     }
 
     void teardown()
@@ -40,7 +41,7 @@ TEST(SignalingTestGroup, TopicPublish)
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
-    messagebus_topic_publish(&topic, buffer);
+    msgbus_topic_publish(&topic, buffer);
 }
 
 TEST(SignalingTestGroup, TopicWait)
@@ -74,5 +75,5 @@ TEST(SignalingTestGroup, Advertise)
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
-    messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
 }

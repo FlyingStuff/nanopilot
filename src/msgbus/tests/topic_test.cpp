@@ -1,5 +1,6 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
+#include "../msgbus.h"
 #include "../messagebus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
@@ -13,8 +14,8 @@ TEST_GROUP(TopicTests)
 
     void setup()
     {
-        messagebus_init(&bus);
-        messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+        msgbus_init(&bus);
+        msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
     }
 
     void teardown()
@@ -33,7 +34,7 @@ TEST(TopicTests, Initializer)
     mock().expectOneCall("messagebus_lock_init").withParameter("lock", &topic.lock);
     condvar_init_mock_enable(true);
 
-    messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
 
     POINTERS_EQUAL(buffer, topic.buffer);
     POINTERS_EQUAL(&simple_type, topic.type);
@@ -45,7 +46,7 @@ TEST(TopicTests, PublishCopiesData)
 {
     simple_t data = {42};
 
-    messagebus_topic_publish(&topic, &data);
+    msgbus_topic_publish(&topic, &data);
 
     MEMCMP_EQUAL(topic.buffer, &data, sizeof(data));
 }
@@ -54,7 +55,7 @@ TEST(TopicTests, PublishIncrementsSequenceNbr)
 {
     simple_t data = {42};
 
-    messagebus_topic_publish(&topic, &data);
+    msgbus_topic_publish(&topic, &data);
 
     CHECK_EQUAL(1, topic.pub_seq_nbr);
 }
@@ -64,7 +65,7 @@ TEST(TopicTests, PublishSequenceNbrCorrectlyOverflows)
     simple_t data = {42};
 
     topic.pub_seq_nbr = UINT32_MAX;
-    messagebus_topic_publish(&topic, &data);
+    msgbus_topic_publish(&topic, &data);
 
     CHECK_EQUAL(0, topic.pub_seq_nbr);
 }
@@ -76,7 +77,7 @@ TEST(TopicTests, PublishAndReadBack)
     simple_t rx;
     bool res;
 
-    messagebus_topic_publish(&topic, &tx);
+    msgbus_topic_publish(&topic, &tx);
     res = messagebus_topic_read(&topic, &rx);
 
     CHECK_TRUE(res);
@@ -97,7 +98,7 @@ TEST(TopicTests, WaitForUpdate)
     simple_t tx = {42};
     simple_t rx;
 
-    messagebus_topic_publish(&topic, &tx);
+    msgbus_topic_publish(&topic, &tx);
     messagebus_topic_wait(&topic, &rx);
 
     CHECK_EQUAL(tx.x, rx.x);

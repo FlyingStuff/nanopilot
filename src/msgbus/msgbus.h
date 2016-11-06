@@ -7,8 +7,30 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "type_definition.h"
-#include "messagebus.h"
 #include <messagebus_port.h>
+
+
+#define TOPIC_NAME_MAX_LENGTH 64
+
+typedef struct topic_s {
+    void *buffer;
+    const msgbus_type_definition_t *type;
+    msgbus_mutex_t lock;
+    msgbus_cond_t condvar;
+    char name[TOPIC_NAME_MAX_LENGTH+1];
+    struct topic_s *next;
+    bool published;
+    uint32_t pub_seq_nbr;
+} msgbus_topic_t;
+
+
+typedef struct {
+    struct {
+        msgbus_topic_t *head;
+    } topics;
+    msgbus_mutex_t lock;
+    msgbus_cond_t condvar;
+} msgbus_t;
 
 
 typedef struct {
@@ -39,6 +61,8 @@ void msgbus_init(msgbus_t *bus);
  * @parameter [in] type The data type of the topic
  * @parameter [in] buffer The buffer to be used (the size is given by the type)
  * @parameter [in] name The name under which the topic is published
+ *
+ * @note The topic name will be truncated to TOPIC_NAME_MAX_LENGTH characters.
  */
 void msgbus_topic_create(msgbus_topic_t *topic,
                          msgbus_t *bus,
@@ -54,6 +78,18 @@ void msgbus_topic_create(msgbus_topic_t *topic,
  * @returns A pointer to the topic or NULL if it doesn't exist
  */
 msgbus_topic_t *msgbus_find_topic(msgbus_t *bus, const char *name);
+
+/** Search for a topic or wait for creation
+ *
+ * @parameter [in] bus The bus object
+ * @parameter [in] name The name of the topic
+ * @parameter [in] timeout_us Timeout in microseconds
+ *
+ * @returns A pointer to the topic or NULL if it wasn't create before the timeout
+ */
+msgbus_topic_t *msgbus_find_topic_blocking(msgbus_t *bus,
+                                           const char *name,
+                                           uint64_t timeout_us);
 
 /** Start iteration over all topics on a bus
  *

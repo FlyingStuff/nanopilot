@@ -1,6 +1,7 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+#include "../msgbus.h"
 #include "../messagebus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
@@ -12,9 +13,9 @@ TEST_GROUP(MsgBusForeachTestGroup)
 
    void setup()
    {
-        messagebus_init(&bus);
-        messagebus_topic_create(&foo, &bus, &simple_type, NULL, "foo");
-        messagebus_topic_create(&bar, &bus, &simple_type, NULL, "bar");
+        msgbus_init(&bus);
+        msgbus_topic_create(&foo, &bus, &simple_type, NULL, "foo");
+        msgbus_topic_create(&bar, &bus, &simple_type, NULL, "bar");
    }
 
    void teardown()
