@@ -13,8 +13,7 @@ void msgbus_topic_create(msgbus_topic_t *topic,
                          void *buffer,
                          const char *name)
 {
-    topic->type = type;
-    messagebus_topic_create(&topic->topic, &bus->bus, buffer, type->struct_size, name);
+    messagebus_topic_create(&topic->topic, &bus->bus, type, buffer, name);
 }
 
 
@@ -51,13 +50,13 @@ msgbus_topic_t *msgbus_iterate_topics_next(msgbus_topic_t *topic)
 
 void msgbus_topic_publish(msgbus_topic_t *topic, const void *val)
 {
-    messagebus_topic_publish(&topic->topic, (void*)val, topic->type->struct_size);
+    messagebus_topic_publish(&topic->topic, (void*)val);
 }
 
 
 const msgbus_type_definition_t *msgbus_topic_get_type(msgbus_topic_t *topic)
 {
-    return topic->type;
+    return topic->topic.type;
 }
 
 
@@ -103,7 +102,7 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
         if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
             return false;
         } else { // todo timeout not working with current implementation
-            messagebus_topic_wait(&sub->topic->topic, NULL, 0);
+            messagebus_topic_wait(&sub->topic->topic, NULL);
             return true;
         }
     }
@@ -132,7 +131,7 @@ bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub)
 void msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest)
 {
     sub->pub_seq_nbr = sub->topic->topic.pub_seq_nbr;
-    messagebus_topic_read(&sub->topic->topic, dest, sub->topic->type->struct_size);
+    messagebus_topic_read(&sub->topic->topic, dest);
 }
 
 

@@ -8,12 +8,13 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <messagebus_port.h>
+#include "type_definition.h"
 
 #define TOPIC_NAME_MAX_LENGTH 64
 
 typedef struct topic_s {
     void *buffer;
-    size_t buffer_len;
+    const msgbus_type_definition_t *type;
     msgbus_mutex_t lock;
     msgbus_cond_t condvar;
     char name[TOPIC_NAME_MAX_LENGTH+1];
@@ -45,8 +46,8 @@ typedef struct {
  *
  * @parameter [in] topic The topic object to create.
  * @parameter [in] bus The bus on which the topic will be advertised.
- * @parameter [in] buffer,buffer_len The buffer where the topic messages will
- * be stored.
+ * @parameter [in] type The type of the published data
+ * @parameter [in] buffer The buffer where the topic messages will be stored.
  * @parameter [in] name The topic name, used to refer to it from the rest
  * of the application.
  *
@@ -54,8 +55,8 @@ typedef struct {
  */
 void messagebus_topic_create(messagebus_topic_t *topic,
                              messagebus_t *bus,
+                             const msgbus_type_definition_t *type,
                              void *buffer,
-                             size_t buffer_len,
                              const char *name);
 
 /** Initializes a new message bus with no topics.
@@ -84,32 +85,27 @@ messagebus_topic_t *messagebus_find_topic_blocking(messagebus_t *bus, const char
  *
  * @parameter [in] topic A pointer to the topic to publish.
  * @parameter [in] buf Pointer to a buffer containing the data to publish.
- * @parameter [in] buf_len Length of the data buffer.
  *
- * @warning If the buffer is too big to fit in the topic, no message is sent and
- * false is returned.
- * @returns True if successful, otherwise.
  */
-bool messagebus_topic_publish(messagebus_topic_t *topic, void *buf, size_t buf_len);
+void messagebus_topic_publish(messagebus_topic_t *topic, void *buf);
+
 
 /** Reads the content of a single topic.
  *
  * @parameter [in] topic A pointer to the topic to read.
  * @parameter [out] buf Pointer where the read data will be stored.
- * @parameter [out] buf_len Length of the buffer.
  *
  * @returns true if the topic was published on at least once.
  * @returns false if the topic was never published to
  */
-bool messagebus_topic_read(messagebus_topic_t *topic, void *buf, size_t buf_len);
+bool messagebus_topic_read(messagebus_topic_t *topic, void *buf);
 
 /** Wait for an update to be published on the topic.
  *
  * @parameter [in] topic A pointer to the topic to read.
  * @parameter [out] buf Pointer where the read data will be stored.
- * @parameter [out] buf_len Length of the buffer.
  */
-void messagebus_topic_wait(messagebus_topic_t *topic, void *buf, size_t buf_len);
+void messagebus_topic_wait(messagebus_topic_t *topic, void *buf);
 
 /** @defgroup portable Portable functions, platform specific.
  * @{*/

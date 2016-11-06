@@ -1,0 +1,7 @@
+
+simple:
+    float32 x
+    int32 y
+
+nested:
+    simple s

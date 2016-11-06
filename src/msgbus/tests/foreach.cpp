@@ -3,6 +3,7 @@
 
 #include "../messagebus.h"
 #include "mocks/synchronization.hpp"
+#include "types/test.h"
 
 TEST_GROUP(MsgBusForeachTestGroup)
 {
@@ -12,8 +13,8 @@ TEST_GROUP(MsgBusForeachTestGroup)
    void setup()
    {
         messagebus_init(&bus);
-        messagebus_topic_create(&foo, &bus, NULL, 0, "foo");
-        messagebus_topic_create(&bar, &bus, NULL, 0, "bar");
+        messagebus_topic_create(&foo, &bus, &simple_type, NULL, "foo");
+        messagebus_topic_create(&bar, &bus, &simple_type, NULL, "bar");
    }
 
    void teardown()

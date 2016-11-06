@@ -12,6 +12,7 @@ source:
 
 tests:
     - tests/mocks/synchronization.cpp
+    - tests/types/test.c
     - tests/atomicity.cpp
     - tests/bus_test.cpp
     - tests/topic_test.cpp

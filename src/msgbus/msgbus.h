@@ -11,8 +11,6 @@
 #include <messagebus_port.h>
 
 typedef struct {
-    const msgbus_type_definition_t *type;
-    // wrapped topic
     messagebus_topic_t topic;
 } msgbus_topic_t;
 

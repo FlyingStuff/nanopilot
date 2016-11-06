@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <CppUTest/TestHarness.h>
 #include "../serialization_msgpack.h"
+#include "types/test.h"
 
 extern "C" {
 #include "cmp/cmp.h"
@@ -28,56 +29,6 @@ bool msgbus_cmp_ser_value_once(const void *var,
                                bool compact);
 }
 
-
-struct simple_s {
-    float x;
-    int32_t y;
-};
-
-msgbus_type_entry_t simple_entries[] = {
-    {
-        .name = "x",
-        .is_base_type = 1,
-        .is_array = 0,
-        .is_dynamic_array = 0,
-        .struct_offset = offsetof(struct simple_s, x),
-        .base_type = MSGBUS_TYPE_FLOAT32,
-    },
-    {
-        .name = "y",
-        .is_base_type = 1,
-        .is_array = 0,
-        .is_dynamic_array = 0,
-        .struct_offset = offsetof(struct simple_s, y),
-        .base_type = MSGBUS_TYPE_INT32,
-    }
-};
-
-msgbus_type_definition_t simple_type = {
-    .nb_elements = 2,
-    .elements = simple_entries,
-};
-
-
-struct nested_s {
-    struct simple_s s;
-};
-
-msgbus_type_entry_t nested_entries[] = {
-    {
-        .name = "s",
-        .is_base_type = 0,
-        .is_array = 0,
-        .is_dynamic_array = 0,
-        .struct_offset = offsetof(struct nested_s, s),
-        .type = &simple_type,
-    }
-};
-
-msgbus_type_definition_t nested_type = {
-    .nb_elements = 1,
-    .elements = nested_entries,
-};
 
 
 TEST_GROUP(MessagePackSerializationTests)
@@ -158,7 +109,7 @@ TEST(MessagePackSerializationTests, SerializeCustomTypeValue)
         .type = &simple_type,
         .struct_offset = 0,
     };
-    struct simple_s var = {.x = 3.14, .y = 42};
+    simple_t var = {.x = 3.14, .y = 42};
     CHECK_TRUE(msgbus_cmp_ser_value(&var, &entry, &ctx, false));
     cmp_mem_access_set_pos(&mem, 0);
     uint32_t nb_elements;
@@ -268,7 +219,7 @@ TEST(MessagePackSerializationTests, SerializeStructEntry)
 
 TEST(MessagePackSerializationTests, SerializeStruct)
 {
-    struct simple_s val = {.x = 3.14, .y = 42};
+    simple_t val = {.x = 3.14, .y = 42};
     CHECK_TRUE(msgbus_cmp_ser_type(&val, &simple_type, &ctx, false));
 
     cmp_mem_access_set_pos(&mem, 0);
@@ -295,7 +246,7 @@ TEST(MessagePackSerializationTests, SerializeStruct)
 
 TEST(MessagePackSerializationTests, SerializeStructCompact)
 {
-    struct simple_s val = {.x = 3.14, .y = 42};
+    simple_t val = {.x = 3.14, .y = 42};
     CHECK_TRUE(msgbus_cmp_ser_type(&val, &simple_type, &ctx, true));
 
     cmp_mem_access_set_pos(&mem, 0);
@@ -312,7 +263,7 @@ TEST(MessagePackSerializationTests, SerializeStructCompact)
 
 TEST(MessagePackSerializationTests, SerializeNestedStructCompact)
 {
-    struct nested_s val = {.s = {.x = 3.14, .y = 42}};
+    nested_t val = {.s = {.x = 3.14, .y = 42}};
     CHECK_TRUE(msgbus_cmp_ser_type(&val, &nested_type, &ctx, true));
 
     cmp_mem_access_set_pos(&mem, 0);

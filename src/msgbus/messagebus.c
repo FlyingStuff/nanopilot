@@ -26,13 +26,13 @@ void messagebus_init(messagebus_t *bus)
 
 void messagebus_topic_create(messagebus_topic_t *topic,
                              messagebus_t *bus,
+                             const msgbus_type_definition_t *type,
                              void *buffer,
-                             size_t buffer_len,
                              const char *name)
 {
     memset(topic, 0, sizeof(messagebus_topic_t));
     topic->buffer = buffer;
-    topic->buffer_len = buffer_len;
+    topic->type = type;
     messagebus_condvar_init(&topic->condvar);
     messagebus_lock_init(&topic->lock);
 
@@ -89,32 +89,26 @@ messagebus_topic_t *messagebus_find_topic_blocking(messagebus_t *bus, const char
     return res;
 }
 
-bool messagebus_topic_publish(messagebus_topic_t *topic, void *buf, size_t buf_len)
+void messagebus_topic_publish(messagebus_topic_t *topic, void *buf)
 {
-    if (topic->buffer_len < buf_len) {
-        return false;
-    }
-
     messagebus_lock_acquire(&topic->lock);
 
-    memcpy(topic->buffer, buf, buf_len);
+    memcpy(topic->buffer, buf, topic->type->struct_size);
     topic->published = true;
     topic->pub_seq_nbr++;
     messagebus_condvar_broadcast(&topic->condvar);
 
     messagebus_lock_release(&topic->lock);
-
-    return true;
 }
 
-bool messagebus_topic_read(messagebus_topic_t *topic, void *buf, size_t buf_len)
+bool messagebus_topic_read(messagebus_topic_t *topic, void *buf)
 {
     bool success = false;
     messagebus_lock_acquire(&topic->lock);
 
     if (topic->published) {
         success = true;
-        memcpy(buf, topic->buffer, buf_len);
+        memcpy(buf, topic->buffer, topic->type->struct_size);
     }
 
     messagebus_lock_release(&topic->lock);
@@ -122,12 +116,12 @@ bool messagebus_topic_read(messagebus_topic_t *topic, void *buf, size_t buf_len)
     return success;
 }
 
-void messagebus_topic_wait(messagebus_topic_t *topic, void *buf, size_t buf_len)
+void messagebus_topic_wait(messagebus_topic_t *topic, void *buf)
 {
     messagebus_lock_acquire(&topic->lock);
     messagebus_condvar_wait(&topic->condvar);
 
-    memcpy(buf, topic->buffer, buf_len);
+    memcpy(buf, topic->buffer, topic->type->struct_size);
 
     messagebus_lock_release(&topic->lock);
 }

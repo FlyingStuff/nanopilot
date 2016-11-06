@@ -2,6 +2,7 @@
 #include <CppUTestExt/MockSupport.h>
 #include "../messagebus.h"
 #include "mocks/synchronization.hpp"
+#include "types/test.h"
 
 
 TEST_GROUP(TopicTests)
@@ -13,7 +14,7 @@ TEST_GROUP(TopicTests)
     void setup()
     {
         messagebus_init(&bus);
-        messagebus_topic_create(&topic, &bus, buffer, sizeof buffer, "topic");
+        messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
     }
 
     void teardown()
@@ -32,86 +33,73 @@ TEST(TopicTests, Initializer)
     mock().expectOneCall("messagebus_lock_init").withParameter("lock", &topic.lock);
     condvar_init_mock_enable(true);
 
-    messagebus_topic_create(&topic, &bus, buffer, sizeof buffer, "topic");
+    messagebus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
 
     POINTERS_EQUAL(buffer, topic.buffer);
-    CHECK_EQUAL(sizeof(buffer), topic.buffer_len);
+    POINTERS_EQUAL(&simple_type, topic.type);
     CHECK_EQUAL(0, topic.pub_seq_nbr);
     STRCMP_EQUAL("topic", topic.name);
 }
 
 TEST(TopicTests, PublishCopiesData)
 {
-    uint8_t data[] = {1, 2, 3};
-    bool res;
+    simple_t data = {42};
 
-    res = messagebus_topic_publish(&topic, data, sizeof(data));
+    messagebus_topic_publish(&topic, &data);
 
-    MEMCMP_EQUAL(topic.buffer, data, sizeof(data));
-    CHECK_TRUE(res);
+    MEMCMP_EQUAL(topic.buffer, &data, sizeof(data));
 }
 
 TEST(TopicTests, PublishIncrementsSequenceNbr)
 {
-    uint8_t data[] = {1, 2, 3};
-    bool res;
+    simple_t data = {42};
 
-    res = messagebus_topic_publish(&topic, data, sizeof(data));
+    messagebus_topic_publish(&topic, &data);
 
     CHECK_EQUAL(1, topic.pub_seq_nbr);
 }
 
 TEST(TopicTests, PublishSequenceNbrCorrectlyOverflows)
 {
-    uint8_t data[] = {1, 2, 3};
-    bool res;
+    simple_t data = {42};
 
     topic.pub_seq_nbr = UINT32_MAX;
-    res = messagebus_topic_publish(&topic, data, sizeof(data));
+    messagebus_topic_publish(&topic, &data);
 
     CHECK_EQUAL(0, topic.pub_seq_nbr);
 }
 
 
-TEST(TopicTests, WontPublishTooBigMessage)
+TEST(TopicTests, PublishAndReadBack)
 {
-    uint8_t data[] = {1, 2, 3};
+    simple_t tx = {42};
+    simple_t rx;
     bool res;
 
-    topic.buffer_len = 1;
-    res = messagebus_topic_publish(&topic, data, sizeof(data));
-
-    CHECK_FALSE(res);
-}
-
-TEST(TopicTests, CanRead)
-{
-    int tx=42, rx;
-    bool res;
-
-    messagebus_topic_publish(&topic, &tx, sizeof(int));
-    res = messagebus_topic_read(&topic, &rx, sizeof(int));
+    messagebus_topic_publish(&topic, &tx);
+    res = messagebus_topic_read(&topic, &rx);
 
     CHECK_TRUE(res);
-    CHECK_EQUAL(tx, rx);
+    CHECK_EQUAL(tx.x, rx.x);
 }
 
 TEST(TopicTests, WontReadUnpublishedtopic)
 {
-    int rx;
+    simple_t rx = {42};
     bool res;
 
-    res = messagebus_topic_read(&topic, &rx, sizeof(int));
+    res = messagebus_topic_read(&topic, &rx);
     CHECK_FALSE(res);
 }
 
 TEST(TopicTests, WaitForUpdate)
 {
-    int tx=42, rx;
+    simple_t tx = {42};
+    simple_t rx;
 
-    messagebus_topic_publish(&topic, &tx, sizeof(int));
-    messagebus_topic_wait(&topic, &rx, sizeof(int));
+    messagebus_topic_publish(&topic, &tx);
+    messagebus_topic_wait(&topic, &rx);
 
-    CHECK_EQUAL(tx, rx);
+    CHECK_EQUAL(tx.x, rx.x);
 }
 
