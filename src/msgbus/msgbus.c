@@ -171,13 +171,19 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
 }
 
 
+static uint32_t subscriber_get_nb_updates_with_lock(msgbus_subscriber_t *sub)
+{
+    return sub->topic->pub_seq_nbr - sub->pub_seq_nbr;
+}
+
+
 uint32_t msgbus_subscriber_has_update(msgbus_subscriber_t *sub)
 {
     uint32_t ret;
 
     messagebus_lock_acquire(&sub->topic->lock);
 
-    ret = sub->topic->pub_seq_nbr - sub->pub_seq_nbr;
+    ret = subscriber_get_nb_updates_with_lock(sub);
 
     messagebus_lock_release(&sub->topic->lock);
 
@@ -197,10 +203,19 @@ bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub)
 }
 
 
-void msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest)
+uint32_t msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest)
 {
+    uint32_t ret;
+
+    messagebus_lock_acquire(&sub->topic->lock);
+
+    ret = subscriber_get_nb_updates_with_lock(sub);
     sub->pub_seq_nbr = sub->topic->pub_seq_nbr;
-    messagebus_topic_read(sub->topic, dest);
+    memcpy(dest, sub->topic->buffer, sub->topic->type->struct_size);
+
+    messagebus_lock_release(&sub->topic->lock);
+
+    return ret;
 }
 
 

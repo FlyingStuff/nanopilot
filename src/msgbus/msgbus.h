@@ -193,9 +193,11 @@ bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub);
  * @parameter [in] sub Subscriber object
  * @parameter [out] dest Pointer to the value to be read
  *
+ * @returns the number of updates since the last read
+ *
  * @note A topic must not be read if it is not valid (has not been pubished yet)
  */
-void msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest);
+uint32_t msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest);
 
 /** Get a pointer to the topic to which the subscriber subscribed
  *

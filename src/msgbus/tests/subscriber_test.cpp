@@ -91,6 +91,16 @@ TEST(SubscriberTests, SubscriberUpdateCountResetsAfterRead)
     CHECK_EQUAL(0, msgbus_subscriber_has_update(&sub));
 }
 
+TEST(SubscriberTests, SubscriberReturnsNbrOfUpdatesOnRead)
+{
+    simple_t val;
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+    msgbus_topic_publish(&topic, &val);
+    msgbus_topic_publish(&topic, &val);
+    int ret = msgbus_subscriber_read(&sub, &val);
+    CHECK_EQUAL(2, ret);
+}
+
 TEST(SubscriberTests, SubscriberUpdateCountIsExactlyOneIfSubscribedAfterPublish)
 {
     simple_t val;
