@@ -57,33 +57,21 @@ void msgbus_topic_create(msgbus_topic_t *topic,
 }
 
 
-msgbus_topic_t *msgbus_find_topic(msgbus_t *bus, const char *name)
+msgbus_topic_t *msgbus_find_topic(msgbus_t *bus,
+                                  const char *name,
+                                  uint64_t timeout_us)
 {
-    msgbus_topic_t *res;
-
-    messagebus_lock_acquire(&bus->lock);
-
-    res = topic_by_name(bus, name);
-
-    messagebus_lock_release(&bus->lock);
-
-    return res;
-}
-
-msgbus_topic_t *msgbus_find_topic_blocking(msgbus_t *bus,
-                                           const char *name,
-                                           uint64_t timeout_us)
-{
-    // todo timeout ignored
     msgbus_topic_t *res = NULL;
 
     messagebus_lock_acquire(&bus->lock);
 
-    while (res == NULL) {
+    while (true) {
         res = topic_by_name(bus, name);
 
-        if (res == NULL) {
-            messagebus_condvar_wait(&bus->condvar, timeout_us);
+        if (res == NULL && timeout_us != MSGBUS_TIMEOUT_IMMEDIATE) {
+            messagebus_condvar_wait(&bus->condvar, timeout_us); // todo handle return value
+        } else {
+            break;
         }
     }
 
@@ -135,12 +123,7 @@ bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
                             const char *name,
                             uint64_t timeout_us)
 {
-    msgbus_topic_t *topic;
-    if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
-        topic = msgbus_find_topic(bus, name);
-    } else {
-        topic = msgbus_find_topic_blocking(bus, name, MSGBUS_TIMEOUT_IMMEDIATE);
-    }
+    msgbus_topic_t *topic = msgbus_find_topic(bus, name, timeout_us);
     sub->topic = topic;
     if (topic == NULL) {
         return false;

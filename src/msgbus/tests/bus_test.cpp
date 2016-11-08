@@ -54,14 +54,13 @@ TEST(BusTests, NextofListIsOkToo)
 
 TEST(BusTests, FindTopicNotFound)
 {
-    msgbus_find_topic(&bus, "topic");
-    POINTERS_EQUAL(NULL, msgbus_find_topic(&bus, "topic"));
+    POINTERS_EQUAL(NULL, msgbus_find_topic(&bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE));
 }
 
 TEST(BusTests, FindTopicFound)
 {
     msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
-    POINTERS_EQUAL(&topic, msgbus_find_topic(&bus, "topic"));
+    POINTERS_EQUAL(&topic, msgbus_find_topic(&bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE));
 }
 
 TEST(BusTests, FindOnBusWithMultipleTopics)
@@ -69,8 +68,8 @@ TEST(BusTests, FindOnBusWithMultipleTopics)
     msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "first");
     msgbus_topic_create(&second_topic, &bus, &simple_type, &buffer, "second");
 
-    POINTERS_EQUAL(&topic, msgbus_find_topic(&bus, "first"));
-    POINTERS_EQUAL(&second_topic, msgbus_find_topic(&bus, "second"));
+    POINTERS_EQUAL(&topic, msgbus_find_topic(&bus, "first", MSGBUS_TIMEOUT_IMMEDIATE));
+    POINTERS_EQUAL(&second_topic, msgbus_find_topic(&bus, "second", MSGBUS_TIMEOUT_IMMEDIATE));
 }
 
 TEST(BusTests, FindTopicBlocking)
@@ -80,7 +79,7 @@ TEST(BusTests, FindTopicBlocking)
      * when the topic is not on the bus yes without additional thread and I
      * don't like threading in tests. */
     msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
-    res = msgbus_find_topic_blocking(&bus, "topic", MSGBUS_TIMEOUT_NEVER);
+    res = msgbus_find_topic(&bus, "topic", MSGBUS_TIMEOUT_NEVER);
     POINTERS_EQUAL(&topic, res);
 }
 

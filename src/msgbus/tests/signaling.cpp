@@ -27,6 +27,13 @@ TEST_GROUP(SignalingTestGroup)
     }
 };
 
+TEST(SignalingTestGroup, TopicFindWithTimeoutImmediateDoesntBlockOnCond)
+{
+    condvar_mocks_enable(true);
+
+    msgbus_find_topic(&bus, "notatopic", MSGBUS_TIMEOUT_IMMEDIATE);
+}
+
 TEST(SignalingTestGroup, TopicPublish)
 {
     lock_mocks_enable(true);
@@ -60,6 +67,15 @@ TEST(SignalingTestGroup, TopicWait)
           .withPointerParameter("lock", &topic.lock);
 
     messagebus_topic_wait(&topic, buffer);
+}
+
+TEST(SignalingTestGroup, SubscriberWaitWithTimeoutImmediateDoesntBlockOnCond)
+{
+    msgbus_subscriber_t sub;
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+
+    condvar_mocks_enable(true);
+    CHECK_FALSE(msgbus_subscriber_wait_for_update(&sub, MSGBUS_TIMEOUT_IMMEDIATE));
 }
 
 TEST(SignalingTestGroup, Advertise)

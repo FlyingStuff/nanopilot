@@ -70,26 +70,17 @@ void msgbus_topic_create(msgbus_topic_t *topic,
                          void *buffer,
                          const char *name);
 
-/** Search for a topic
- *
- * @parameter [in] bus The bus object
- * @parameter [in] name The name of the topic
- *
- * @returns A pointer to the topic or NULL if it doesn't exist
- */
-msgbus_topic_t *msgbus_find_topic(msgbus_t *bus, const char *name);
-
 /** Search for a topic or wait for creation
  *
  * @parameter [in] bus The bus object
  * @parameter [in] name The name of the topic
  * @parameter [in] timeout_us Timeout in microseconds
  *
- * @returns A pointer to the topic or NULL if it wasn't create before the timeout
+ * @returns A pointer to the topic or NULL if it wasn't created before the timeout
  */
-msgbus_topic_t *msgbus_find_topic_blocking(msgbus_t *bus,
-                                           const char *name,
-                                           uint64_t timeout_us);
+msgbus_topic_t *msgbus_find_topic(msgbus_t *bus,
+                                  const char *name,
+                                  uint64_t timeout_us);
 
 /** Start iteration over all topics on a bus
  *
