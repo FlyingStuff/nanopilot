@@ -13,6 +13,10 @@ typedef struct {
     int cond;
 } messagebus_condvar_wrapper_t;
 
+void msgbus_unittest_assert(bool condition);
+#define MSGBUS_ASSERT(x) msgbus_unittest_assert(x)
+
+
 #else // ChibiOS
 
 #include <ch.h>

@@ -12,6 +12,7 @@ source:
 
 tests:
     - tests/mocks/synchronization.cpp
+    - tests/mocks/assert.cpp
     - tests/types/test.c
     - tests/atomicity.cpp
     - tests/bus_test.cpp
@@ -21,6 +22,7 @@ tests:
     - tests/foreach.cpp
     - tests/serialization_msgpack_test.cpp
     - tests/type_print_test.cpp
+    - tests/cpp_wrapper_test.cpp
 
 target.demo:
     - examples/posix/demo.c
