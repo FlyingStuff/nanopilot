@@ -24,11 +24,8 @@ static msgbus_topic_t *topic_by_name(msgbus_t *bus, const char *name)
 }
 
 
-static void advertise_topic(msgbus_t *bus, msgbus_topic_t *topic, const char *name)
+static void advertise_topic(msgbus_t *bus, msgbus_topic_t *topic)
 {
-    memset(topic->name, 0, sizeof(topic->name));
-    strncpy(topic->name, name, TOPIC_NAME_MAX_LENGTH);
-
     messagebus_lock_acquire(&bus->lock);
 
     if (bus->topics.head != NULL) {
@@ -50,10 +47,11 @@ void msgbus_topic_create(msgbus_topic_t *topic,
     memset(topic, 0, sizeof(msgbus_topic_t));
     topic->buffer = buffer;
     topic->type = type;
+    topic->name = name;
     messagebus_condvar_init(&topic->condvar);
     messagebus_lock_init(&topic->lock);
 
-    advertise_topic(bus, topic, name);
+    advertise_topic(bus, topic);
 }
 
 

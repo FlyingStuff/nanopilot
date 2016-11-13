@@ -6,15 +6,12 @@
 #include "type_definition.h"
 #include <messagebus_port.h>
 
-
-#define TOPIC_NAME_MAX_LENGTH 64
-
 typedef struct topic_s {
     void *buffer;
     const msgbus_type_definition_t *type;
     msgbus_mutex_t lock;
     msgbus_cond_t condvar;
-    char name[TOPIC_NAME_MAX_LENGTH+1];
+    const char *name;
     struct topic_s *next;
     bool published;
     uint32_t pub_seq_nbr;
@@ -59,7 +56,8 @@ void msgbus_init(msgbus_t *bus);
  * @parameter [in] buffer The buffer to be used (the size is given by the type)
  * @parameter [in] name The name under which the topic is published
  *
- * @note The topic name will be truncated to TOPIC_NAME_MAX_LENGTH characters.
+ * @note Only a reference to the name string is stored so it must have the same
+ * lifetime as the topic
  */
 void msgbus_topic_create(msgbus_topic_t *topic,
                          msgbus_t *bus,
