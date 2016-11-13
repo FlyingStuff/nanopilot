@@ -2,45 +2,42 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <pthread.h>
-#include "../../messagebus.h"
-#include "messagebus_port.h"
+#include "../../msgbus.h"
+#include "example_type.h"
 
-messagebus_t bus;
+msgbus_t bus;
 
 static void* producer(void *p)
 {
-    messagebus_topic_t *topic;
-    int counter = 0;
-    int producer_number = (int)p;
+    const char *name = "test";
 
-    printf("[publisher %d] waiting for topic myint\n", producer_number);
+    msgbus_topic_t topic;
+    example_t topic_buffer;
+    msgbus_topic_create(&topic, &bus, &example_type, &topic_buffer, name);
 
+    example_t x = {.counter = 0};
     while (1) {
-        topic = messagebus_find_topic_blocking(&bus, "myint");
-        printf("[publisher %d] writing %d on topic %s\n",
-                producer_number, counter, topic->name);
-        messagebus_topic_publish(topic, &counter, sizeof counter);
-        counter += 1;
-        sleep(2);
+        printf("[publisher] writing %d on topic %s\n", x.counter, name);
+        msgbus_topic_publish(&topic, &x);
+        x.counter += 1;
+        sleep(1);
     }
-
-    return NULL;
 }
 
 static void *consumer(void *p)
 {
-    messagebus_topic_t *topic;
-    int received;
     int consumer_number = (int)p;
 
-    printf("[consumer %d] waiting for topic myint\n", consumer_number);
+    msgbus_subscriber_t sub;
 
+    printf("[consumer %d] waiting for topic\n", consumer_number);
+    msgbus_topic_subscribe(&sub, &bus, "test", MSGBUS_TIMEOUT_NEVER);
+
+    example_t x;
     while (1) {
-        topic = messagebus_find_topic_blocking(&bus, "myint");
-
-        messagebus_topic_wait(topic, &received, sizeof received);
-        printf("[consumer %d] read %d on topic %s\n",
-               consumer_number, received, topic->name);
+        msgbus_subscriber_wait_for_update(&sub, MSGBUS_TIMEOUT_NEVER);
+        msgbus_subscriber_read(&sub, &x);
+        printf("[consumer %d] read %d on topic\n", consumer_number, x.counter);
     }
 
     return NULL;
@@ -52,17 +49,7 @@ int main(int argc, const char **argv)
     (void) argv;
 
     /* Create the message bus. */
-    messagebus_condvar_wrapper_t bus_sync;
-    messagebus_condvar_wrapper_init(&bus_sync);
-    messagebus_init(&bus, &bus_sync, &bus_sync);
-
-    /* Creates a topic and publish it on the bus. */
-    messagebus_topic_t topic;
-    int buffer;
-
-    messagebus_condvar_wrapper_t wrapper;
-    messagebus_condvar_wrapper_init(&wrapper);
-    messagebus_topic_init(&topic, &wrapper, &wrapper, &buffer, sizeof buffer);
+    msgbus_init(&bus);
 
 
     /* Creates a few consumer threads. */
@@ -71,14 +58,12 @@ int main(int argc, const char **argv)
     pthread_create(&consumer_thd, NULL, consumer, (void *)2);
     pthread_create(&consumer_thd, NULL, consumer, (void *)3);
 
-    /* Creates the producer threads, slightly offset */
-    pthread_create(&producer_thd, NULL, producer, (void *)1);
-
     sleep(1);
-    messagebus_advertise_topic(&bus, &topic, "myint");
-    sleep(3);
-    pthread_create(&producer_thd, NULL, producer, (void *)2);
+
+    /* Creates a producer thread */
+    pthread_create(&producer_thd, NULL, producer, NULL);
 
     while(1) {
+        sleep(1);
     }
 }
