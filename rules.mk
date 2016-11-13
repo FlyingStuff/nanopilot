@@ -83,7 +83,7 @@ else
 endif
 ASRC	  = $(ACSRC)$(ACPPSRC)
 TSRC	  = $(TCSRC)$(TCPPSRC)
-SRCPATHS  = $(sort $(dir $(ASMXSRC)) $(dir $(ASMSRC)) $(dir $(ASRC)) $(dir $(TSRC)))
+SRCPATHS  = $(dir $(ASMXSRC)) $(dir $(ASMSRC)) $(dir $(ASRC)) $(dir $(TSRC))
 
 # Various directories
 OBJDIR    = $(BUILDDIR)/obj

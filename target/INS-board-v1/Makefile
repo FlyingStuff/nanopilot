@@ -103,7 +103,8 @@ LDSCRIPT= STM32F405xG.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CSRC = $(PORTSRC) \
+CSRC = $(PROJCSRC) \
+	   $(PORTSRC) \
        $(KERNSRC) \
        $(TESTSRC) \
        $(HALSRC) \
@@ -116,13 +117,12 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/various/shell.c \
        $(FATFSSRC) \
        $(TYPECSRC) \
-       $(PROJCSRC) \
        $(PROJROOT)/src/git_revision.c \
        board.c main.c exti.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CPPSRC = $(CHCPPSRC) $(PROJCPPSRC)
+CPPSRC = $(PROJCPPSRC) $(CHCPPSRC)
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
