@@ -1,9 +1,10 @@
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 #include "../messagebus.h"
 #include "../msgbus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
+
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 
 TEST_GROUP(MessageBusAtomicityTestGroup)
@@ -86,6 +87,20 @@ TEST(MessageBusAtomicityTestGroup, PublishIsAtomic)
     lock_mocks_enable(true);
     msgbus_topic_publish(&topic, data);
 }
+
+TEST(MessageBusAtomicityTestGroup, SubscriberWaitLocks)
+{
+    mock().expectOneCall("messagebus_lock_acquire")
+          .withPointerParameter("lock", &topic.lock);
+    mock().expectOneCall("messagebus_lock_release")
+          .withPointerParameter("lock", &topic.lock);
+
+    msgbus_subscriber_t sub;
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+    lock_mocks_enable(true);
+    msgbus_subscriber_wait_for_update(&sub, MSGBUS_TIMEOUT_IMMEDIATE);
+}
+
 
 TEST(MessageBusAtomicityTestGroup, ReadPublished)
 {

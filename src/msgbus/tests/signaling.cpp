@@ -1,9 +1,10 @@
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 #include "../msgbus.h"
 #include "../messagebus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
+
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 TEST_GROUP(SignalingTestGroup)
 {
@@ -20,6 +21,7 @@ TEST_GROUP(SignalingTestGroup)
 
     void teardown()
     {
+        clear_condvar_wait_side_effect();
         lock_mocks_enable(false);
         condvar_mocks_enable(false);
         mock().checkExpectations();
@@ -76,6 +78,29 @@ TEST(SignalingTestGroup, SubscriberWaitWithTimeoutImmediateDoesntBlockOnCond)
 
     condvar_mocks_enable(true);
     CHECK_FALSE(msgbus_subscriber_wait_for_update(&sub, MSGBUS_TIMEOUT_IMMEDIATE));
+}
+
+TEST(SignalingTestGroup, SubscriberWaitBlockOnCond)
+{
+    msgbus_subscriber_t sub;
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+
+    condvar_mocks_enable(true);
+    mock().expectOneCall("messagebus_condvar_wait")
+          .withPointerParameter("cond", &topic.condvar)
+          .withParameter("timeout_us", 100);
+
+    CHECK_FALSE(msgbus_subscriber_wait_for_update(&sub, 100));
+}
+
+TEST(SignalingTestGroup, SubscriberWaitBlockOnCondHasUpdate)
+{
+    msgbus_subscriber_t sub;
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+
+    set_condvar_wait_side_effect([this](){msgbus_topic_publish(&topic, buffer);});
+
+    CHECK_TRUE(msgbus_subscriber_wait_for_update(&sub, 100));
 }
 
 TEST(SignalingTestGroup, Advertise)

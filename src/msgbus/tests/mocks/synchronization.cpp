@@ -1,12 +1,14 @@
+#include <functional>
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 #include "../../messagebus.h"
 #include <messagebus_port.h>
 
+
 static bool lock_enabled = false;
 static bool condvar_enabled = false;
 static bool init_enabled = false;
-
+std::function<void()> condvar_wait_side_effect = [](){};
 
 void messagebus_lock_init(msgbus_mutex_t *lock)
 {
@@ -56,6 +58,17 @@ void messagebus_condvar_wait(msgbus_cond_t *cond, uint64_t timeout_us)
               .withPointerParameter("cond", cond)
               .withParameter("timeout_us", (uint32_t)timeout_us);
     }
+    condvar_wait_side_effect();
+}
+
+void set_condvar_wait_side_effect(std::function<void()> side_effect)
+{
+    condvar_wait_side_effect = side_effect;
+}
+
+void clear_condvar_wait_side_effect()
+{
+    condvar_wait_side_effect = [](){};
 }
 
 void lock_mocks_enable(bool enabled)

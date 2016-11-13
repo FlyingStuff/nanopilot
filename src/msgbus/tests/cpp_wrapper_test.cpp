@@ -1,9 +1,9 @@
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 #include "types/test.h"
 #include "mocks/assert.hpp"
 #include "../typesafe_wrapper.h"
 
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 
 TEST_GROUP(WrapperTest)

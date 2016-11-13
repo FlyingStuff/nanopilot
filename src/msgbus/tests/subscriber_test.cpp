@@ -1,9 +1,10 @@
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 #include "../msgbus.h"
 #include "../messagebus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
+
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 
 TEST_GROUP(SubscriberTests)
@@ -125,6 +126,20 @@ TEST(SubscriberTests, HasUpdateHandlesPublishSequenceOverflowCorrectly)
     CHECK_EQUAL(3, msgbus_subscriber_has_update(&sub));
     topic.pub_seq_nbr = UINT32_MAX-1;
     CHECK_EQUAL(UINT32_MAX, msgbus_subscriber_has_update(&sub));
+}
+
+TEST(SubscriberTests, WaitForUpdateReturnsFalseWithTimeoutImmediateNoUpdate)
+{
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+    CHECK_FALSE(msgbus_subscriber_wait_for_update(&sub, MSGBUS_TIMEOUT_IMMEDIATE));
+}
+
+TEST(SubscriberTests, WaitForUpdateReturnsTrueIfUpdate)
+{
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
+    simple_t val;
+    msgbus_topic_publish(&topic, &val);
+    CHECK_TRUE(msgbus_subscriber_wait_for_update(&sub, MSGBUS_TIMEOUT_IMMEDIATE));
 }
 
 TEST(SubscriberTests, SubscriberGetTopic)

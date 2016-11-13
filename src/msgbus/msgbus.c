@@ -137,26 +137,30 @@ bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
 }
 
 
-bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
-                                       uint64_t timeout_us)
-{
-    int updates = msgbus_subscriber_has_update(sub);
-    if (updates > 0) {
-        return true;
-    } else {
-        if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
-            return false;
-        } else { // todo timeout not working with current implementation
-            messagebus_topic_wait(sub->topic, NULL);
-            return true;
-        }
-    }
-}
-
-
 static uint32_t subscriber_get_nb_updates_with_lock(msgbus_subscriber_t *sub)
 {
     return sub->topic->pub_seq_nbr - sub->pub_seq_nbr;
+}
+
+
+bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
+                                       uint64_t timeout_us)
+{
+    messagebus_lock_acquire(&sub->topic->lock);
+
+    int updates = subscriber_get_nb_updates_with_lock(sub);
+    if (updates == 0 && timeout_us != MSGBUS_TIMEOUT_IMMEDIATE) {
+        messagebus_condvar_wait(&sub->topic->condvar, timeout_us);
+        updates = subscriber_get_nb_updates_with_lock(sub);
+    }
+
+    messagebus_lock_release(&sub->topic->lock);
+
+    if (updates > 0) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 

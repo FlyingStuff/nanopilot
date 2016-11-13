@@ -1,8 +1,9 @@
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 #include "../msgbus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
+
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 
 TEST_GROUP(BusTests)
