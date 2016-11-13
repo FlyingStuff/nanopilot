@@ -231,7 +231,7 @@ RULESPATH = $(PROJROOT)
 include $(PROJROOT)/rules.mk
 -include tools.mk
 
-PRE_MAKE_ALL_RULE_HOOK:
+PRE_MAKE_ALL_RULE_HOOK: $(notdir $(TYPECSRC))
 	cd $(PROJROOT)/src/flight-stack && ./code_gen.sh
 	cd $(PROJROOT) && ./git_revision.sh
 
