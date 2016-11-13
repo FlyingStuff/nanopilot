@@ -1,9 +1,6 @@
 #ifndef MSGBUS_H
 #define MSGBUS_H
 
-/** WARNING this wrapper is currently not threadsafe */
-
-
 #include <stdbool.h>
 #include <stdint.h>
 #include "type_definition.h"

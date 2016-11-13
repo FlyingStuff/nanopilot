@@ -83,13 +83,21 @@ msgbus_topic_t *msgbus_find_topic(msgbus_t *bus,
 
 msgbus_topic_t *msgbus_iterate_topics(msgbus_t *bus)
 {
-    return bus->topics.head;
+    msgbus_topic_t *t;
+
+    messagebus_lock_acquire(&bus->lock);
+
+    t = bus->topics.head;
+
+    messagebus_lock_release(&bus->lock);
+
+    return t;
 }
 
 
 msgbus_topic_t *msgbus_iterate_topics_next(msgbus_topic_t *topic)
 {
-    return topic->next;
+    return topic->next; // next pointer is const
 }
 
 
@@ -182,9 +190,11 @@ bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub)
 {
     bool is_valid;
 
-    // lock
+    messagebus_lock_acquire(&sub->topic->lock);
+
     is_valid = sub->topic->published;
-    // unlock
+
+    messagebus_lock_release(&sub->topic->lock);
 
     return is_valid;
 }

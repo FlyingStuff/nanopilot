@@ -11,14 +11,14 @@ TEST_GROUP(MessageBusAtomicityTestGroup)
 {
     msgbus_t bus;
     msgbus_topic_t topic;
-    uint8_t buffer[128];
+    simple_t buffer;
 
     void setup()
     {
         mock().strictOrder();
 
         msgbus_init(&bus);
-        msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+        msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
     }
 
     void teardown()
@@ -29,7 +29,7 @@ TEST_GROUP(MessageBusAtomicityTestGroup)
     }
 };
 
-TEST(MessageBusAtomicityTestGroup, AdvertiseIsLockedProperly)
+TEST(MessageBusAtomicityTestGroup, AdvertiseIsLocked)
 {
     mock().expectOneCall("messagebus_lock_acquire")
           .withPointerParameter("lock", &bus.lock);
@@ -38,10 +38,10 @@ TEST(MessageBusAtomicityTestGroup, AdvertiseIsLockedProperly)
 
     lock_mocks_enable(true);
     msgbus_init(&bus);
-    msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");
+    msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
 }
 
-TEST(MessageBusAtomicityTestGroup, FindNoneIsLockedProperly)
+TEST(MessageBusAtomicityTestGroup, FindNoneIsLocked)
 {
     mock().expectOneCall("messagebus_lock_acquire")
           .withPointerParameter("lock", &bus.lock);
@@ -52,7 +52,7 @@ TEST(MessageBusAtomicityTestGroup, FindNoneIsLockedProperly)
     msgbus_find_topic(&bus, "notatopic", MSGBUS_TIMEOUT_IMMEDIATE);
 }
 
-TEST(MessageBusAtomicityTestGroup, FindExistingTopicIsLockedProperly)
+TEST(MessageBusAtomicityTestGroup, FindExistingTopicIsLocked)
 {
     mock().expectOneCall("messagebus_lock_acquire")
           .withPointerParameter("lock", &bus.lock);
@@ -63,7 +63,7 @@ TEST(MessageBusAtomicityTestGroup, FindExistingTopicIsLockedProperly)
     msgbus_find_topic(&bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
 }
 
-TEST(MessageBusAtomicityTestGroup, FindBlockingIsLockedProperly)
+TEST(MessageBusAtomicityTestGroup, FindBlockingIsLocked)
 {
     lock_mocks_enable(true);
 
@@ -76,19 +76,40 @@ TEST(MessageBusAtomicityTestGroup, FindBlockingIsLockedProperly)
     msgbus_find_topic(&bus, "topic", MSGBUS_TIMEOUT_NEVER);
 }
 
-TEST(MessageBusAtomicityTestGroup, PublishIsAtomic)
+TEST(MessageBusAtomicityTestGroup, IterateIsLocked)
 {
-    uint8_t data[4];
+    lock_mocks_enable(true);
+
+    mock().expectOneCall("messagebus_lock_acquire")
+          .withPointerParameter("lock", &bus.lock);
+
+    mock().expectOneCall("messagebus_lock_release")
+          .withPointerParameter("lock", &bus.lock);
+
+    msgbus_iterate_topics(&bus);
+}
+
+TEST(MessageBusAtomicityTestGroup, IterateNextIsNotLocked)
+{
+    msgbus_topic_t *i = msgbus_iterate_topics(&bus);
+    lock_mocks_enable(true);
+    // there is no lock for next, because next pointer is constant
+    msgbus_iterate_topics_next(i);
+}
+
+TEST(MessageBusAtomicityTestGroup, PublishIsLocked)
+{
+    simple_t var;
     mock().expectOneCall("messagebus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
     lock_mocks_enable(true);
-    msgbus_topic_publish(&topic, data);
+    msgbus_topic_publish(&topic, &var);
 }
 
-TEST(MessageBusAtomicityTestGroup, SubscriberWaitLocks)
+TEST(MessageBusAtomicityTestGroup, SubscriberWaitIsLocked)
 {
     mock().expectOneCall("messagebus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
@@ -102,47 +123,42 @@ TEST(MessageBusAtomicityTestGroup, SubscriberWaitLocks)
 }
 
 
-TEST(MessageBusAtomicityTestGroup, ReadPublished)
+TEST(MessageBusAtomicityTestGroup, HasUpdateIsLocked)
 {
-    uint8_t buffer[128];
-    bool res;
-
     mock().expectOneCall("messagebus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
-    msgbus_topic_publish(&topic, buffer);
-
+    msgbus_subscriber_t sub;
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
     lock_mocks_enable(true);
-    res = messagebus_topic_read(&topic, buffer);
-
-    CHECK_TRUE(res);
+    msgbus_subscriber_has_update(&sub);
 }
 
-TEST(MessageBusAtomicityTestGroup, ReadUnpublished)
+TEST(MessageBusAtomicityTestGroup, IsValidIsLocked)
 {
-    uint8_t buffer[128];
-    bool res;
     mock().expectOneCall("messagebus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
+    msgbus_subscriber_t sub;
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
     lock_mocks_enable(true);
-    res = messagebus_topic_read(&topic, buffer);
-
-    CHECK_FALSE(res);
+    msgbus_subscriber_topic_is_valid(&sub);
 }
 
-TEST(MessageBusAtomicityTestGroup, Wait)
+TEST(MessageBusAtomicityTestGroup, ReadIsLocked)
 {
-    uint8_t buffer[128];
     mock().expectOneCall("messagebus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
     mock().expectOneCall("messagebus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
+    msgbus_subscriber_t sub;
+    msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
     lock_mocks_enable(true);
-    messagebus_topic_wait(&topic, buffer);
+    simple_t var;
+    msgbus_subscriber_read(&sub, &var);
 }
