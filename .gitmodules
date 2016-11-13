@@ -7,9 +7,6 @@
 [submodule "src/serial-datagram"]
 	path = src/serial-datagram
 	url = https://github.com/Stapelzeiger/serial-datagram.git
-[submodule "packager"]
-	path = packager
-	url = https://github.com/cvra/packager.git
 [submodule "src/cmp_mem_access"]
 	path = src/cmp_mem_access
 	url = https://github.com/Stapelzeiger/cmp_mem_access.git

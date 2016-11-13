@@ -237,10 +237,6 @@ PRE_MAKE_ALL_RULE_HOOK:
 
 POST_MAKE_ALL_RULE_HOOK:
 
-.PHONY: packager
-packager:
-	cd $(PROJROOT) && python packager/cvra_packager/packager.py
-
 # Generates a ctags file containing the correct definition for the build
 .PHONY: ctags
 ctags:

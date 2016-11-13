@@ -1,6 +1,5 @@
 #include <ch.h>
-#include "messagebus_port.h"
-#include "msgbus/messagebus.h"
+#include "msgbus_port.h"
 
 // void messagebus_lock_acquire(void *p)
 // {
@@ -31,3 +30,35 @@
 //     chMtxObjectInit(&c->lock);
 //     chCondObjectInit(&c->cond);
 // }
+
+void msgbus_mutex_init(msgbus_mutex_t *mutex)
+{
+    (void)mutex;
+}
+
+void msgbus_mutex_acquire(msgbus_mutex_t *mutex)
+{
+    (void)mutex;
+}
+
+void msgbus_mutex_release(msgbus_mutex_t *mutex)
+{
+    (void)mutex;
+}
+
+void msgbus_condvar_init(msgbus_cond_t *cond)
+{
+    (void)cond;
+}
+
+void msgbus_condvar_broadcast(msgbus_cond_t *cond)
+{
+    (void)cond;
+}
+
+void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
+{
+    (void)cond;
+    (void)mutex;
+    (void)timeout_us;
+}
