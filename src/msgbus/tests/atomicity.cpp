@@ -30,10 +30,10 @@ TEST_GROUP(MessageBusAtomicityTestGroup)
 
 TEST(MessageBusAtomicityTestGroup, AdvertiseIsLocked)
 {
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &bus.lock);
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &bus.lock);
 
     lock_mocks_enable(true);
     msgbus_init(&bus);
@@ -42,10 +42,10 @@ TEST(MessageBusAtomicityTestGroup, AdvertiseIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, FindNoneIsLocked)
 {
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &bus.lock);
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &bus.lock);
 
     lock_mocks_enable(true);
     msgbus_find_topic(&bus, "notatopic", MSGBUS_TIMEOUT_IMMEDIATE);
@@ -53,10 +53,10 @@ TEST(MessageBusAtomicityTestGroup, FindNoneIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, FindExistingTopicIsLocked)
 {
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &bus.lock);
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &bus.lock);
 
     lock_mocks_enable(true);
     msgbus_find_topic(&bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
@@ -66,11 +66,11 @@ TEST(MessageBusAtomicityTestGroup, FindBlockingIsLocked)
 {
     lock_mocks_enable(true);
 
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &bus.lock);
 
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &bus.lock);
 
     msgbus_find_topic(&bus, "topic", MSGBUS_TIMEOUT_NEVER);
 }
@@ -79,11 +79,11 @@ TEST(MessageBusAtomicityTestGroup, IterateIsLocked)
 {
     lock_mocks_enable(true);
 
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &bus.lock);
 
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &bus.lock);
 
     msgbus_iterate_topics(&bus);
 }
@@ -99,10 +99,10 @@ TEST(MessageBusAtomicityTestGroup, IterateNextIsNotLocked)
 TEST(MessageBusAtomicityTestGroup, PublishIsLocked)
 {
     simple_t var;
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &topic.lock);
 
     lock_mocks_enable(true);
     msgbus_topic_publish(&topic, &var);
@@ -110,10 +110,10 @@ TEST(MessageBusAtomicityTestGroup, PublishIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, SubscriberWaitIsLocked)
 {
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &topic.lock);
 
     msgbus_subscriber_t sub;
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
@@ -124,10 +124,10 @@ TEST(MessageBusAtomicityTestGroup, SubscriberWaitIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, HasUpdateIsLocked)
 {
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &topic.lock);
 
     msgbus_subscriber_t sub;
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
@@ -137,10 +137,10 @@ TEST(MessageBusAtomicityTestGroup, HasUpdateIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, IsValidIsLocked)
 {
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &topic.lock);
 
     msgbus_subscriber_t sub;
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
@@ -150,10 +150,10 @@ TEST(MessageBusAtomicityTestGroup, IsValidIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, ReadIsLocked)
 {
-    mock().expectOneCall("msgbus_lock_acquire")
-          .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("msgbus_lock_release")
-          .withPointerParameter("lock", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_acquire")
+          .withPointerParameter("mutex", &topic.lock);
+    mock().expectOneCall("msgbus_mutex_release")
+          .withPointerParameter("mutex", &topic.lock);
 
     msgbus_subscriber_t sub;
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);

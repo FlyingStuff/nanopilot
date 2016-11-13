@@ -198,13 +198,13 @@ msgbus_topic_t *msgbus_subscriber_get_topic(msgbus_subscriber_t *sub);
  * @{*/
 
 /** Initialize a mutex */
-extern void msgbus_lock_init(msgbus_mutex_t *mutex);
+extern void msgbus_mutex_init(msgbus_mutex_t *mutex);
 
 /** Acquire a reentrant mutex. */
-extern void msgbus_lock_acquire(msgbus_mutex_t *mutex);
+extern void msgbus_mutex_acquire(msgbus_mutex_t *mutex);
 
-/** Release a mutex previously acquired by msgbus_lock_acquire. */
-extern void msgbus_lock_release(msgbus_mutex_t *mutex);
+/** Release a mutex previously acquired by msgbus_mutex_acquire. */
+extern void msgbus_mutex_release(msgbus_mutex_t *mutex);
 
 /** Initialize a condition variable */
 extern void msgbus_condvar_init(msgbus_cond_t *cond);
@@ -213,7 +213,8 @@ extern void msgbus_condvar_init(msgbus_cond_t *cond);
 extern void msgbus_condvar_broadcast(msgbus_cond_t *cond);
 
 /** Wait on the given condition variable. */
-extern void msgbus_condvar_wait(msgbus_cond_t *cond, uint32_t timeout_us);
+extern void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us);
+
 
 /** @} */
 
