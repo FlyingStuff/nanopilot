@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "type_definition.h"
-#include <messagebus_port.h>
+#include <msgbus_port.h>
 
 typedef struct topic_s {
     void *buffer;
@@ -75,7 +75,7 @@ void msgbus_topic_create(msgbus_topic_t *topic,
  */
 msgbus_topic_t *msgbus_find_topic(msgbus_t *bus,
                                   const char *name,
-                                  uint64_t timeout_us);
+                                  uint32_t timeout_us);
 
 /** Start iteration over all topics on a bus
  *
@@ -132,7 +132,7 @@ const char *msgbus_topic_get_name(msgbus_topic_t *topic);
 bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
                             msgbus_t *bus,
                             const char *name,
-                            uint64_t timeout_us);
+                            uint32_t timeout_us);
 
 /** Wait for a topic update
  *
@@ -142,7 +142,7 @@ bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
  * @returns true on success and false on timeout
  */
 bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
-                                       uint64_t timeout_us);
+                                       uint32_t timeout_us);
 
 /** Wait for a topic update on multiple subscribers
  *
@@ -154,7 +154,7 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
  */
 bool msgbus_subscriber_wait_for_update_on_any(msgbus_subscriber_t **subs,
                                               int nb_sub,
-                                              uint64_t timeout_us);
+                                              uint32_t timeout_us);
 
 /** Check if the topic has an update
  *
@@ -192,6 +192,30 @@ uint32_t msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest);
  * @returns A pointer to the topic to which the subscriber subscribed
  */
 msgbus_topic_t *msgbus_subscriber_get_topic(msgbus_subscriber_t *sub);
+
+
+/** @defgroup portable Portable functions, platform specific.
+ * @{*/
+
+/** Initialize a mutex */
+extern void msgbus_lock_init(msgbus_mutex_t *mutex);
+
+/** Acquire a reentrant mutex. */
+extern void msgbus_lock_acquire(msgbus_mutex_t *mutex);
+
+/** Release a mutex previously acquired by msgbus_lock_acquire. */
+extern void msgbus_lock_release(msgbus_mutex_t *mutex);
+
+/** Initialize a condition variable */
+extern void msgbus_condvar_init(msgbus_cond_t *cond);
+
+/** Signal all tasks waiting on the given condition variable. */
+extern void msgbus_condvar_broadcast(msgbus_cond_t *cond);
+
+/** Wait on the given condition variable. */
+extern void msgbus_condvar_wait(msgbus_cond_t *cond, uint32_t timeout_us);
+
+/** @} */
 
 
 #ifdef __cplusplus

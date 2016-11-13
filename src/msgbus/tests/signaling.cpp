@@ -1,5 +1,4 @@
 #include "../msgbus.h"
-#include "../messagebus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
 
@@ -41,34 +40,16 @@ TEST(SignalingTestGroup, TopicPublish)
     lock_mocks_enable(true);
     condvar_mocks_enable(true);
 
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
 
-    mock().expectOneCall("messagebus_condvar_broadcast")
+    mock().expectOneCall("msgbus_condvar_broadcast")
           .withPointerParameter("cond", &topic.condvar);
 
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
     msgbus_topic_publish(&topic, buffer);
-}
-
-TEST(SignalingTestGroup, TopicWait)
-{
-    lock_mocks_enable(true);
-    condvar_mocks_enable(true);
-
-    mock().expectOneCall("messagebus_lock_acquire")
-          .withPointerParameter("lock", &topic.lock);
-
-    mock().expectOneCall("messagebus_condvar_wait")
-          .withPointerParameter("cond", &topic.condvar)
-          .withParameter("timeout_us", MSGBUS_TIMEOUT_NEVER);
-
-    mock().expectOneCall("messagebus_lock_release")
-          .withPointerParameter("lock", &topic.lock);
-
-    messagebus_topic_wait(&topic, buffer);
 }
 
 TEST(SignalingTestGroup, SubscriberWaitWithTimeoutImmediateDoesntBlockOnCond)
@@ -86,7 +67,7 @@ TEST(SignalingTestGroup, SubscriberWaitBlockOnCond)
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
 
     condvar_mocks_enable(true);
-    mock().expectOneCall("messagebus_condvar_wait")
+    mock().expectOneCall("msgbus_condvar_wait")
           .withPointerParameter("cond", &topic.condvar)
           .withParameter("timeout_us", 100);
 
@@ -108,13 +89,13 @@ TEST(SignalingTestGroup, Advertise)
     lock_mocks_enable(true);
     condvar_mocks_enable(true);
 
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &bus.lock);
 
-    mock().expectOneCall("messagebus_condvar_broadcast")
+    mock().expectOneCall("msgbus_condvar_broadcast")
           .withPointerParameter("cond", &bus.condvar);
 
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
     msgbus_topic_create(&topic, &bus, &simple_type, buffer, "topic");

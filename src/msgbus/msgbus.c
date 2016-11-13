@@ -1,13 +1,12 @@
 #include <string.h>
-#include "messagebus.h"
 #include "msgbus.h"
 
 
 void msgbus_init(msgbus_t *bus)
 {
     memset(bus, 0, sizeof(msgbus_t));
-    messagebus_condvar_init(&bus->condvar);
-    messagebus_lock_init(&bus->lock);
+    msgbus_condvar_init(&bus->condvar);
+    msgbus_lock_init(&bus->lock);
 }
 
 
@@ -26,16 +25,16 @@ static msgbus_topic_t *topic_by_name(msgbus_t *bus, const char *name)
 
 static void advertise_topic(msgbus_t *bus, msgbus_topic_t *topic)
 {
-    messagebus_lock_acquire(&bus->lock);
+    msgbus_lock_acquire(&bus->lock);
 
     if (bus->topics.head != NULL) {
         topic->next = bus->topics.head;
     }
     bus->topics.head = topic;
 
-    messagebus_condvar_broadcast(&bus->condvar);
+    msgbus_condvar_broadcast(&bus->condvar);
 
-    messagebus_lock_release(&bus->lock);
+    msgbus_lock_release(&bus->lock);
 }
 
 void msgbus_topic_create(msgbus_topic_t *topic,
@@ -48,8 +47,8 @@ void msgbus_topic_create(msgbus_topic_t *topic,
     topic->buffer = buffer;
     topic->type = type;
     topic->name = name;
-    messagebus_condvar_init(&topic->condvar);
-    messagebus_lock_init(&topic->lock);
+    msgbus_condvar_init(&topic->condvar);
+    msgbus_lock_init(&topic->lock);
 
     advertise_topic(bus, topic);
 }
@@ -57,23 +56,23 @@ void msgbus_topic_create(msgbus_topic_t *topic,
 
 msgbus_topic_t *msgbus_find_topic(msgbus_t *bus,
                                   const char *name,
-                                  uint64_t timeout_us)
+                                  uint32_t timeout_us)
 {
     msgbus_topic_t *res = NULL;
 
-    messagebus_lock_acquire(&bus->lock);
+    msgbus_lock_acquire(&bus->lock);
 
     while (true) {
         res = topic_by_name(bus, name);
 
         if (res == NULL && timeout_us != MSGBUS_TIMEOUT_IMMEDIATE) {
-            messagebus_condvar_wait(&bus->condvar, timeout_us); // todo handle return value
+            msgbus_condvar_wait(&bus->condvar, timeout_us); // todo handle return value
         } else {
             break;
         }
     }
 
-    messagebus_lock_release(&bus->lock);
+    msgbus_lock_release(&bus->lock);
 
     return res;
 }
@@ -83,11 +82,11 @@ msgbus_topic_t *msgbus_iterate_topics(msgbus_t *bus)
 {
     msgbus_topic_t *t;
 
-    messagebus_lock_acquire(&bus->lock);
+    msgbus_lock_acquire(&bus->lock);
 
     t = bus->topics.head;
 
-    messagebus_lock_release(&bus->lock);
+    msgbus_lock_release(&bus->lock);
 
     return t;
 }
@@ -101,14 +100,14 @@ msgbus_topic_t *msgbus_iterate_topics_next(msgbus_topic_t *topic)
 
 void msgbus_topic_publish(msgbus_topic_t *topic, const void *val)
 {
-    messagebus_lock_acquire(&topic->lock);
+    msgbus_lock_acquire(&topic->lock);
 
     memcpy(topic->buffer, val, topic->type->struct_size);
     topic->published = true;
     topic->pub_seq_nbr++;
-    messagebus_condvar_broadcast(&topic->condvar);
+    msgbus_condvar_broadcast(&topic->condvar);
 
-    messagebus_lock_release(&topic->lock);
+    msgbus_lock_release(&topic->lock);
 }
 
 
@@ -127,7 +126,7 @@ const char *msgbus_topic_get_name(msgbus_topic_t *topic)
 bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
                             msgbus_t *bus,
                             const char *name,
-                            uint64_t timeout_us)
+                            uint32_t timeout_us)
 {
     msgbus_topic_t *topic = msgbus_find_topic(bus, name, timeout_us);
     sub->topic = topic;
@@ -150,17 +149,17 @@ static uint32_t subscriber_get_nb_updates_with_lock(msgbus_subscriber_t *sub)
 
 
 bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
-                                       uint64_t timeout_us)
+                                       uint32_t timeout_us)
 {
-    messagebus_lock_acquire(&sub->topic->lock);
+    msgbus_lock_acquire(&sub->topic->lock);
 
     int updates = subscriber_get_nb_updates_with_lock(sub);
     if (updates == 0 && timeout_us != MSGBUS_TIMEOUT_IMMEDIATE) {
-        messagebus_condvar_wait(&sub->topic->condvar, timeout_us);
+        msgbus_condvar_wait(&sub->topic->condvar, timeout_us);
         updates = subscriber_get_nb_updates_with_lock(sub);
     }
 
-    messagebus_lock_release(&sub->topic->lock);
+    msgbus_lock_release(&sub->topic->lock);
 
     if (updates > 0) {
         return true;
@@ -174,11 +173,11 @@ uint32_t msgbus_subscriber_has_update(msgbus_subscriber_t *sub)
 {
     uint32_t ret;
 
-    messagebus_lock_acquire(&sub->topic->lock);
+    msgbus_lock_acquire(&sub->topic->lock);
 
     ret = subscriber_get_nb_updates_with_lock(sub);
 
-    messagebus_lock_release(&sub->topic->lock);
+    msgbus_lock_release(&sub->topic->lock);
 
     return ret;
 }
@@ -188,11 +187,11 @@ bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub)
 {
     bool is_valid;
 
-    messagebus_lock_acquire(&sub->topic->lock);
+    msgbus_lock_acquire(&sub->topic->lock);
 
     is_valid = sub->topic->published;
 
-    messagebus_lock_release(&sub->topic->lock);
+    msgbus_lock_release(&sub->topic->lock);
 
     return is_valid;
 }
@@ -202,13 +201,13 @@ uint32_t msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest)
 {
     uint32_t ret;
 
-    messagebus_lock_acquire(&sub->topic->lock);
+    msgbus_lock_acquire(&sub->topic->lock);
 
     ret = subscriber_get_nb_updates_with_lock(sub);
     sub->pub_seq_nbr = sub->topic->pub_seq_nbr;
     memcpy(dest, sub->topic->buffer, sub->topic->type->struct_size);
 
-    messagebus_lock_release(&sub->topic->lock);
+    msgbus_lock_release(&sub->topic->lock);
 
     return ret;
 }

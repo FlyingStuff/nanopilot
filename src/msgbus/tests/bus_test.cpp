@@ -29,8 +29,8 @@ TEST_GROUP(BusTests)
 
 TEST(BusTests, Initializer)
 {
-    mock().expectOneCall("messagebus_condvar_init").withParameter("cond", &bus.condvar);
-    mock().expectOneCall("messagebus_lock_init").withParameter("lock", &bus.lock);
+    mock().expectOneCall("msgbus_condvar_init").withParameter("cond", &bus.condvar);
+    mock().expectOneCall("msgbus_lock_init").withParameter("lock", &bus.lock);
     condvar_init_mock_enable(true);
     msgbus_init(&bus);
     POINTERS_EQUAL(NULL, bus.topics.head);

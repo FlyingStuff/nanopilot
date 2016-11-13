@@ -1,5 +1,4 @@
 #include "../msgbus.h"
-#include "../messagebus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
 
@@ -31,8 +30,8 @@ TEST_GROUP(TopicTests)
 
 TEST(TopicTests, Initializer)
 {
-    mock().expectOneCall("messagebus_condvar_init").withParameter("cond", &topic.condvar);
-    mock().expectOneCall("messagebus_lock_init").withParameter("lock", &topic.lock);
+    mock().expectOneCall("msgbus_condvar_init").withParameter("cond", &topic.condvar);
+    mock().expectOneCall("msgbus_lock_init").withParameter("lock", &topic.lock);
     condvar_init_mock_enable(true);
 
     msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
@@ -69,43 +68,6 @@ TEST(TopicTests, PublishSequenceNbrCorrectlyOverflows)
     msgbus_topic_publish(&topic, &data);
 
     CHECK_EQUAL(0, topic.pub_seq_nbr);
-}
-
-
-// todo delete
-TEST(TopicTests, PublishAndReadBack)
-{
-    simple_t tx = {42};
-    simple_t rx;
-    bool res;
-
-    msgbus_topic_publish(&topic, &tx);
-    res = messagebus_topic_read(&topic, &rx);
-
-    CHECK_TRUE(res);
-    CHECK_EQUAL(tx.x, rx.x);
-}
-
-// todo delete
-TEST(TopicTests, WontReadUnpublishedtopic)
-{
-    simple_t rx = {42};
-    bool res;
-
-    res = messagebus_topic_read(&topic, &rx);
-    CHECK_FALSE(res);
-}
-
-// todo delete
-TEST(TopicTests, WaitForUpdate)
-{
-    simple_t tx = {42};
-    simple_t rx;
-
-    msgbus_topic_publish(&topic, &tx);
-    messagebus_topic_wait(&topic, &rx);
-
-    CHECK_EQUAL(tx.x, rx.x);
 }
 
 TEST(TopicTests, GetTopicType)

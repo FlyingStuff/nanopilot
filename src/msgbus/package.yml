@@ -5,7 +5,6 @@ depends:
     - cmp_mem_access
 
 source:
-    - messagebus.c
     - msgbus.c
     - serialization_msgpack.c
     - type_print.c
@@ -19,7 +18,6 @@ tests:
     - tests/topic_test.cpp
     - tests/subscriber_test.cpp
     - tests/signaling.cpp
-    - tests/foreach.cpp
     - tests/serialization_msgpack_test.cpp
     - tests/type_print_test.cpp
     - tests/cpp_wrapper_test.cpp

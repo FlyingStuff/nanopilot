@@ -1,4 +1,3 @@
-#include "../messagebus.h"
 #include "../msgbus.h"
 #include "mocks/synchronization.hpp"
 #include "types/test.h"
@@ -31,9 +30,9 @@ TEST_GROUP(MessageBusAtomicityTestGroup)
 
 TEST(MessageBusAtomicityTestGroup, AdvertiseIsLocked)
 {
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &bus.lock);
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
     lock_mocks_enable(true);
@@ -43,9 +42,9 @@ TEST(MessageBusAtomicityTestGroup, AdvertiseIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, FindNoneIsLocked)
 {
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &bus.lock);
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
     lock_mocks_enable(true);
@@ -54,9 +53,9 @@ TEST(MessageBusAtomicityTestGroup, FindNoneIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, FindExistingTopicIsLocked)
 {
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &bus.lock);
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
     lock_mocks_enable(true);
@@ -67,10 +66,10 @@ TEST(MessageBusAtomicityTestGroup, FindBlockingIsLocked)
 {
     lock_mocks_enable(true);
 
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &bus.lock);
 
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
     msgbus_find_topic(&bus, "topic", MSGBUS_TIMEOUT_NEVER);
@@ -80,10 +79,10 @@ TEST(MessageBusAtomicityTestGroup, IterateIsLocked)
 {
     lock_mocks_enable(true);
 
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &bus.lock);
 
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &bus.lock);
 
     msgbus_iterate_topics(&bus);
@@ -100,9 +99,9 @@ TEST(MessageBusAtomicityTestGroup, IterateNextIsNotLocked)
 TEST(MessageBusAtomicityTestGroup, PublishIsLocked)
 {
     simple_t var;
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
     lock_mocks_enable(true);
@@ -111,9 +110,9 @@ TEST(MessageBusAtomicityTestGroup, PublishIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, SubscriberWaitIsLocked)
 {
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
     msgbus_subscriber_t sub;
@@ -125,9 +124,9 @@ TEST(MessageBusAtomicityTestGroup, SubscriberWaitIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, HasUpdateIsLocked)
 {
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
     msgbus_subscriber_t sub;
@@ -138,9 +137,9 @@ TEST(MessageBusAtomicityTestGroup, HasUpdateIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, IsValidIsLocked)
 {
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
     msgbus_subscriber_t sub;
@@ -151,9 +150,9 @@ TEST(MessageBusAtomicityTestGroup, IsValidIsLocked)
 
 TEST(MessageBusAtomicityTestGroup, ReadIsLocked)
 {
-    mock().expectOneCall("messagebus_lock_acquire")
+    mock().expectOneCall("msgbus_lock_acquire")
           .withPointerParameter("lock", &topic.lock);
-    mock().expectOneCall("messagebus_lock_release")
+    mock().expectOneCall("msgbus_lock_release")
           .withPointerParameter("lock", &topic.lock);
 
     msgbus_subscriber_t sub;
