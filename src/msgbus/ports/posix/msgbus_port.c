@@ -2,7 +2,9 @@
 #include <stdint.h>
 #include <time.h>
 #include <assert.h>
+#include <errno.h>
 #include "msgbus_port.h"
+#include "../../msgbus.h"
 
 
 void msgbus_mutex_init(msgbus_mutex_t *mutex)
@@ -33,19 +35,35 @@ void msgbus_condvar_broadcast(msgbus_cond_t *cond)
 #ifdef __APPLE__ // OS X has no gettitme with realtime clock
 void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
 {
-    struct timespec ts;
-    ts.tv_sec = timeout_us / 1000000;
-    ts.tv_nsec = (timeout_us % 1000000) * 1000;
-    pthread_cond_timedwait_relative_np(cond, mutex, &ts);
+    if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
+        return;
+    }
+    if (timeout_us == MSGBUS_TIMEOUT_NEVER) {
+        assert(pthread_cond_wait(cond, mutex) == 0);
+    } else {
+        struct timespec ts;
+        ts.tv_sec = timeout_us / 1000000;
+        ts.tv_nsec = (timeout_us % 1000000) * 1000;
+        int ret = pthread_cond_timedwait_relative_np(cond, mutex, &ts);
+        assert(ret == 0 || ret == ETIMEDOUT);
+    }
 }
 #else // posix
 void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_sec += timeout_us / 1000000;
-    // ts.tv_nsec todo
-    pthread_cond_timedwait(cond, mutex, &ts);
+    if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
+        return;
+    }
+    if (timeout_us == MSGBUS_TIMEOUT_NEVER) {
+        assert(pthread_cond_wait(cond, mutex) == 0);
+    } else {
+        struct timespec ts;
+        assert(clock_gettime(CLOCK_REALTIME, &ts) == 0);
+        ts.tv_nsec += (timeout_us % 1000000) * 1000;
+        ts.tv_sec += timeout_us / 1000000 + ts.tv_nsec / 1000000000;
+        ts.tv_nsec = ts.tv_nsec % 1000000000;
+        int ret = pthread_cond_timedwait(cond, mutex, &ts);
+        assert(ret == 0 || ret == ETIMEDOUT);
+    }
 }
 #endif
-
