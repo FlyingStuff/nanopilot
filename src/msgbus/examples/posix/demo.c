@@ -9,19 +9,23 @@ msgbus_t bus;
 
 static void* producer(void *p)
 {
+    int max_count = (int)p;
     const char *name = "test";
 
-    msgbus_topic_t topic;
+    static msgbus_topic_t topic; // this must be static
     example_t topic_buffer;
     msgbus_topic_create(&topic, &bus, &example_type, &topic_buffer, name);
 
-    example_t x = {.counter = 0};
-    while (1) {
+    example_t x = {.counter = 1};
+    int i;
+    for (i = 0; i < max_count; i++) {
         printf("[publisher] writing %d on topic %s\n", x.counter, name);
         msgbus_topic_publish(&topic, &x);
         x.counter += 1;
         sleep(1);
     }
+    printf("[publisher] stopped\n");
+    return NULL;
 }
 
 static void *consumer(void *p)
@@ -35,9 +39,14 @@ static void *consumer(void *p)
 
     example_t x;
     while (1) {
-        msgbus_subscriber_wait_for_update(&sub, MSGBUS_TIMEOUT_NEVER);
-        msgbus_subscriber_read(&sub, &x);
-        printf("[consumer %d] read %d on topic\n", consumer_number, x.counter);
+        int timeout_s = 5;
+        if (msgbus_subscriber_wait_for_update(&sub, timeout_s*1000000)) {
+            msgbus_subscriber_read(&sub, &x);
+            printf("[consumer %d] read %d on topic\n", consumer_number, x.counter);
+        } else {
+            printf("[consumer %d] timed out after %d seconds\n", consumer_number, timeout_s);
+            return NULL;
+        }
     }
 
     return NULL;
@@ -55,13 +64,13 @@ int main(int argc, const char **argv)
     /* Creates a few consumer threads. */
     pthread_t producer_thd, consumer_thd;
     pthread_create(&consumer_thd, NULL, consumer, (void *)1);
-    pthread_create(&consumer_thd, NULL, consumer, (void *)2);
-    pthread_create(&consumer_thd, NULL, consumer, (void *)3);
+    // pthread_create(&consumer_thd, NULL, consumer, (void *)2);
+    // pthread_create(&consumer_thd, NULL, consumer, (void *)3);
 
     sleep(1);
 
     /* Creates a producer thread */
-    pthread_create(&producer_thd, NULL, producer, NULL);
+    pthread_create(&producer_thd, NULL, producer, (void *)3);
 
     while(1) {
         sleep(1);
