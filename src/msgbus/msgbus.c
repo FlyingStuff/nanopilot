@@ -7,6 +7,7 @@ void msgbus_init(msgbus_t *bus)
     memset(bus, 0, sizeof(msgbus_t));
     msgbus_condvar_init(&bus->condvar);
     msgbus_mutex_init(&bus->lock);
+    msgbus_mutex_init(&bus->topic_update_lock);
 }
 
 
@@ -47,8 +48,8 @@ void msgbus_topic_create(msgbus_topic_t *topic,
     topic->buffer = buffer;
     topic->type = type;
     topic->name = name;
+    topic->bus = bus;
     msgbus_condvar_init(&topic->condvar);
-    msgbus_mutex_init(&topic->lock);
 
     advertise_topic(bus, topic);
 }
@@ -100,14 +101,14 @@ msgbus_topic_t *msgbus_iterate_topics_next(msgbus_topic_t *topic)
 
 void msgbus_topic_publish(msgbus_topic_t *topic, const void *val)
 {
-    msgbus_mutex_acquire(&topic->lock);
+    msgbus_mutex_acquire(&topic->bus->topic_update_lock);
 
     memcpy(topic->buffer, val, topic->type->struct_size);
     topic->published = true;
     topic->pub_seq_nbr++;
     msgbus_condvar_broadcast(&topic->condvar);
 
-    msgbus_mutex_release(&topic->lock);
+    msgbus_mutex_release(&topic->bus->topic_update_lock);
 }
 
 
@@ -151,15 +152,15 @@ static uint32_t subscriber_get_nb_updates_with_lock(msgbus_subscriber_t *sub)
 bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
                                        uint32_t timeout_us)
 {
-    msgbus_mutex_acquire(&sub->topic->lock);
+    msgbus_mutex_acquire(&sub->topic->bus->topic_update_lock);
 
     int updates = subscriber_get_nb_updates_with_lock(sub);
     if (updates == 0 && timeout_us != MSGBUS_TIMEOUT_IMMEDIATE) {
-        msgbus_condvar_wait(&sub->topic->condvar, &sub->topic->lock, timeout_us);
+        msgbus_condvar_wait(&sub->topic->condvar, &sub->topic->bus->topic_update_lock, timeout_us);
         updates = subscriber_get_nb_updates_with_lock(sub);
     }
 
-    msgbus_mutex_release(&sub->topic->lock);
+    msgbus_mutex_release(&sub->topic->bus->topic_update_lock);
 
     if (updates > 0) {
         return true;
@@ -173,11 +174,11 @@ uint32_t msgbus_subscriber_has_update(msgbus_subscriber_t *sub)
 {
     uint32_t ret;
 
-    msgbus_mutex_acquire(&sub->topic->lock);
+    msgbus_mutex_acquire(&sub->topic->bus->topic_update_lock);
 
     ret = subscriber_get_nb_updates_with_lock(sub);
 
-    msgbus_mutex_release(&sub->topic->lock);
+    msgbus_mutex_release(&sub->topic->bus->topic_update_lock);
 
     return ret;
 }
@@ -187,11 +188,11 @@ bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub)
 {
     bool is_valid;
 
-    msgbus_mutex_acquire(&sub->topic->lock);
+    msgbus_mutex_acquire(&sub->topic->bus->topic_update_lock);
 
     is_valid = sub->topic->published;
 
-    msgbus_mutex_release(&sub->topic->lock);
+    msgbus_mutex_release(&sub->topic->bus->topic_update_lock);
 
     return is_valid;
 }
@@ -201,13 +202,13 @@ uint32_t msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest)
 {
     uint32_t ret;
 
-    msgbus_mutex_acquire(&sub->topic->lock);
+    msgbus_mutex_acquire(&sub->topic->bus->topic_update_lock);
 
     ret = subscriber_get_nb_updates_with_lock(sub);
     sub->pub_seq_nbr = sub->topic->pub_seq_nbr;
     memcpy(dest, sub->topic->buffer, sub->topic->type->struct_size);
 
-    msgbus_mutex_release(&sub->topic->lock);
+    msgbus_mutex_release(&sub->topic->bus->topic_update_lock);
 
     return ret;
 }

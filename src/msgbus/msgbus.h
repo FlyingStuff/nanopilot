@@ -6,31 +6,37 @@
 #include "type_definition.h"
 #include <msgbus_port.h>
 
-typedef struct topic_s {
+typedef struct msgbus_topic_s msgbus_topic_t;
+typedef struct msgbus_s msgbus_t;
+typedef struct msgbus_subscriber_s msgbus_subscriber_t;
+
+
+struct msgbus_topic_s {
     void *buffer;
     const msgbus_type_definition_t *type;
-    msgbus_mutex_t lock;
+    msgbus_t *bus;
     msgbus_cond_t condvar;
     const char *name;
-    struct topic_s *next;
+    struct msgbus_topic_s *next;
     bool published;
     uint32_t pub_seq_nbr;
-} msgbus_topic_t;
+};
 
 
-typedef struct {
+struct msgbus_s {
     struct {
         msgbus_topic_t *head;
     } topics;
+    msgbus_mutex_t topic_update_lock;
     msgbus_mutex_t lock;
     msgbus_cond_t condvar;
-} msgbus_t;
+};
 
 
-typedef struct {
+struct msgbus_subscriber_s {
     uint32_t pub_seq_nbr;
     msgbus_topic_t *topic;
-} msgbus_subscriber_t;
+};
 
 
 

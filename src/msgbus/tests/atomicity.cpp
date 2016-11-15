@@ -100,9 +100,9 @@ TEST(MessageBusAtomicityTestGroup, PublishIsLocked)
 {
     simple_t var;
     mock().expectOneCall("msgbus_mutex_acquire")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
     mock().expectOneCall("msgbus_mutex_release")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
 
     lock_mocks_enable(true);
     msgbus_topic_publish(&topic, &var);
@@ -111,9 +111,9 @@ TEST(MessageBusAtomicityTestGroup, PublishIsLocked)
 TEST(MessageBusAtomicityTestGroup, SubscriberWaitIsLocked)
 {
     mock().expectOneCall("msgbus_mutex_acquire")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
     mock().expectOneCall("msgbus_mutex_release")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
 
     msgbus_subscriber_t sub;
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
@@ -125,9 +125,9 @@ TEST(MessageBusAtomicityTestGroup, SubscriberWaitIsLocked)
 TEST(MessageBusAtomicityTestGroup, HasUpdateIsLocked)
 {
     mock().expectOneCall("msgbus_mutex_acquire")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
     mock().expectOneCall("msgbus_mutex_release")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
 
     msgbus_subscriber_t sub;
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
@@ -138,9 +138,9 @@ TEST(MessageBusAtomicityTestGroup, HasUpdateIsLocked)
 TEST(MessageBusAtomicityTestGroup, IsValidIsLocked)
 {
     mock().expectOneCall("msgbus_mutex_acquire")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
     mock().expectOneCall("msgbus_mutex_release")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
 
     msgbus_subscriber_t sub;
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);
@@ -151,9 +151,9 @@ TEST(MessageBusAtomicityTestGroup, IsValidIsLocked)
 TEST(MessageBusAtomicityTestGroup, ReadIsLocked)
 {
     mock().expectOneCall("msgbus_mutex_acquire")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
     mock().expectOneCall("msgbus_mutex_release")
-          .withPointerParameter("mutex", &topic.lock);
+          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
 
     msgbus_subscriber_t sub;
     msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE);

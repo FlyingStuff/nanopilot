@@ -31,6 +31,7 @@ TEST(BusTests, Initializer)
 {
     mock().expectOneCall("msgbus_condvar_init").withParameter("cond", &bus.condvar);
     mock().expectOneCall("msgbus_mutex_init").withParameter("mutex", &bus.lock);
+    mock().expectOneCall("msgbus_mutex_init").withParameter("mutex", &bus.topic_update_lock);
     condvar_init_mock_enable(true);
     msgbus_init(&bus);
     POINTERS_EQUAL(NULL, bus.topics.head);

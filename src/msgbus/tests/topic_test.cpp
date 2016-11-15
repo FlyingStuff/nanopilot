@@ -31,13 +31,13 @@ TEST_GROUP(TopicTests)
 TEST(TopicTests, Initializer)
 {
     mock().expectOneCall("msgbus_condvar_init").withParameter("cond", &topic.condvar);
-    mock().expectOneCall("msgbus_mutex_init").withParameter("mutex", &topic.lock);
     condvar_init_mock_enable(true);
 
     msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
 
     POINTERS_EQUAL(&buffer, topic.buffer);
     POINTERS_EQUAL(&simple_type, topic.type);
+    POINTERS_EQUAL(&bus, topic.bus);
     CHECK_EQUAL(0, topic.pub_seq_nbr);
     STRCMP_EQUAL("topic", topic.name);
 }
