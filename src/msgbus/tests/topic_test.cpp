@@ -30,14 +30,12 @@ TEST_GROUP(TopicTests)
 
 TEST(TopicTests, Initializer)
 {
-    mock().expectOneCall("msgbus_condvar_init").withParameter("cond", &topic.condvar);
-    condvar_init_mock_enable(true);
-
     msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
 
     POINTERS_EQUAL(&buffer, topic.buffer);
     POINTERS_EQUAL(&simple_type, topic.type);
     POINTERS_EQUAL(&bus, topic.bus);
+    POINTERS_EQUAL(NULL, topic.waiting_threads);
     CHECK_EQUAL(0, topic.pub_seq_nbr);
     STRCMP_EQUAL("topic", topic.name);
 }

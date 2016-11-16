@@ -15,8 +15,8 @@ struct msgbus_topic_s {
     void *buffer;
     const msgbus_type_definition_t *type;
     msgbus_t *bus;
-    msgbus_cond_t condvar;
     const char *name;
+    struct msgbus_cond_link_s *waiting_threads;
     struct msgbus_topic_s *next;
     bool published;
     uint32_t pub_seq_nbr;
@@ -33,9 +33,16 @@ struct msgbus_s {
 };
 
 
+struct msgbus_cond_link_s {
+    msgbus_cond_t *cond;
+    struct msgbus_cond_link_s *prev;
+    struct msgbus_cond_link_s *next;
+};
+
 struct msgbus_subscriber_s {
-    uint32_t pub_seq_nbr;
     msgbus_topic_t *topic;
+    uint32_t pub_seq_nbr;
+    struct msgbus_cond_link_s cond_link;
 };
 
 

@@ -49,7 +49,6 @@ void msgbus_topic_create(msgbus_topic_t *topic,
     topic->type = type;
     topic->name = name;
     topic->bus = bus;
-    msgbus_condvar_init(&topic->condvar);
 
     advertise_topic(bus, topic);
 }
@@ -99,6 +98,44 @@ msgbus_topic_t *msgbus_iterate_topics_next(msgbus_topic_t *topic)
 }
 
 
+void _msgbus_cond_link_to_topic(struct msgbus_cond_link_s *link,
+                               msgbus_cond_t *cv,
+                               msgbus_topic_t *topic)
+{
+    link->cond = cv;
+    link->next = topic->waiting_threads;
+    if (topic->waiting_threads != NULL) {
+        topic->waiting_threads->prev = link;
+    }
+    link->prev = NULL;
+    topic->waiting_threads = link;
+}
+
+
+void _msgbus_cond_unlink_from_topic(struct msgbus_cond_link_s *link,
+                                   msgbus_topic_t *topic)
+{
+    if (link->prev != NULL) {
+        link->prev->next = link->next;
+    } else {
+        topic->waiting_threads = link->next;
+    }
+    if (link->next != NULL) {
+        link->next->prev = link->prev;
+    }
+}
+
+
+void _msgbus_topic_signal_all(msgbus_topic_t *topic)
+{
+    struct msgbus_cond_link_s *l = topic->waiting_threads;
+    while (l != NULL) {
+        msgbus_condvar_broadcast(l->cond);
+        l = l->next;
+    }
+}
+
+
 void msgbus_topic_publish(msgbus_topic_t *topic, const void *val)
 {
     msgbus_mutex_acquire(&topic->bus->topic_update_lock);
@@ -106,7 +143,7 @@ void msgbus_topic_publish(msgbus_topic_t *topic, const void *val)
     memcpy(topic->buffer, val, topic->type->struct_size);
     topic->published = true;
     topic->pub_seq_nbr++;
-    msgbus_condvar_broadcast(&topic->condvar);
+    _msgbus_topic_signal_all(topic);
 
     msgbus_mutex_release(&topic->bus->topic_update_lock);
 }
@@ -149,6 +186,17 @@ static uint32_t subscriber_get_nb_updates_with_lock(msgbus_subscriber_t *sub)
 }
 
 
+void _msgbus_subscriber_block_on_cv_with_lock(msgbus_cond_t *c,
+                                              msgbus_subscriber_t *sub,
+                                              uint32_t timeout_us)
+{
+    msgbus_condvar_init(c);
+    _msgbus_cond_link_to_topic(&sub->cond_link, c, sub->topic);
+    msgbus_condvar_wait(c, &sub->topic->bus->topic_update_lock, timeout_us);
+    _msgbus_cond_unlink_from_topic(&sub->cond_link, sub->topic);
+}
+
+
 bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
                                        uint32_t timeout_us)
 {
@@ -156,7 +204,8 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
 
     int updates = subscriber_get_nb_updates_with_lock(sub);
     if (updates == 0 && timeout_us != MSGBUS_TIMEOUT_IMMEDIATE) {
-        msgbus_condvar_wait(&sub->topic->condvar, &sub->topic->bus->topic_update_lock, timeout_us);
+        msgbus_cond_t cv;
+        _msgbus_subscriber_block_on_cv_with_lock(&cv, sub, timeout_us);
         updates = subscriber_get_nb_updates_with_lock(sub);
     }
 

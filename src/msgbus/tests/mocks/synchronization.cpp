@@ -7,7 +7,8 @@
 static bool lock_enabled = false;
 static bool condvar_enabled = false;
 static bool init_enabled = false;
-std::function<void()> condvar_wait_side_effect = [](){};
+static bool condvar_ignore_cv_pointer_arg = false;
+static std::function<void()> condvar_wait_side_effect = [](){};
 
 void msgbus_mutex_init(msgbus_mutex_t *lock)
 {
@@ -20,8 +21,12 @@ void msgbus_mutex_init(msgbus_mutex_t *lock)
 void msgbus_condvar_init(msgbus_cond_t *cond)
 {
     if (init_enabled) {
-        mock().actualCall("msgbus_condvar_init")
-            .withPointerParameter("cond", cond);
+        if (condvar_ignore_cv_pointer_arg) {
+            mock().actualCall("msgbus_condvar_init");
+        } else {
+            mock().actualCall("msgbus_condvar_init")
+                .withPointerParameter("cond", cond);
+        }
     }
 }
 
@@ -45,18 +50,28 @@ void msgbus_mutex_release(msgbus_mutex_t *mutex)
 void msgbus_condvar_broadcast(msgbus_cond_t *cond)
 {
     if (condvar_enabled) {
-        mock().actualCall("msgbus_condvar_broadcast")
-              .withPointerParameter("cond", cond);
+        if (condvar_ignore_cv_pointer_arg) {
+            mock().actualCall("msgbus_condvar_broadcast");
+        } else {
+            mock().actualCall("msgbus_condvar_broadcast")
+                  .withPointerParameter("cond", cond);
+        }
     }
 }
 
 void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
 {
     if (condvar_enabled) {
-        mock().actualCall("msgbus_condvar_wait")
-              .withPointerParameter("cond", cond)
-              .withPointerParameter("mutex", mutex)
-              .withParameter("timeout_us", timeout_us);
+        if (condvar_ignore_cv_pointer_arg) {
+            mock().actualCall("msgbus_condvar_wait")
+                  .withPointerParameter("mutex", mutex)
+                  .withParameter("timeout_us", timeout_us);
+        } else {
+            mock().actualCall("msgbus_condvar_wait")
+                  .withPointerParameter("cond", cond)
+                  .withPointerParameter("mutex", mutex)
+                  .withParameter("timeout_us", timeout_us);
+        }
     }
     condvar_wait_side_effect();
 }
@@ -84,6 +99,11 @@ void condvar_mocks_enable(bool enabled)
 void condvar_init_mock_enable(bool enabled)
 {
     init_enabled = enabled;
+}
+
+void condvar_mocks_ignore_cv_pointer_arg(bool enabled)
+{
+    condvar_ignore_cv_pointer_arg = enabled;
 }
 
 TEST_GROUP(LockTestGroup)
