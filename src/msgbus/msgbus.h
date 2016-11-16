@@ -160,13 +160,13 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
 /** Wait for a topic update on multiple subscribers
  *
  * @parameter [in] subs Subscriber pointer list
- * @parameter [in] nb_sub number of subscriber pointers in list
+ * @parameter [in] nb_subs number of subscriber pointers in list
  * @parameter [in] timeout_us Timeout in microseconds
  *
  * @returns true on success and false on timeout
  */
 bool msgbus_subscriber_wait_for_update_on_any(msgbus_subscriber_t **subs,
-                                              int nb_sub,
+                                              int nb_subs,
                                               uint32_t timeout_us);
 
 /** Check if the topic has an update

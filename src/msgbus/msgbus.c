@@ -186,14 +186,20 @@ static uint32_t subscriber_get_nb_updates_with_lock(msgbus_subscriber_t *sub)
 }
 
 
-void _msgbus_subscriber_block_on_cv_with_lock(msgbus_cond_t *c,
-                                              msgbus_subscriber_t *sub,
-                                              uint32_t timeout_us)
+static void _msgbus_subscribers_block_on_cv_with_lock(msgbus_cond_t *c,
+                                                      msgbus_subscriber_t **subs,
+                                                      int nb_subs,
+                                                      uint32_t timeout_us)
 {
     msgbus_condvar_init(c);
-    _msgbus_cond_link_to_topic(&sub->cond_link, c, sub->topic);
-    msgbus_condvar_wait(c, &sub->topic->bus->topic_update_lock, timeout_us);
-    _msgbus_cond_unlink_from_topic(&sub->cond_link, sub->topic);
+    int i;
+    for (i = 0; i < nb_subs; i++) {
+        _msgbus_cond_link_to_topic(&subs[i]->cond_link, c, subs[i]->topic);
+    }
+    msgbus_condvar_wait(c, &subs[0]->topic->bus->topic_update_lock, timeout_us);
+    for (i = 0; i < nb_subs; i++) {
+        _msgbus_cond_unlink_from_topic(&subs[i]->cond_link, subs[i]->topic);
+    }
 }
 
 
@@ -205,7 +211,7 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
     int updates = subscriber_get_nb_updates_with_lock(sub);
     if (updates == 0 && timeout_us != MSGBUS_TIMEOUT_IMMEDIATE) {
         msgbus_cond_t cv;
-        _msgbus_subscriber_block_on_cv_with_lock(&cv, sub, timeout_us);
+        _msgbus_subscribers_block_on_cv_with_lock(&cv, &sub, 1, timeout_us);
         updates = subscriber_get_nb_updates_with_lock(sub);
     }
 
@@ -218,6 +224,37 @@ bool msgbus_subscriber_wait_for_update(msgbus_subscriber_t *sub,
     }
 }
 
+
+static bool subscriber_any_has_update_with_lock(msgbus_subscriber_t **subs,
+                                                int nb_subs)
+{
+    int i;
+    for (i = 0; i < nb_subs; i++) {
+        if (subscriber_get_nb_updates_with_lock(subs[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool msgbus_subscriber_wait_for_update_on_any(msgbus_subscriber_t **subs,
+                                              int nb_subs,
+                                              uint32_t timeout_us)
+{
+    msgbus_mutex_acquire(&subs[0]->topic->bus->topic_update_lock);
+
+    bool has_updates = subscriber_any_has_update_with_lock(subs, nb_subs);
+
+    if (has_updates == false && timeout_us != MSGBUS_TIMEOUT_IMMEDIATE) {
+        msgbus_cond_t cv;
+        _msgbus_subscribers_block_on_cv_with_lock(&cv, subs, nb_subs, timeout_us);
+        has_updates = subscriber_any_has_update_with_lock(subs, nb_subs);
+    }
+
+    msgbus_mutex_release(&subs[0]->topic->bus->topic_update_lock);
+
+    return has_updates;
+}
 
 uint32_t msgbus_subscriber_has_update(msgbus_subscriber_t *sub)
 {
