@@ -4,10 +4,10 @@
 
 void msgbus_init(msgbus_t *bus)
 {
-    memset(bus, 0, sizeof(msgbus_t));
-    msgbus_condvar_init(&bus->condvar);
-    msgbus_mutex_init(&bus->lock);
+    bus->topics.head = NULL;
     msgbus_mutex_init(&bus->topic_update_lock);
+    msgbus_mutex_init(&bus->lock);
+    msgbus_condvar_init(&bus->condvar);
 }
 
 
@@ -28,9 +28,7 @@ static void advertise_topic(msgbus_t *bus, msgbus_topic_t *topic)
 {
     msgbus_mutex_acquire(&bus->lock);
 
-    if (bus->topics.head != NULL) {
-        topic->next = bus->topics.head;
-    }
+    topic->next = bus->topics.head;
     bus->topics.head = topic;
 
     msgbus_condvar_broadcast(&bus->condvar);
@@ -44,11 +42,13 @@ void msgbus_topic_create(msgbus_topic_t *topic,
                          void *buffer,
                          const char *name)
 {
-    memset(topic, 0, sizeof(msgbus_topic_t));
     topic->buffer = buffer;
     topic->type = type;
     topic->name = name;
     topic->bus = bus;
+    topic->waiting_threads = NULL;
+    topic->published = false;
+    topic->pub_seq_nbr = 0;
 
     advertise_topic(bus, topic);
 }
