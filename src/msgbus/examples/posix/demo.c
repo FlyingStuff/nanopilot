@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "../../msgbus.h"
-#include "example_type.h"
+#include "types/example_type.h"
 
 msgbus_t bus;
 

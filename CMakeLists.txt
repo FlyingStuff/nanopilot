@@ -4,17 +4,19 @@ project(unittest-build)
 set(CMAKE_BUILD_TYPE Debug)
 
 
-include_directories(./src/eigen/)
-include_directories(./src/flight-stack/src/)
-include_directories(./src/)
-include_directories(./src/msgbus/tests)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+add_subdirectory(src/msgbus)
 
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
+include_directories(./src/eigen/)
+include_directories(./src/flight-stack/src/)
+include_directories(./src/)
+
 add_executable(
-    tests
+    ins-board-unittests
     ./src/tests/runner.cpp
     ./src/cmp/cmp.c
     ./src/cmp_mem_access/cmp_mem_access.c
@@ -22,9 +24,6 @@ add_executable(
     ./src/datagram-messages/msg_dispatcher.c
     ./src/datagram-messages/service_call.c
     ./src/hott/sumd.c
-    ./src/msgbus/msgbus.c
-    ./src/msgbus/serialization_msgpack.c
-    ./src/msgbus/type_print.c
     ./src/parameter/parameter.c
     ./src/parameter/parameter_msgpack.c
     ./src/parameter/parameter_print.c
@@ -37,17 +36,6 @@ add_executable(
     ./src/crc/test/crc32_test.cpp
     ./src/datagram-messages/tests/msg_dispatcher_test.cpp
     ./src/datagram-messages/tests/service_call_test.cpp
-    ./src/msgbus/tests/atomicity.cpp
-    ./src/msgbus/tests/bus_test.cpp
-    ./src/msgbus/tests/cpp_wrapper_test.cpp
-    ./src/msgbus/tests/mocks/assert.cpp
-    ./src/msgbus/tests/mocks/synchronization.cpp
-    ./src/msgbus/tests/serialization_msgpack_test.cpp
-    ./src/msgbus/tests/signaling.cpp
-    ./src/msgbus/tests/subscriber_test.cpp
-    ./src/msgbus/tests/topic_test.cpp
-    ./src/msgbus/tests/type_print_test.cpp
-    ./src/msgbus/tests/types/test.c
     ./src/parameter/tests/msgpack_test.cpp
     ./src/parameter/tests/parameter_print_test.cpp
     ./src/parameter/tests/parameter_test.cpp
@@ -63,13 +51,24 @@ add_executable(
 
 
 target_link_libraries(
-    tests
+    ins-board-unittests
     m
     CppUTest
     CppUTestExt
     )
 
-# Run unit tests
-add_custom_target(check ./tests -c DEPENDS tests)
+enable_testing()
+add_test(ins-board-unittests ins-board-unittests)
 
+list(APPEND ALL_UNIT_TESTS ${CMAKE_CURRENT_BINARY_DIR}/ins-board-unittests)
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    FOREACH(t ${ALL_UNIT_TESTS})
+        LIST(APPEND ALL_UNIT_TESTS_AS_COMMAND COMMAND;echo;${t})
+        LIST(APPEND ALL_UNIT_TESTS_AS_COMMAND COMMAND;${t};-c)
+    ENDFOREACH()
+    add_custom_target(check ${ALL_UNIT_TESTS_AS_COMMAND} DEPENDS ${ALL_UNIT_TESTS})
+else()
+    set(ALL_UNIT_TESTS ${ALL_UNIT_TESTS} PARENT_SCOPE)
+endif()
 
