@@ -30,6 +30,3 @@
 
 # Cmake build directory
 build/
-
-# Packager generated
-CMakeLists.txt
