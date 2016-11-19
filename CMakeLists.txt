@@ -5,15 +5,17 @@ set(CMAKE_BUILD_TYPE Debug)
 
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-add_subdirectory(src/msgbus)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/src/msgbus")
+find_package(msgbus)
+
+add_subdirectory(src/msgbus) # to build tests
+
+include(${CMAKE_CURRENT_LIST_DIR}/src/msgbus/cmake/type_compiler.cmake)
 
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
-include_directories(./src/eigen/)
-include_directories(./src/flight-stack/src/)
-include_directories(./src/)
 
 add_executable(
     ins-board-unittests
@@ -49,6 +51,11 @@ add_executable(
     ./src/timestamp/timestamp_test.cpp
     )
 
+
+
+target_include_directories(ins-board-unittests PUBLIC ./src/eigen/)
+target_include_directories(ins-board-unittests PUBLIC ./src/flight-stack/src/)
+target_include_directories(ins-board-unittests PUBLIC ./src/)
 
 target_link_libraries(
     ins-board-unittests
