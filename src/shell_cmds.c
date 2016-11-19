@@ -45,6 +45,61 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
     chprintf(chp, "[sytick %d @ %d Hz]\n", chVTGetSystemTime(), CH_CFG_ST_FREQUENCY);
 }
 
+static void cmd_cpu(BaseSequentialStream *chp, int argc, char *argv[]) {
+    thread_t *tp;
+
+    (void)argv;
+    (void)argc;
+
+    tp = chRegFirstThread();
+    int thd_cnt = 0;
+    while (tp != NULL) {
+        thd_cnt++;
+        tp = chRegNextThread(tp);
+    }
+
+    struct thd_timing_s {
+        thread_t *tp;
+        systime_t t1;
+        systime_t t2;
+    };
+
+    struct thd_timing_s *thread_times = malloc(sizeof(struct thd_timing_s)*thd_cnt);
+    if (thread_times != NULL) {
+        int i;
+        tp = chRegFirstThread();
+        for (i = 0; i < thd_cnt; i++) {
+            thread_times[i].tp = tp;
+            tp = chRegNextThread(tp);
+        }
+
+        systime_t t1 = chVTGetSystemTime();
+        for (i = 0; i < thd_cnt; i++) {
+            thread_times[i].t1 = chThdGetTicksX(thread_times[i].tp);
+        }
+
+        chThdSleepMilliseconds(1000);
+
+        systime_t t2 = chVTGetSystemTime();
+        for (i = 0; i < thd_cnt; i++) {
+            thread_times[i].t2 = chThdGetTicksX(thread_times[i].tp);
+        }
+        chprintf(chp, "thread times:\n");
+        chprintf(chp, "   total /1000 name\n");
+        for (i = 0; i < thd_cnt; i++) {
+            uint32_t share = 1000 * (thread_times[i].t2 - thread_times[i].t1) / (t2 - t1);
+            chprintf(chp, "%8lu  %4u %s\n",
+                    thread_times[i].t2,
+                    share,
+                    thread_times[i].tp->p_name);
+        }
+
+        free(thread_times);
+    } else {
+        chprintf(chp, "malloc failed\n");
+    }
+}
+
 static void cmd_version(BaseSequentialStream *chp, int argc, char *argv[]) {
     (void)chp;
     (void)argc;
@@ -156,6 +211,7 @@ static void cmd_topic_list(BaseSequentialStream *stream, int argc, char *argv[])
 const ShellCommand shell_commands[] = {
   {"mem", cmd_mem},
   {"threads", cmd_threads},
+  {"cpu", cmd_cpu},
   {"version", cmd_version},
   {"safemode", cmd_safemode},
   {"reboot", cmd_reboot},
