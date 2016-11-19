@@ -2,6 +2,7 @@
 #define MSGBUS_PORT_H
 
 #include <ch.h>
+#include <osal.h>
 
 typedef condition_variable_t msgbus_cond_t;
 typedef mutex_t msgbus_mutex_t;

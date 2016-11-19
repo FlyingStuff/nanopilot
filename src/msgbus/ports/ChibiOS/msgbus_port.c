@@ -39,5 +39,8 @@ void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t ti
     } else {
         timeout = US2ST(timeout_us);
     }
-    chCondWaitTimeout(cond, timeout);
+    msg_t ret = chCondWaitTimeout(cond, timeout);
+    if (ret == MSG_TIMEOUT) {
+        chMtxLock(mutex);
+    }
 }
