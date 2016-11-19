@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void stream_start(void);
+void stream_start(BaseSequentialStream *out);
 
 #ifdef __cplusplus
 }
