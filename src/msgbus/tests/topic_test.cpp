@@ -30,6 +30,7 @@ TEST_GROUP(TopicTests)
 
 TEST(TopicTests, Initializer)
 {
+    memset(&topic, 0xff, sizeof(topic));
     msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
 
     POINTERS_EQUAL(&buffer, topic.buffer);
