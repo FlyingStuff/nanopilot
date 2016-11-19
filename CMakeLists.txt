@@ -26,6 +26,11 @@ add_executable(
     ./src/datagram-messages/msg_dispatcher.c
     ./src/datagram-messages/service_call.c
     ./src/hott/sumd.c
+    ./src/msgbus_scheduler.c
+    ./src/tests/msgbus_scheduler_test.cpp
+    ${MSGBUS_SOURCES}
+    ${MSGBUS_PORT_UNITTEST_MOCK_SOURCES}
+    ${CMAKE_CURRENT_BINARY_DIR}/types/test.c
     ./src/parameter/parameter.c
     ./src/parameter/parameter_msgpack.c
     ./src/parameter/parameter_print.c
@@ -52,6 +57,10 @@ add_executable(
     )
 
 
+type_compile(${CMAKE_CURRENT_SOURCE_DIR}/src/tests/types/test.type)
+target_include_directories(ins-board-unittests PUBLIC ${TYPE_FILE_INCLUDE_DIR})
+target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_INCLUDE_DIR})
+target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_PORT_UNITTEST_MOCK_INCLUDE_DIR})
 
 target_include_directories(ins-board-unittests PUBLIC ./src/eigen/)
 target_include_directories(ins-board-unittests PUBLIC ./src/flight-stack/src/)
