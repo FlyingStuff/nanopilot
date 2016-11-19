@@ -132,6 +132,7 @@ static void cmd_topic_print(BaseSequentialStream *stream, int argc, char *argv[]
             msgbus_subscriber_read(&sub, buf);
             msgbus_print_type((void (*)(void *, const char *, ...))chprintf,
                               stream, type, buf);
+            free(buf);
         } else {
             chprintf(stream, "topic not published yet\n");
             return;
