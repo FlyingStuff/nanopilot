@@ -1,4 +1,5 @@
 #include <CppUTest/TestHarness.h>
+#include <inttypes.h>
 #include "../type_definition.h"
 #include "../type_print.h"
 #include "types/test.h"
@@ -130,5 +131,41 @@ TEST(TypePrintTestGroup, CanPrintArraysOfStructs)
         "    x: 2.000000\n"
         "    y: 2\n"
         "]\n",
+        buffer);
+}
+
+TEST(TypePrintTestGroup, CanPrintAllIntegerTypes)
+{
+    integer_types_t object = {
+        .i8 = INT8_MIN,
+        .i16 = INT16_MIN,
+        .i32 = INT32_MIN,
+        .i64 = INT64_MIN,
+        .u8 = UINT8_MAX,
+        .u16 = UINT16_MAX,
+        .u32 = UINT32_MAX,
+        .u64 = UINT64_MAX,
+    };
+    msgbus_print_type(print_fn, &arg, &integer_types_type, &object);
+    char expect[1000];
+    sprintf(expect,
+        "i8: %" PRIi8 "\n"
+        "i16: %" PRIi16 "\n"
+        "i32: %" PRIi32 "\n"
+        "i64: %" PRIi64 "\n"
+        "u8: %" PRIu8 "\n"
+        "u16: %" PRIu16 "\n"
+        "u32: %" PRIu32 "\n"
+        "u64: %" PRIu64 "\n",
+        (int8_t)INT8_MIN,
+        (int16_t)INT16_MIN,
+        INT32_MIN,
+        INT64_MIN,
+        (uint8_t)UINT8_MAX,
+        (uint16_t)UINT16_MAX,
+        UINT32_MAX,
+        UINT64_MAX);
+    STRCMP_EQUAL(
+        expect,
         buffer);
 }

@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdbool.h>
+#include <inttypes.h>
 #include "type_definition.h"
 #include "type_print.h"
 
@@ -19,8 +20,29 @@ bool msgbus_print_base_type(void (*print_fn)(void *, const char *, ...),
                             const void *p)
 {
     switch (type) {
+        case MSGBUS_TYPE_INT8:
+            print_fn(arg, "%" PRIi8, *(int8_t *)p);
+            break;
+        case MSGBUS_TYPE_INT16:
+            print_fn(arg, "%" PRIi16, *(int16_t *)p);
+            break;
         case MSGBUS_TYPE_INT32:
-            print_fn(arg, "%d", *(int32_t *)p);
+            print_fn(arg, "%" PRIi32, *(int32_t *)p);
+            break;
+        case MSGBUS_TYPE_INT64:
+            print_fn(arg, "%" PRIi64, *(int64_t *)p);
+            break;
+        case MSGBUS_TYPE_UINT8:
+            print_fn(arg, "%" PRIu8, *(uint8_t *)p);
+            break;
+        case MSGBUS_TYPE_UINT16:
+            print_fn(arg, "%" PRIu16, *(uint16_t *)p);
+            break;
+        case MSGBUS_TYPE_UINT32:
+            print_fn(arg, "%" PRIu32, *(uint32_t *)p);
+            break;
+        case MSGBUS_TYPE_UINT64:
+            print_fn(arg, "%" PRIu64, *(uint64_t *)p);
             break;
         case MSGBUS_TYPE_FLOAT32:
             print_fn(arg, "%f", *(float *)p);
