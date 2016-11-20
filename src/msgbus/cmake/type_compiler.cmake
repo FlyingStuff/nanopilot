@@ -10,6 +10,7 @@ function(type_compile filename)
     set(output ${base_abs}.c ${base_abs}.h)
     add_custom_command(
         OUTPUT ${output}
-        COMMAND python3 ${TYPE_COMPILER} ${filename} -o ${base_abs})
+        COMMAND python3 ${TYPE_COMPILER} ${filename} -o ${base_abs}
+        DEPENDS ${filename})
     set_source_files_properties(${output} PROPERTIES GENERATED TRUE)
 endfunction()
