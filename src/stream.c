@@ -8,6 +8,7 @@
 #include "msgbus_scheduler.h"
 #include "msgbus/type_print.h"
 #include "log.h"
+#include <string.h>
 
 #include "stream.h"
 
@@ -42,9 +43,25 @@ void stream_scheduler_add(struct stream_arg_s *stream,
                           msgbus_scheduler_t *sched,
                           parameter_namespace_t *ns,
                           BaseSequentialStream *out_fd,
-                          const char *name,
-                          const char *pname)
+                          const char *name)
 {
+    char *pname = malloc(strlen(name)+1);
+    if (pname == NULL) {
+        log_warning("stream %s could not be allocated", name);
+        return;
+    }
+    const char *first = &name[0];
+    while (first[0] == '/') {
+        first++;
+    }
+    strcpy(pname, first);
+    char *c = pname;
+    while (*c != '\0') {
+        if (*c == '/') {
+            *c = '.';
+        }
+        c++;
+    }
     msgbus_t *bus = msgbus_scheduler_get_bus(sched);
     if (msgbus_topic_subscribe(&stream->sub, bus, name, 1000000)) {
         stream->out_fd = out_fd;
@@ -73,10 +90,10 @@ static THD_FUNCTION(stream, arg)
     static struct stream_arg_s streams[sizeof(buf)/sizeof(buf[0])];
     struct stream_arg_s *s = streams;
 
-    stream_scheduler_add(s++, &sched, &stream_ns, out_fd, "/sensors/mpu6000", "mpu6000");
-    stream_scheduler_add(s++, &sched, &stream_ns, out_fd, "/sensors/hmc5883l", "hmc5883l");
-    stream_scheduler_add(s++, &sched, &stream_ns, out_fd, "/sensors/h3lis331dl", "h3lis331dl");
-    stream_scheduler_add(s++, &sched, &stream_ns, out_fd, "/sensors/ms5611", "ms5611");
+    stream_scheduler_add(s++, &sched, &stream_ns, out_fd, "/sensors/mpu6000");
+    stream_scheduler_add(s++, &sched, &stream_ns, out_fd, "/sensors/hmc5883l");
+    stream_scheduler_add(s++, &sched, &stream_ns, out_fd, "/sensors/h3lis331dl");
+    stream_scheduler_add(s++, &sched, &stream_ns, out_fd, "/sensors/ms5611");
 
     while(1) {
         msgbus_scheduler_spin(&sched, MSGBUS_TIMEOUT_NEVER);
