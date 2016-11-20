@@ -5,3 +5,10 @@ simple:
 
 nested:
     simple s
+
+arrays:
+    int32 x[<=4]
+    string(10) strings[2]
+
+arrays_of_structs:
+    simple arr[3]
