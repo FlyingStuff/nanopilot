@@ -46,7 +46,6 @@ PROJCSRC += $(PROJROOT)/src/parameter/parameter.c
 PROJCSRC += $(PROJROOT)/src/parameter/parameter_msgpack.c
 PROJCSRC += $(PROJROOT)/src/parameter/parameter_print.c
 PROJCSRC += $(PROJROOT)/src/rate_limiter.c
-PROJCSRC += $(PROJROOT)/src/rcservo/rcservo.c
 PROJCSRC += $(PROJROOT)/src/serial-datagram/serial_datagram.c
 PROJCSRC += $(PROJROOT)/src/serial-datagram/serial_datagram_buffer_writer.c
 PROJCSRC += $(PROJROOT)/src/timestamp/timestamp.c

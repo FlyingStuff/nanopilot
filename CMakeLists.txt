@@ -35,7 +35,6 @@ add_executable(
     ./src/parameter/parameter_msgpack.c
     ./src/parameter/parameter_print.c
     ./src/rate_limiter.c
-    ./src/rcservo/rcservo.c
     ./src/serial-datagram/serial_datagram.c
     ./src/serial-datagram/serial_datagram_buffer_writer.c
     ./src/timestamp/timestamp.c
@@ -47,7 +46,6 @@ add_executable(
     ./src/parameter/tests/parameter_print_test.cpp
     ./src/parameter/tests/parameter_test.cpp
     ./src/parameter/tests/parameter_types_test.cpp
-    ./src/rcservo/rcservo_test.cpp
     ./src/serial-datagram/tests/serial_datagram_buffer_writer_tests.cpp
     ./src/serial-datagram/tests/serial_datagram_test.cpp
     ./src/tests/rate_limiter_test.cpp
