@@ -225,8 +225,10 @@ extern void msgbus_condvar_init(msgbus_cond_t *cond);
 /** Signal all tasks waiting on the given condition variable. */
 extern void msgbus_condvar_broadcast(msgbus_cond_t *cond);
 
-/** Wait on the given condition variable. */
-extern void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us);
+/** Wait on the given condition variable.
+ * @returns true if the condition was signaled, false on timeout
+ */
+extern bool msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us);
 
 
 /** @} */

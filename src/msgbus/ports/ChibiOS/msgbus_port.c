@@ -26,12 +26,12 @@ void msgbus_condvar_broadcast(msgbus_cond_t *cond)
     chCondBroadcast(cond);
 }
 
-void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
+bool msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
 {
     (void)mutex;
 
     if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
-        return;
+        return false;
     }
     systime_t timeout;
     if (timeout_us == MSGBUS_TIMEOUT_NEVER) {
@@ -42,5 +42,8 @@ void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t ti
     msg_t ret = chCondWaitTimeout(cond, timeout);
     if (ret == MSG_TIMEOUT) {
         chMtxLock(mutex);
+        return false;
+    } else {
+        return true;
     }
 }

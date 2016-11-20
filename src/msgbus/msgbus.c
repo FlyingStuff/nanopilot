@@ -66,8 +66,9 @@ msgbus_topic_t *msgbus_find_topic(msgbus_t *bus,
         res = topic_by_name(bus, name);
 
         if (res == NULL && timeout_us != MSGBUS_TIMEOUT_IMMEDIATE) {
-            msgbus_condvar_wait(&bus->condvar, &bus->lock, timeout_us);
-            break; // todo handle return value, break only if wait is successful
+            if (!msgbus_condvar_wait(&bus->condvar, &bus->lock, timeout_us)) {
+                break; // timeout
+            }
         } else {
             break;
         }

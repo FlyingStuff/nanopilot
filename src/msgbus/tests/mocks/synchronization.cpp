@@ -59,7 +59,7 @@ void msgbus_condvar_broadcast(msgbus_cond_t *cond)
     }
 }
 
-void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
+bool msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
 {
     if (condvar_enabled) {
         if (condvar_ignore_cv_pointer_arg) {
@@ -74,6 +74,7 @@ void msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t ti
         }
     }
     condvar_wait_side_effect();
+    return true;
 }
 
 void set_condvar_wait_side_effect(std::function<void()> side_effect)
