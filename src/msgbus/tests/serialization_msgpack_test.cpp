@@ -31,66 +31,158 @@ bool msgbus_cmp_ser_value_once(const void *var,
 
 
 
-TEST_GROUP(MessagePackSerializationTests)
+TEST_GROUP(MessagePackEntrySerializationTests)
 {
     cmp_ctx_t ctx;
     cmp_mem_access_t mem;
     char buf[1000];
+    msgbus_type_entry_t base_type_entry;
     void setup(void)
     {
         memset(buf, 0, sizeof(buf));
         cmp_mem_access_init(&ctx, &mem, buf, sizeof(buf));
+        base_type_entry = {
+            .name = "var",
+            .base_type = MSGBUS_TYPE_INT32,
+            .is_base_type = 1,
+            .is_array = 0,
+            .is_dynamic_array = 0,
+            .array_len = 0,
+            .dynamic_array_len_struct_offset = 0,
+            .struct_offset = 0,
+            .size = 0
+        };
     }
 };
 
 
-TEST(MessagePackSerializationTests, SerializeFloatValue)
+TEST(MessagePackEntrySerializationTests, SerializeFloat16Value)
 {
-    msgbus_type_entry_t entry = {
-        .is_base_type = 1,
-        .is_array = 0,
-        .is_dynamic_array = 0,
-        .base_type = MSGBUS_TYPE_FLOAT32,
-        .struct_offset = 0,
-    };
+    base_type_entry.base_type = MSGBUS_TYPE_FLOAT16;
     float var = 3.14;
-    CHECK_TRUE(msgbus_cmp_ser_value(&var, &entry, &ctx, false));
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
     cmp_mem_access_set_pos(&mem, 0);
     float var_read;
     CHECK_TRUE(cmp_read_float(&ctx, &var_read));
     CHECK_EQUAL(var, var_read);
 }
 
-
-TEST(MessagePackSerializationTests, SerializeInt32Value)
+TEST(MessagePackEntrySerializationTests, SerializeFloat32Value)
 {
-    msgbus_type_entry_t entry = {
-        .is_base_type = 1,
-        .is_array = 0,
-        .is_dynamic_array = 0,
-        .base_type = MSGBUS_TYPE_INT32,
-        .struct_offset = 0,
-    };
-    int32_t var = 42;
-    CHECK_TRUE(msgbus_cmp_ser_value(&var, &entry, &ctx, false));
+    base_type_entry.base_type = MSGBUS_TYPE_FLOAT32;
+    float var = 3.14;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
+    cmp_mem_access_set_pos(&mem, 0);
+    float var_read;
+    CHECK_TRUE(cmp_read_float(&ctx, &var_read));
+    CHECK_EQUAL(var, var_read);
+}
+
+TEST(MessagePackEntrySerializationTests, SerializeFloat64Value)
+{
+    base_type_entry.base_type = MSGBUS_TYPE_FLOAT64;
+    double var = 3.14;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
+    cmp_mem_access_set_pos(&mem, 0);
+    double var_read;
+    CHECK_TRUE(cmp_read_double(&ctx, &var_read));
+    CHECK_EQUAL(var, var_read);
+}
+
+TEST(MessagePackEntrySerializationTests, SerializeInt8Value)
+{
+    base_type_entry.base_type = MSGBUS_TYPE_INT8;
+    int8_t var = INT8_MIN;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
+    cmp_mem_access_set_pos(&mem, 0);
+    int8_t var_read;
+    CHECK_TRUE(cmp_read_char(&ctx, &var_read));
+    CHECK_EQUAL(var, var_read);
+}
+
+TEST(MessagePackEntrySerializationTests, SerializeInt16Value)
+{
+    base_type_entry.base_type = MSGBUS_TYPE_INT16;
+    int16_t var = INT16_MIN;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
+    cmp_mem_access_set_pos(&mem, 0);
+    int16_t var_read;
+    CHECK_TRUE(cmp_read_short(&ctx, &var_read));
+    CHECK_EQUAL(var, var_read);
+}
+
+TEST(MessagePackEntrySerializationTests, SerializeInt32Value)
+{
+    base_type_entry.base_type = MSGBUS_TYPE_INT32;
+    int32_t var = INT32_MIN;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
     cmp_mem_access_set_pos(&mem, 0);
     int32_t var_read;
     CHECK_TRUE(cmp_read_int(&ctx, &var_read));
     CHECK_EQUAL(var, var_read);
 }
 
-TEST(MessagePackSerializationTests, SerializeStringValue)
+TEST(MessagePackEntrySerializationTests, SerializeInt64Value)
 {
-    msgbus_type_entry_t entry = {
-        .is_base_type = 1,
-        .is_array = 0,
-        .is_dynamic_array = 0,
-        .base_type = MSGBUS_TYPE_STRING,
-        .struct_offset = 0,
-        .size = 10
-    };
+    base_type_entry.base_type = MSGBUS_TYPE_INT64;
+    int64_t var = INT64_MIN;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
+    cmp_mem_access_set_pos(&mem, 0);
+    int64_t var_read;
+    CHECK_TRUE(cmp_read_long(&ctx, &var_read));
+    CHECK_TRUE(var == var_read);
+}
+
+TEST(MessagePackEntrySerializationTests, SerializeUInt8Value)
+{
+    base_type_entry.base_type = MSGBUS_TYPE_UINT8;
+    uint8_t var = UINT8_MAX;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
+    cmp_mem_access_set_pos(&mem, 0);
+    uint8_t var_read;
+    CHECK_TRUE(cmp_read_uchar(&ctx, &var_read));
+    CHECK_EQUAL(var, var_read);
+}
+
+TEST(MessagePackEntrySerializationTests, SerializeUInt16Value)
+{
+    base_type_entry.base_type = MSGBUS_TYPE_UINT16;
+    uint16_t var = UINT16_MAX;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
+    cmp_mem_access_set_pos(&mem, 0);
+    uint16_t var_read;
+    CHECK_TRUE(cmp_read_ushort(&ctx, &var_read));
+    CHECK_EQUAL(var, var_read);
+}
+
+TEST(MessagePackEntrySerializationTests, SerializeUInt32Value)
+{
+    base_type_entry.base_type = MSGBUS_TYPE_UINT32;
+    uint32_t var = UINT32_MAX;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
+    cmp_mem_access_set_pos(&mem, 0);
+    uint32_t var_read;
+    CHECK_TRUE(cmp_read_uint(&ctx, &var_read));
+    CHECK_EQUAL(var, var_read);
+}
+
+TEST(MessagePackEntrySerializationTests, SerializeUInt64Value)
+{
+    base_type_entry.base_type = MSGBUS_TYPE_UINT64;
+    uint64_t var = UINT64_MAX;
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
+    cmp_mem_access_set_pos(&mem, 0);
+    uint64_t var_read;
+    CHECK_TRUE(cmp_read_ulong(&ctx, &var_read));
+    CHECK_TRUE(var == var_read);
+}
+
+TEST(MessagePackEntrySerializationTests, SerializeStringValue)
+{
+    base_type_entry.base_type = MSGBUS_TYPE_STRING;
+    base_type_entry.size = 10;
     char str[10] = "test";
-    CHECK_TRUE(msgbus_cmp_ser_value(&str, &entry, &ctx, false));
+    CHECK_TRUE(msgbus_cmp_ser_value(&str, &base_type_entry, &ctx, false));
     cmp_mem_access_set_pos(&mem, 0);
     memset(str, 0, sizeof(str));
     uint32_t len = sizeof(str);
@@ -100,7 +192,7 @@ TEST(MessagePackSerializationTests, SerializeStringValue)
 }
 
 
-TEST(MessagePackSerializationTests, SerializeCustomTypeValue)
+TEST(MessagePackEntrySerializationTests, SerializeCustomTypeValue)
 {
     msgbus_type_entry_t entry = {
         .is_base_type = 0,
@@ -118,19 +210,14 @@ TEST(MessagePackSerializationTests, SerializeCustomTypeValue)
 }
 
 
-TEST(MessagePackSerializationTests, SerializeStaticArray)
+TEST(MessagePackEntrySerializationTests, SerializeStaticArray)
 {
-    msgbus_type_entry_t entry = {
-        .is_base_type = 1,
-        .is_array = 1,
-        .is_dynamic_array = 0,
-        .base_type = MSGBUS_TYPE_INT32,
-        .struct_offset = 0,
-        .array_len = 3,
-        .size = sizeof(int32_t),
-    };
+    base_type_entry.base_type = MSGBUS_TYPE_INT32;
+    base_type_entry.is_array = 1;
+    base_type_entry.array_len = 3;
+    base_type_entry.size = sizeof(int32_t);
     int32_t var[3] = {1, 2, 3};
-    CHECK_TRUE(msgbus_cmp_ser_value(&var, &entry, &ctx, false));
+    CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
     cmp_mem_access_set_pos(&mem, 0);
     int32_t var_read;
     CHECK_TRUE(cmp_read_int(&ctx, &var_read));
@@ -142,7 +229,7 @@ TEST(MessagePackSerializationTests, SerializeStaticArray)
 }
 
 
-TEST(MessagePackSerializationTests, SerializeDynamicArray)
+TEST(MessagePackEntrySerializationTests, SerializeDynamicArray)
 {
     struct dynamic_array_test_s {
         int32_t list[10];
@@ -171,7 +258,7 @@ TEST(MessagePackSerializationTests, SerializeDynamicArray)
 }
 
 
-TEST(MessagePackSerializationTests, SerializeDynamicArrayMaxSizeCheck)
+TEST(MessagePackEntrySerializationTests, SerializeDynamicArrayMaxSizeCheck)
 {
     struct dynamic_array_test_s {
         int32_t list[10];
@@ -192,7 +279,7 @@ TEST(MessagePackSerializationTests, SerializeDynamicArrayMaxSizeCheck)
 }
 
 
-TEST(MessagePackSerializationTests, SerializeStructEntry)
+TEST(MessagePackEntrySerializationTests, SerializeStructEntry)
 {
     msgbus_type_entry_t entry = {
         .name = "var",
@@ -215,6 +302,18 @@ TEST(MessagePackSerializationTests, SerializeStructEntry)
 }
 
 // todo buffer too short tests
+
+TEST_GROUP(MessagePackSerializationTests)
+{
+    cmp_ctx_t ctx;
+    cmp_mem_access_t mem;
+    char buf[1000];
+    void setup(void)
+    {
+        memset(buf, 0, sizeof(buf));
+        cmp_mem_access_init(&ctx, &mem, buf, sizeof(buf));
+    }
+};
 
 
 TEST(MessagePackSerializationTests, SerializeStruct)

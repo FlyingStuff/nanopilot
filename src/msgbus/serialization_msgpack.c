@@ -32,10 +32,27 @@ bool msgbus_cmp_ser_value_once(const void *var,
 {
     if (entry->is_base_type) {
         switch (entry->base_type) {
+        case MSGBUS_TYPE_FLOAT16:
         case MSGBUS_TYPE_FLOAT32:
             return cmp_write_float(ctx, *(float*)var);
+        case MSGBUS_TYPE_FLOAT64:
+            return cmp_write_double(ctx, *(double*)var);
+        case MSGBUS_TYPE_INT8:
+            return cmp_write_int(ctx, *(int8_t*)var);
+        case MSGBUS_TYPE_INT16:
+            return cmp_write_int(ctx, *(int16_t*)var);
         case MSGBUS_TYPE_INT32:
             return cmp_write_int(ctx, *(int32_t*)var);
+        case MSGBUS_TYPE_INT64:
+            return cmp_write_int(ctx, *(int64_t*)var);
+        case MSGBUS_TYPE_UINT8:
+            return cmp_write_uint(ctx, *(uint8_t*)var);
+        case MSGBUS_TYPE_UINT16:
+            return cmp_write_uint(ctx, *(uint16_t*)var);
+        case MSGBUS_TYPE_UINT32:
+            return cmp_write_uint(ctx, *(uint32_t*)var);
+        case MSGBUS_TYPE_UINT64:
+            return cmp_write_uint(ctx, *(uint64_t*)var);
         case MSGBUS_TYPE_STRING:
             return cmp_write_str(ctx, (const char*)var, strlen((const char*)var));
         default:
