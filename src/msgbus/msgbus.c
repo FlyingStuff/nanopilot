@@ -294,7 +294,9 @@ uint32_t msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest)
 
     ret = subscriber_get_nb_updates_with_lock(sub);
     sub->pub_seq_nbr = sub->topic->pub_seq_nbr;
-    memcpy(dest, sub->topic->buffer, sub->topic->type->struct_size);
+    if (dest != NULL) {
+        memcpy(dest, sub->topic->buffer, sub->topic->type->struct_size);
+    }
 
     msgbus_mutex_release(&sub->topic->bus->topic_update_lock);
 

@@ -190,7 +190,8 @@ bool msgbus_subscriber_topic_is_valid(msgbus_subscriber_t *sub);
 /** Read a topic
  *
  * @parameter [in] sub Subscriber object
- * @parameter [out] dest Pointer to the value to be read
+ * @parameter [out] dest Pointer to the value to be read, if it is NULL,
+ * the update is cleared without copying data
  *
  * @returns the number of updates since the last read
  *

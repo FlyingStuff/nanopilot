@@ -156,3 +156,12 @@ TEST(SubscriberTests, PublishAndReadBack)
     msgbus_subscriber_read(&sub, &s);
     CHECK_EQUAL(42, s.x);
 }
+
+TEST(SubscriberTests, ReadJustUpdatesTheSeqNbrIfDestIsNULL)
+{
+    CHECK_TRUE(msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE));
+    simple_t t = {42};
+    msgbus_topic_publish(&topic, &t);
+    msgbus_subscriber_read(&sub, NULL);
+    CHECK_FALSE(msgbus_subscriber_has_update(&sub));
+}
