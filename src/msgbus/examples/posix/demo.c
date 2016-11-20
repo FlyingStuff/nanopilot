@@ -9,7 +9,7 @@ msgbus_t bus;
 
 static void* producer(void *p)
 {
-    int max_count = (int)p;
+    int max_count = *(int*)p;
     const char *name = "test";
 
     static msgbus_topic_t topic; // this must be static
@@ -30,12 +30,12 @@ static void* producer(void *p)
 
 static void *consumer(void *p)
 {
-    int consumer_number = (int)p;
+    int consumer_number = *(int*)p;
 
     msgbus_subscriber_t sub;
 
     printf("[consumer %d] waiting for topic\n", consumer_number);
-    msgbus_topic_subscribe(&sub, &bus, "test", MSGBUS_TIMEOUT_NEVER);
+    assert(msgbus_topic_subscribe(&sub, &bus, "test", MSGBUS_TIMEOUT_NEVER));
 
     example_t x;
     while (1) {
@@ -63,14 +63,18 @@ int main(int argc, const char **argv)
 
     /* Creates a few consumer threads. */
     pthread_t producer_thd, consumer_thd;
-    pthread_create(&consumer_thd, NULL, consumer, (void *)1);
-    // pthread_create(&consumer_thd, NULL, consumer, (void *)2);
-    // pthread_create(&consumer_thd, NULL, consumer, (void *)3);
+    int c1 = 1;
+    pthread_create(&consumer_thd, NULL, consumer, &c1);
+    int c2 = 2;
+    pthread_create(&consumer_thd, NULL, consumer, &c2);
+    int c3 = 3;
+    pthread_create(&consumer_thd, NULL, consumer, &c3);
 
     sleep(1);
 
     /* Creates a producer thread */
-    pthread_create(&producer_thd, NULL, producer, (void *)3);
+    int p = 5;
+    pthread_create(&producer_thd, NULL, producer, &p);
 
     while(1) {
         sleep(1);
