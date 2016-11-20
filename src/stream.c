@@ -23,7 +23,10 @@ struct stream_arg_s {
 void stream_cb(void *arg)
 {
     struct stream_arg_s *s = (struct stream_arg_s*)arg;
-
+    if (!rate_limiter_should_run(&s->rate_limiter)) {
+        msgbus_subscriber_read(&s->sub, NULL); // clear update
+        return;
+    }
     msgbus_topic_t *topic = msgbus_subscriber_get_topic(&s->sub);
     const msgbus_type_definition_t *type = msgbus_topic_get_type(topic);
     void *buf = malloc(type->struct_size);
@@ -32,10 +35,8 @@ void stream_cb(void *arg)
         return;
     }
     msgbus_subscriber_read(&s->sub, buf);
-    if (rate_limiter_should_run(&s->rate_limiter)) {
-        msgbus_print_type((void (*)(void *, const char *, ...))chprintf,
+    msgbus_print_type((void (*)(void *, const char *, ...))chprintf,
                       s->out_fd, type, buf);
-    }
     free(buf);
 }
 
