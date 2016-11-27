@@ -219,6 +219,10 @@ TEST(MessagePackEntrySerializationTests, SerializeStaticArray)
     int32_t var[3] = {1, 2, 3};
     CHECK_TRUE(msgbus_cmp_ser_value(&var, &base_type_entry, &ctx, false));
     cmp_mem_access_set_pos(&mem, 0);
+
+    uint32_t nb_elements;
+    CHECK_TRUE(cmp_read_map(&ctx, &nb_elements));
+    CHECK_EQUAL(3, nb_elements);
     int32_t var_read;
     CHECK_TRUE(cmp_read_int(&ctx, &var_read));
     CHECK_EQUAL(var[0], var_read);
@@ -248,6 +252,10 @@ TEST(MessagePackEntrySerializationTests, SerializeDynamicArray)
     struct dynamic_array_test_s var = {.list = {1, 2, 3}, .list_len = 3};
     CHECK_TRUE(msgbus_cmp_ser_value(&var, &entry, &ctx, false));
     cmp_mem_access_set_pos(&mem, 0);
+
+    uint32_t nb_elements;
+    CHECK_TRUE(cmp_read_map(&ctx, &nb_elements));
+    CHECK_EQUAL(3, nb_elements);
     int32_t var_read;
     CHECK_TRUE(cmp_read_int(&ctx, &var_read));
     CHECK_EQUAL(var.list[0], var_read);

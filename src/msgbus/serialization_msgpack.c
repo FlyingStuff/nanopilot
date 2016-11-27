@@ -80,6 +80,7 @@ bool msgbus_cmp_ser_value(const void *var,
                 return false;
             }
         }
+        cmp_write_map(ctx, len);
         int i;
         for (i = 0; i < len; i++) {
             const void *var_entry_i = var + entry->struct_offset + entry->size * i;
