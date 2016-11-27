@@ -95,8 +95,7 @@ static void boot_message(void)
     if (safemode_active()) {
         log_warning("safemode active");
     }
-    log_info("git: %s branch: %s", build_git_version, build_git_branch);
-    log_info("built: %s", build_date);
+    log_info("git hash: %s", build_git_sha);
 }
 
 #define STREAM_DEV_STR_SIZE 10

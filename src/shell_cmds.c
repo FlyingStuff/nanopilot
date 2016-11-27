@@ -104,10 +104,7 @@ static void cmd_version(BaseSequentialStream *chp, int argc, char *argv[]) {
     (void)chp;
     (void)argc;
     (void)argv;
-    chprintf(chp, "git version: %s\n", build_git_version);
-    chprintf(chp, "branch:      %s\n", build_git_branch);
-    chprintf(chp, "full sha:    %s\n", build_git_sha);
-    chprintf(chp, "build date:  %s\n", build_date);
+    chprintf(chp, "git version: %s\n", build_git_sha);
     chprintf(chp, "compiler:    %s\n", PORT_COMPILER_NAME);
 }
 

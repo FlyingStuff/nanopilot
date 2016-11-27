@@ -3,9 +3,14 @@
 # NOTE: Can be overridden externally.
 #
 
+C_OPT_REPRODUCIBLE_BUILD = -frandom-seed=42
+C_OPT_REPRODUCIBLE_BUILD += -D__DATE__="\"not set for reproducible build\""
+C_OPT_REPRODUCIBLE_BUILD += -D__TIME__="\"not set for reproducible build\""
+C_OPT_REPRODUCIBLE_BUILD += -Wno-builtin-macro-redefined
+
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16 $(C_OPT_REPRODUCIBLE_BUILD)
 endif
 
 # C specific options here (added to USE_OPT).
