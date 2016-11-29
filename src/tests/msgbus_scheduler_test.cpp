@@ -80,9 +80,9 @@ TEST_GROUP(MsgBusSchedulerSpinTests)
     msgbus_subscriber_t sub1, sub2;
     int arg1, arg2;
     void (*cb1)(void*) = [](void *arg) {
-        mock().actualCall("cb1").withPointerParameter("arg", arg);};
+        mock().actualCall("cb1").withParameter("arg", arg);};
     void (*cb2)(void*) = [](void *arg) {
-        mock().actualCall("cb2").withPointerParameter("arg", arg);};
+        mock().actualCall("cb2").withParameter("arg", arg);};
     msgbus_scheduler_t sched;
     msgbus_scheduler_task_buffer_space_t buf[100];
 
@@ -136,7 +136,7 @@ TEST(MsgBusSchedulerSpinTests, TestSpinBlocksIfNoUpdate)
     condvar_mocks_enable(true);
     condvar_mocks_ignore_cv_pointer_arg(true);
     mock().expectOneCall("msgbus_condvar_wait")
-          .withPointerParameter("mutex", &bus.topic_update_lock)
+          .withParameter("mutex", &bus.topic_update_lock)
           .withParameter("timeout_us", 1000);
     msgbus_scheduler_spin(&sched, 1000);
 }

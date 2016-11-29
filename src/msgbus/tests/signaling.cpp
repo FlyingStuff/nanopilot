@@ -57,9 +57,9 @@ TEST(SignalingTestGroup, TopicPublishNoBlockingSubscribers)
     condvar_mocks_enable(true);
 
     mock().expectOneCall("msgbus_mutex_acquire")
-          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
+          .withParameter("mutex", &topic.bus->topic_update_lock);
     mock().expectOneCall("msgbus_mutex_release")
-          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
+          .withParameter("mutex", &topic.bus->topic_update_lock);
 
     msgbus_topic_publish(&topic, &buffer);
 }
@@ -76,15 +76,15 @@ TEST(SignalingTestGroup, TopicPublishWithBlockingSubscribers)
     _msgbus_cond_link_to_topic(&link2, &cv2, &topic);
 
     mock().expectOneCall("msgbus_mutex_acquire")
-          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
+          .withParameter("mutex", &topic.bus->topic_update_lock);
 
     mock().expectOneCall("msgbus_condvar_broadcast")
-          .withPointerParameter("cond", &cv2);
+          .withParameter("cond", &cv2);
     mock().expectOneCall("msgbus_condvar_broadcast")
-          .withPointerParameter("cond", &cv1);
+          .withParameter("cond", &cv1);
 
     mock().expectOneCall("msgbus_mutex_release")
-          .withPointerParameter("mutex", &topic.bus->topic_update_lock);
+          .withParameter("mutex", &topic.bus->topic_update_lock);
 
     msgbus_topic_publish(&topic, &buffer);
 }
@@ -109,7 +109,7 @@ TEST(SignalingTestGroup, SubscriberWaitBlocksOnCond)
     condvar_mocks_ignore_cv_pointer_arg(true);
     mock().expectOneCall("msgbus_condvar_init");
     mock().expectOneCall("msgbus_condvar_wait")
-          .withPointerParameter("mutex", &topic.bus->topic_update_lock)
+          .withParameter("mutex", &topic.bus->topic_update_lock)
           .withParameter("timeout_us", 100);
 
     CHECK_FALSE(msgbus_subscriber_wait_for_update(&sub, 100));
@@ -136,7 +136,7 @@ TEST(SignalingTestGroup, SubscriberWaitWithPublishDuringWaitIsSignaled)
 
     mock().expectOneCall("msgbus_condvar_init");
     mock().expectOneCall("msgbus_condvar_wait")
-          .withPointerParameter("mutex", &topic.bus->topic_update_lock)
+          .withParameter("mutex", &topic.bus->topic_update_lock)
           .withParameter("timeout_us", 100);
 
     set_condvar_wait_side_effect([this](){msgbus_topic_publish(&topic, &buffer);});
@@ -159,7 +159,7 @@ TEST(SignalingTestGroup, SubscriberWaitOnAnyWithPublishDuringWaitIsSignaledAndRe
 
     mock().expectOneCall("msgbus_condvar_init");
     mock().expectOneCall("msgbus_condvar_wait")
-          .withPointerParameter("mutex", &topic.bus->topic_update_lock)
+          .withParameter("mutex", &topic.bus->topic_update_lock)
           .withParameter("timeout_us", 100);
 
     set_condvar_wait_side_effect([this](){msgbus_topic_publish(&topic, &buffer);});
@@ -178,13 +178,13 @@ TEST(SignalingTestGroup, Advertise)
     condvar_mocks_enable(true);
 
     mock().expectOneCall("msgbus_mutex_acquire")
-          .withPointerParameter("mutex", &bus.lock);
+          .withParameter("mutex", &bus.lock);
 
     mock().expectOneCall("msgbus_condvar_broadcast")
-          .withPointerParameter("cond", &bus.condvar);
+          .withParameter("cond", &bus.condvar);
 
     mock().expectOneCall("msgbus_mutex_release")
-          .withPointerParameter("mutex", &bus.lock);
+          .withParameter("mutex", &bus.lock);
 
     msgbus_topic_create(&topic, &bus, &simple_type, &buffer, "topic");
 }
@@ -309,11 +309,11 @@ TEST(CondVarLinkTests, TestSignalAll)
     _msgbus_cond_link_to_topic(&link3, &cv3, &topic);
 
     mock().expectOneCall("msgbus_condvar_broadcast")
-          .withPointerParameter("cond", &cv1);
+          .withParameter("cond", &cv1);
     mock().expectOneCall("msgbus_condvar_broadcast")
-          .withPointerParameter("cond", &cv2);
+          .withParameter("cond", &cv2);
     mock().expectOneCall("msgbus_condvar_broadcast")
-          .withPointerParameter("cond", &cv3);
+          .withParameter("cond", &cv3);
 
     condvar_mocks_enable(true);
     _msgbus_topic_signal_all(&topic);

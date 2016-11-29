@@ -14,7 +14,7 @@ void msgbus_mutex_init(msgbus_mutex_t *lock)
 {
     if (init_enabled) {
         mock().actualCall("msgbus_mutex_init")
-            .withPointerParameter("mutex", lock);
+            .withParameter("mutex", lock);
     }
 }
 
@@ -25,7 +25,7 @@ void msgbus_condvar_init(msgbus_cond_t *cond)
             mock().actualCall("msgbus_condvar_init");
         } else {
             mock().actualCall("msgbus_condvar_init")
-                .withPointerParameter("cond", cond);
+                .withParameter("cond", cond);
         }
     }
 }
@@ -35,7 +35,7 @@ void msgbus_mutex_acquire(msgbus_mutex_t *mutex)
 {
     if (lock_enabled) {
         mock().actualCall("msgbus_mutex_acquire")
-            .withPointerParameter("mutex", mutex);
+            .withParameter("mutex", mutex);
     }
 }
 
@@ -43,7 +43,7 @@ void msgbus_mutex_release(msgbus_mutex_t *mutex)
 {
     if (lock_enabled) {
         mock().actualCall("msgbus_mutex_release")
-            .withPointerParameter("mutex", mutex);
+            .withParameter("mutex", mutex);
     }
 }
 
@@ -54,7 +54,7 @@ void msgbus_condvar_broadcast(msgbus_cond_t *cond)
             mock().actualCall("msgbus_condvar_broadcast");
         } else {
             mock().actualCall("msgbus_condvar_broadcast")
-                  .withPointerParameter("cond", cond);
+                  .withParameter("cond", cond);
         }
     }
 }
@@ -64,12 +64,12 @@ bool msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t ti
     if (condvar_enabled) {
         if (condvar_ignore_cv_pointer_arg) {
             mock().actualCall("msgbus_condvar_wait")
-                  .withPointerParameter("mutex", mutex)
+                  .withParameter("mutex", mutex)
                   .withParameter("timeout_us", timeout_us);
         } else {
             mock().actualCall("msgbus_condvar_wait")
-                  .withPointerParameter("cond", cond)
-                  .withPointerParameter("mutex", mutex)
+                  .withParameter("cond", cond)
+                  .withParameter("mutex", mutex)
                   .withParameter("timeout_us", timeout_us);
         }
     }
@@ -129,7 +129,7 @@ TEST_GROUP(LockTestGroup)
 TEST(LockTestGroup, CanLock)
 {
     mock().expectOneCall("msgbus_mutex_acquire")
-          .withPointerParameter("mutex", &lock);
+          .withParameter("mutex", &lock);
 
     msgbus_mutex_acquire(&lock);
 }
@@ -137,7 +137,7 @@ TEST(LockTestGroup, CanLock)
 TEST(LockTestGroup, CanUnlock)
 {
     mock().expectOneCall("msgbus_mutex_release")
-          .withPointerParameter("mutex", &lock);
+          .withParameter("mutex", &lock);
 
     msgbus_mutex_release(&lock);
 }
@@ -146,7 +146,7 @@ TEST(LockTestGroup, CanBroadcastCondVar)
 {
     int cond;
     mock().expectOneCall("msgbus_condvar_broadcast")
-          .withPointerParameter("cond", &cond);
+          .withParameter("cond", &cond);
 
     msgbus_condvar_broadcast(&cond);
 }
@@ -156,8 +156,8 @@ TEST(LockTestGroup, CanWaitCondVar)
     int cond, mutex;
 
     mock().expectOneCall("msgbus_condvar_wait")
-          .withPointerParameter("cond", &cond)
-          .withPointerParameter("mutex", &mutex)
+          .withParameter("cond", &cond)
+          .withParameter("mutex", &mutex)
           .withParameter("timeout_us", 100);
 
 
