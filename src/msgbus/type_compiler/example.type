@@ -3,7 +3,7 @@
 example:
     string(10) str # string type (max 10 characters)
     float32 array[100] # this is a fixed size array
-    float32 list[<=10] # this is a dynamic array with maximum 10 items ('<' and '<0' are supported)
+    float32 list[<=10] # this is a dynamic array with maximum 10 items ('<' and '<=' are supported)
 
 # comment blocks
 # and vertical whitespace
