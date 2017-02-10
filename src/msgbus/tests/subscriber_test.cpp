@@ -150,7 +150,7 @@ TEST(SubscriberTests, SubscriberGetTopic)
 TEST(SubscriberTests, PublishAndReadBack)
 {
     CHECK_TRUE(msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE));
-    simple_t t = {42};
+    simple_t t = {.x=42};
     msgbus_topic_publish(&topic, &t);
     simple_t s;
     msgbus_subscriber_read(&sub, &s);
@@ -160,7 +160,7 @@ TEST(SubscriberTests, PublishAndReadBack)
 TEST(SubscriberTests, ReadJustUpdatesTheSeqNbrIfDestIsNULL)
 {
     CHECK_TRUE(msgbus_topic_subscribe(&sub, &bus, "topic", MSGBUS_TIMEOUT_IMMEDIATE));
-    simple_t t = {42};
+    simple_t t = {.x=42};
     msgbus_topic_publish(&topic, &t);
     msgbus_subscriber_read(&sub, NULL);
     CHECK_FALSE(msgbus_subscriber_has_update(&sub));
