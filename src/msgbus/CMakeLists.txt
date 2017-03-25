@@ -21,6 +21,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/cmake/type_compiler.cmake)
 set(MSBGUS_SRC
     ./msgbus.c
     ./serialization_msgpack.c
+    ./serialization_csv.c
     ./type_print.c
     )
 
@@ -33,6 +34,7 @@ add_executable(
     ./tests/mocks/assert.cpp
     ./tests/mocks/synchronization.cpp
     ./tests/serialization_msgpack_test.cpp
+    ./tests/serialization_csv_test.cpp
     ./tests/signaling.cpp
     ./tests/subscriber_test.cpp
     ./tests/topic_test.cpp

@@ -6,6 +6,9 @@ simple:
 nested:
     simple s
 
+doublenested:
+    nested n
+
 arrays:
     int32 x[<=4]
     string(10) strings[2]
