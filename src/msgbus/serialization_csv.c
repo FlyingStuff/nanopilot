@@ -28,6 +28,10 @@ static int serialize_header(const msgbus_type_definition_t *type,
         strncpy(&buf[write], name, name_len);
         write += strlen(name);
 
+        if (type->elements[i].is_dynamic_array) {
+            return -1;
+        }
+
         if (!type->elements[i].is_base_type) { // struct type
             if (write + 1 > buf_sz) {
                 return -1;

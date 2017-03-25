@@ -43,7 +43,7 @@ TEST(TopicTests, Initializer)
 
 TEST(TopicTests, PublishCopiesData)
 {
-    simple_t data = {42};
+    simple_t data = {42, 23};
 
     msgbus_topic_publish(&topic, &data);
 
@@ -52,7 +52,7 @@ TEST(TopicTests, PublishCopiesData)
 
 TEST(TopicTests, PublishIncrementsSequenceNbr)
 {
-    simple_t data = {42};
+    simple_t data = {42, 23};
 
     msgbus_topic_publish(&topic, &data);
 
@@ -61,7 +61,7 @@ TEST(TopicTests, PublishIncrementsSequenceNbr)
 
 TEST(TopicTests, PublishSequenceNbrCorrectlyOverflows)
 {
-    simple_t data = {42};
+    simple_t data = {42, 23};
 
     topic.pub_seq_nbr = UINT32_MAX;
     msgbus_topic_publish(&topic, &data);

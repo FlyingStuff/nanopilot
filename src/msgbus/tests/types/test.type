@@ -13,6 +13,14 @@ arrays:
     int32 x[<=4]
     string(10) strings[2]
 
+static_array:
+    int32 x[3]
+    int32 y[2]
+
+dynamic_array:
+    int32 x[<=3]
+    int32 y[<=2]
+
 arrays_of_structs:
     simple arr[3]
 

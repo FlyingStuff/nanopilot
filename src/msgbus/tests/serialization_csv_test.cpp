@@ -46,3 +46,17 @@ TEST(CSVSerializationTests, SerializeHeaderBufferOverflowFailsAllLenghts)
     }
 }
 
+IGNORE_TEST(CSVSerializationTests, SerializeHeaderWithArray)
+{
+    const char *exp = "x[0],x[1],x[2],y[0],y[1]\n";
+    int ret = msgbus_serialize_csv_header(&static_array_type, buffer, sizeof(buffer));
+    CHECK_EQUAL((int)strlen(exp), ret);
+    STRCMP_EQUAL(exp, buffer);
+}
+
+
+TEST(CSVSerializationTests, SerializeHeaderWithDynamicArrayFails)
+{
+    int ret = msgbus_serialize_csv_header(&dynamic_array_type, buffer, sizeof(buffer));
+    CHECK_EQUAL(-1, ret);
+}
