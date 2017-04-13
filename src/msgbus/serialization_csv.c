@@ -1,62 +1,121 @@
 #include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include "serialization_csv.h"
 
 
-static int serialize_header(const msgbus_type_definition_t *type,
-                            char *buf,
-                            size_t buf_sz,
-                            unsigned int prefix_len)
-{
-    unsigned int write = 0;
-    int i;
-    for (i = 0; i < type->nb_elements; i++) {
+struct buffer_s {
+    int write;
+    size_t size;
+    char *buf;
+};
 
-        // copy the prefix
-        if (write + prefix_len > buf_sz) {
-            return -1;
+
+static void buffer_init(struct buffer_s *b, char *mem, size_t size)
+{
+    b->write = 0;
+    b->buf = mem;
+    b->size = size;
+}
+
+static bool buffer_write(struct buffer_s *b, const char* s, size_t len)
+{
+    if (b->write + len > b->size) {
+        return false;
+    }
+    memmove(&b->buf[b->write], s, len);
+    b->write += len;
+    return true;
+}
+
+static bool buffer_write_s(struct buffer_s *b, const char* string)
+{
+    return buffer_write(b, string, strlen(string));
+}
+
+static bool buffer_printf(struct buffer_s *b, const char *fmt, ...)
+{
+    size_t size_left = b->size - b->write;
+    va_list args;
+    va_start(args, fmt);
+    int n = vsnprintf(&b->buf[b->write], size_left, fmt, args);
+    va_end(args);
+    if (n > 0 && (size_t)n < size_left) {
+        b->write += n;
+        return true;
+    } else {
+        return false;
+    }
+
+}
+
+static char *buffer_get_pos(struct buffer_s *b)
+{
+    return &b->buf[b->write];
+}
+
+static bool serialize_header(const msgbus_type_definition_t *type,
+                            struct buffer_s *buf,
+                            char *prefix_start,
+                            size_t prefix_len)
+{
+    char *next_prefix_start;
+    int element, array_idx = 0;
+    for (element = 0; element < type->nb_elements;) {
+        if (element == 0) {
+            next_prefix_start = prefix_start; // prefix is already written
+        } else {
+            next_prefix_start = buffer_get_pos(buf);
+            // copy the prefix
+            if (!buffer_write(buf, prefix_start, prefix_len)) {
+                return false;
+            }
         }
-        int prefix_start = write;
-        memmove(&buf[write], buf, prefix_len);
-        write += prefix_len;
 
         // copy the name
-        const char *name = type->elements[i].name;
-        size_t name_len = strlen(name);
-        if (write + name_len > buf_sz) {
-            return -1;
-        }
-        strncpy(&buf[write], name, name_len);
-        write += strlen(name);
-
-        if (type->elements[i].is_dynamic_array) {
-            return -1;
+        const char *name = type->elements[element].name;
+        if (!buffer_write_s(buf, name)) {
+            return false;
         }
 
-        if (!type->elements[i].is_base_type) { // struct type
-            if (write + 1 > buf_sz) {
-                return -1;
-            }
-            buf[write++] = '.';
+        if (type->elements[element].is_dynamic_array) {
+            return false; // dynamic arrays are not supported
+        }
 
-            int new_prefix_len = prefix_len + name_len + 1;
-            int len = serialize_header(type->elements[i].type,
-                                       &buf[prefix_start],
-                                       buf_sz - prefix_start,
-                                       new_prefix_len);
-            if (len > 0) {
-                write += len - new_prefix_len;
-            } else {
-                return len;
+        if (type->elements[element].is_array) {
+            if (!buffer_printf(buf, "[%d]", array_idx)) {
+                return false;
             }
         }
 
-        // write a ',' after the entry
-        if (write + 1 > buf_sz) {
-            return -1;
+        if (!type->elements[element].is_base_type) { // struct type
+            if (!buffer_write_s(buf, ".")) {
+                return false;
+            }
+
+            size_t next_prefix_len = buffer_get_pos(buf) - next_prefix_start;
+            if (!serialize_header(type->elements[element].type,
+                                  buf,
+                                  next_prefix_start,
+                                  next_prefix_len))
+            {
+                return false;
+            }
         }
-        buf[write++] = ',';
+
+        if (!buffer_write_s(buf, ",")) {
+            return false;
+        }
+
+        array_idx++;
+        if (!type->elements[element].is_array
+            || array_idx == type->elements[element].array_len) {
+            element++;
+            array_idx = 0;
+        }
     }
-    return write - 1; // without the last ','
+    buf->write--; // remove the last ','
+    return true;
 }
 
 
@@ -64,11 +123,15 @@ int msgbus_serialize_csv_header(const msgbus_type_definition_t *type,
                                  char *buf,
                                  size_t buf_sz)
 {
-    int write = serialize_header(type, buf, buf_sz, 0);
-    if (write > 0 && (size_t)write + 1 < buf_sz) {
-        buf[write++] = '\n';
+    struct buffer_s b;
+    buffer_init(&b, buf, buf_sz);
+    if (!serialize_header(type, &b, buf, 0)) {
+        return -1;
     }
-    return write;
+    if (!buffer_write(&b, "\n\0", 2)) {
+        return -1;
+    }
+    return b.write - 1; // buffer without '\0' terminator
 }
 
 int msgbus_serialize_csv(const void *var,

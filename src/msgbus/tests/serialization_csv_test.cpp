@@ -7,6 +7,10 @@
 TEST_GROUP(CSVSerializationTests)
 {
     char buffer[100];
+    void setup()
+    {
+        memset(buffer, '*', sizeof(buffer));
+    }
 };
 
 TEST(CSVSerializationTests, SerializeSimpleHeader)
@@ -46,7 +50,7 @@ TEST(CSVSerializationTests, SerializeHeaderBufferOverflowFailsAllLenghts)
     }
 }
 
-IGNORE_TEST(CSVSerializationTests, SerializeHeaderWithArray)
+TEST(CSVSerializationTests, SerializeHeaderWithArray)
 {
     const char *exp = "x[0],x[1],x[2],y[0],y[1]\n";
     int ret = msgbus_serialize_csv_header(&static_array_type, buffer, sizeof(buffer));
