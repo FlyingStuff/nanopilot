@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <inttypes.h>
 #include "serialization_csv.h"
 
 
@@ -134,14 +135,87 @@ int msgbus_serialize_csv_header(const msgbus_type_definition_t *type,
     return b.write - 1; // buffer without '\0' terminator
 }
 
+
+static bool serialize_type(const void *var, const msgbus_type_definition_t *type, struct buffer_s *buf);
+static bool serialize_entry(const void *var, const msgbus_type_entry_t *entry, struct buffer_s *buf);
+
+static bool serialize_entry(const void *var, const msgbus_type_entry_t *entry, struct buffer_s *buf)
+{
+    if (entry->is_base_type) {
+        switch (entry->base_type) {
+        case MSGBUS_TYPE_FLOAT16:
+        case MSGBUS_TYPE_FLOAT32:
+            return buffer_printf(buf, "%f,", *(float*)var);
+        case MSGBUS_TYPE_FLOAT64:
+            return buffer_printf(buf, "%lf,", *(double*)var);
+        case MSGBUS_TYPE_INT8:
+            return buffer_printf(buf, "%"PRId8",", *(int8_t*)var);
+        case MSGBUS_TYPE_INT16:
+            return buffer_printf(buf, "%"PRId16",", *(int16_t*)var);
+        case MSGBUS_TYPE_INT32:
+            return buffer_printf(buf, "%"PRId32",", *(int32_t*)var);
+        case MSGBUS_TYPE_INT64:
+            return buffer_printf(buf, "%"PRId64",", *(int64_t*)var);
+        case MSGBUS_TYPE_UINT8:
+            return buffer_printf(buf, "%"PRIu8",", *(uint8_t*)var);
+        case MSGBUS_TYPE_UINT16:
+            return buffer_printf(buf, "%"PRIu16",", *(uint16_t*)var);
+        case MSGBUS_TYPE_UINT32:
+            return buffer_printf(buf, "%"PRIu32",", *(uint32_t*)var);
+        case MSGBUS_TYPE_UINT64:
+            return buffer_printf(buf, "%"PRIu64",", *(uint64_t*)var);
+        case MSGBUS_TYPE_STRING:
+            return buffer_write(buf, (const char*)var, strlen((const char*)var))
+                   && buffer_write_s(buf, ",");
+        default:
+            return false;
+        }
+    } else {
+        return serialize_type(var, entry->type, buf)
+               && buffer_write_s(buf, ",");
+    }
+}
+
+
+static bool serialize_type(const void *var, const msgbus_type_definition_t *type, struct buffer_s *buf)
+{
+    int i;
+    for (i = 0; i < type->nb_elements; i++) {
+        const msgbus_type_entry_t *entry = &type->elements[i];
+        if (entry->is_dynamic_array) {
+            return false;
+        }
+        int array_len = 1;
+        if (entry->is_array) {
+            array_len = entry->array_len;
+        }
+        int idx;
+        for (idx = 0; idx < array_len; idx++) {
+            size_t offset = entry->struct_offset + entry->size * idx;
+            if (!serialize_entry(var + offset, entry, buf)) {
+                return false;
+            }
+        }
+    }
+    buf->write--; // remove the last ','
+    return true;
+}
+
+
 int msgbus_serialize_csv(const void *var,
                           const msgbus_type_definition_t *type,
                           char *buf,
                           size_t buf_sz)
 {
-    (void)var;
-    (void)type;
-    (void)buf;
-    (void)buf_sz;
-    return 0;
+    struct buffer_s b;
+    buffer_init(&b, buf, buf_sz);
+
+    if (!serialize_type(var, type, &b)) {
+        return -1;
+    }
+
+    if (!buffer_write(&b, "\n\0", 2)) {
+        return -1;
+    }
+    return b.write - 1;
 }
