@@ -85,6 +85,11 @@ void msgbus_topic_create(msgbus_topic_t *topic,
  * @parameter [in] timeout_us Timeout in microseconds
  *
  * @returns A pointer to the topic or NULL if it wasn't created before the timeout
+ *
+ * @note If the requested topic doesn't exist yet, the function returns after
+ * there has been no topic added for a duration of timeout.
+ * This means the function can block longer than timeout if new topics are being
+ * created.
  */
 msgbus_topic_t *msgbus_find_topic(msgbus_t *bus,
                                   const char *name,
@@ -141,6 +146,11 @@ const char *msgbus_topic_get_name(msgbus_topic_t *topic);
  * @parameter [in] timeout_us Timeout in microseconds
  *
  * @returns true on success and false on timeout.
+ *
+ * @note If the requested topic doesn't exist yet, the function returns after
+ * there has been no topic added for a duration of timeout.
+ * This means the function can block longer than timeout if new topics are being
+ * created.
  */
 bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
                             msgbus_t *bus,
