@@ -1,6 +1,6 @@
 
-set(CMP_SOURCES ${CMAKE_CURRENT_LIST_DIR}/../src/cmp/cmp.c)
-set(CMP_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/../src)
+set(CMP_SOURCES ${CMAKE_CURRENT_LIST_DIR}/../lib/comm/cmp/cmp.c)
+set(CMP_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/../lib/comm)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(cmp  DEFAULT_MSG

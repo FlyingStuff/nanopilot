@@ -48,6 +48,7 @@ add_executable(
 type_compile(${CMAKE_CURRENT_SOURCE_DIR}/tests/types/test.type)
 target_include_directories(msgbus_unittests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_include_directories(msgbus_unittests PUBLIC ${TYPE_FILE_INCLUDE_DIR})
+target_include_directories(msgbus_unittests PUBLIC ${CMP_INCLUDE_DIR})
 
 
 target_link_libraries(

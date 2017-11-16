@@ -86,9 +86,10 @@ endif
 PROJECT = ins-board
 
 PROJROOT = ../..
+TARGETROOT = .
 
 # Imported source files and paths
-CHIBIOS = $(PROJROOT)/ChibiOS
+CHIBIOS = $(PROJROOT)/lib/mcu/ChibiOS
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
@@ -98,8 +99,10 @@ include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 include $(CHIBIOS)/test/rt/test.mk
 # ChibiOS C++ bindings
 include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
-include $(PROJROOT)/src/fatfs/fatfs.mk
+include $(PROJROOT)/lib/fatfs/fatfs.mk
 include $(PROJROOT)/src/src.mk
+include $(PROJROOT)/lib/src.mk
+include $(TARGETROOT)/src/src.mk
 
 include $(PROJROOT)/types/types.mk
 
@@ -123,7 +126,6 @@ CSRC = $(PROJCSRC) \
        $(FATFSSRC) \
        $(TYPECSRC) \
        $(PROJROOT)/src/git_revision.c \
-       board.c main.c exti.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.

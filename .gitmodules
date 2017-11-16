@@ -1,17 +1,17 @@
 [submodule "src/cmp"]
-	path = src/cmp
+	path = lib/comm/cmp
 	url = https://github.com/camgunz/cmp.git
 [submodule "src/crc"]
-	path = src/crc
+	path = lib/comm/crc
 	url = https://github.com/nuft/CRC.git
 [submodule "src/serial-datagram"]
-	path = src/serial-datagram
+	path = lib/comm/serial-datagram
 	url = https://github.com/Stapelzeiger/serial-datagram.git
 [submodule "src/cmp_mem_access"]
-	path = src/cmp_mem_access
+	path = lib/comm/cmp_mem_access
 	url = https://github.com/Stapelzeiger/cmp_mem_access.git
 [submodule "ChibiOS"]
-	path = ChibiOS
+	path = lib/mcu/ChibiOS
 	url = https://github.com/Stapelzeiger/ChibiOS.git
 [submodule "src/parameter"]
 	path = src/parameter
@@ -20,17 +20,17 @@
 	path = src/timestamp
 	url = https://github.com/Stapelzeiger/timestamp.git
 [submodule "src/sensors"]
-	path = src/sensors
+	path = lib/drivers/sensors
 	url = https://github.com/Stapelzeiger/sensor-drivers.git
 [submodule "src/eigen"]
-	path = src/eigen
+	path = lib/math/eigen
 	url = https://github.com/Stapelzeiger/eigen.git
 [submodule "src/arm-cortex-tools"]
-	path = src/arm-cortex-tools
+	path = lib/mcu/arm-cortex-tools
 	url = https://github.com/cvra/arm-cortex-tools.git
 [submodule "src/datagram-messages"]
-	path = src/datagram-messages
+	path = lib/comm/datagram-messages
 	url = https://github.com/Stapelzeiger/datagram-messages.git
 [submodule "python/zmqmsgbus"]
-	path = python/zmqmsgbus
+	path = tools/zmqmsgbus
 	url = https://github.com/stapelzeiger/zmqmsgbus.git

@@ -4,4 +4,4 @@ msgpack-python
 zmq
 -e ./src/serial-datagram/python
 -e ./src/datagram-messages/python
--e ./python/zmqmsgbus
+-e ./tools/zmqmsgbus

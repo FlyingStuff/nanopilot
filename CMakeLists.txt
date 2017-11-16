@@ -20,11 +20,11 @@ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 add_executable(
     ins-board-unittests
     ./src/tests/runner.cpp
-    ./src/cmp/cmp.c
-    ./src/cmp_mem_access/cmp_mem_access.c
-    ./src/crc/crc32.c
-    ./src/datagram-messages/msg_dispatcher.c
-    ./src/datagram-messages/service_call.c
+    ./lib/comm/cmp/cmp.c
+    ./lib/comm/cmp_mem_access/cmp_mem_access.c
+    ./lib/comm/crc/crc32.c
+    ./lib/comm/datagram-messages/msg_dispatcher.c
+    ./lib/comm/datagram-messages/service_call.c
     ./src/hott/sumd.c
     ./src/msgbus_scheduler.c
     ./src/tests/msgbus_scheduler_test.cpp
@@ -35,19 +35,19 @@ add_executable(
     ./src/parameter/parameter_msgpack.c
     ./src/parameter/parameter_print.c
     ./src/rate_limiter.c
-    ./src/serial-datagram/serial_datagram.c
-    ./src/serial-datagram/serial_datagram_buffer_writer.c
+    ./lib/comm/serial-datagram/serial_datagram.c
+    ./lib/comm/serial-datagram/serial_datagram_buffer_writer.c
     ./src/timestamp/timestamp.c
-    ./src/cmp_mem_access/cmp_mem_access_test.cpp
-    ./src/crc/test/crc32_test.cpp
-    ./src/datagram-messages/tests/msg_dispatcher_test.cpp
-    ./src/datagram-messages/tests/service_call_test.cpp
+    ./lib/comm/cmp_mem_access/cmp_mem_access_test.cpp
+    ./lib/comm/crc/test/crc32_test.cpp
+    ./lib/comm/datagram-messages/tests/msg_dispatcher_test.cpp
+    ./lib/comm/datagram-messages/tests/service_call_test.cpp
     ./src/parameter/tests/msgpack_test.cpp
     ./src/parameter/tests/parameter_print_test.cpp
     ./src/parameter/tests/parameter_test.cpp
     ./src/parameter/tests/parameter_types_test.cpp
-    ./src/serial-datagram/tests/serial_datagram_buffer_writer_tests.cpp
-    ./src/serial-datagram/tests/serial_datagram_test.cpp
+    ./lib/comm/serial-datagram/tests/serial_datagram_buffer_writer_tests.cpp
+    ./lib/comm/serial-datagram/tests/serial_datagram_test.cpp
     ./src/tests/rate_limiter_test.cpp
     ./src/tests/timestamp_mock.c
     ./src/tests/timestamp_mock_test.cpp
@@ -60,6 +60,7 @@ target_include_directories(ins-board-unittests PUBLIC ${TYPE_FILE_INCLUDE_DIR})
 target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_INCLUDE_DIR})
 target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_PORT_UNITTEST_MOCK_INCLUDE_DIR})
 
+target_include_directories(ins-board-unittests PUBLIC ./lib/comm/)
 target_include_directories(ins-board-unittests PUBLIC ./src/eigen/)
 target_include_directories(ins-board-unittests PUBLIC ./src/flight-stack/src/)
 target_include_directories(ins-board-unittests PUBLIC ./src/)
