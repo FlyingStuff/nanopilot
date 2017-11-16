@@ -5,3 +5,11 @@ tags
 .dep
 build
 src/git_revision.c
+
+# latex
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.toc
+*.aux
