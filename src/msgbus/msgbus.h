@@ -13,7 +13,7 @@ typedef struct msgbus_subscriber_s msgbus_subscriber_t;
 
 struct msgbus_topic_s {
     void *buffer;
-    const msgbus_type_definition_t *type;
+    const ts_type_definition_t *type;
     msgbus_t *bus;
     const char *name;
     struct msgbus_cond_link_s *waiting_threads;
@@ -74,7 +74,7 @@ void msgbus_init(msgbus_t *bus);
  */
 void msgbus_topic_create(msgbus_topic_t *topic,
                          msgbus_t *bus,
-                         const msgbus_type_definition_t *type,
+                         const ts_type_definition_t *type,
                          void *buffer,
                          const char *name);
 
@@ -127,7 +127,7 @@ void msgbus_topic_publish(msgbus_topic_t *topic, const void *val);
  *
  * @returns A pointer to the topic type
  */
-const msgbus_type_definition_t *msgbus_topic_get_type(msgbus_topic_t *topic);
+const ts_type_definition_t *msgbus_topic_get_type(msgbus_topic_t *topic);
 
 /** Get the name of a topic
  *

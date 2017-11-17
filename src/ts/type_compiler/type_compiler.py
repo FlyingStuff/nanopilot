@@ -177,18 +177,18 @@ C_types_map = {
 }
 
 base_types_map = {
-    'int8': 'MSGBUS_TYPE_INT8',
-    'int16': 'MSGBUS_TYPE_INT16',
-    'int32': 'MSGBUS_TYPE_INT32',
-    'int64': 'MSGBUS_TYPE_INT64',
-    'uint8': 'MSGBUS_TYPE_UINT8',
-    'uint16': 'MSGBUS_TYPE_UINT16',
-    'uint32': 'MSGBUS_TYPE_UINT32',
-    'uint64': 'MSGBUS_TYPE_UINT64',
-    'float16': 'MSGBUS_TYPE_FLOAT16',
-    'float32': 'MSGBUS_TYPE_FLOAT32',
-    'float64': 'MSGBUS_TYPE_FLOAT64',
-    'string': 'MSGBUS_TYPE_STRING'
+    'int8': 'TS_TYPE_INT8',
+    'int16': 'TS_TYPE_INT16',
+    'int32': 'TS_TYPE_INT32',
+    'int64': 'TS_TYPE_INT64',
+    'uint8': 'TS_TYPE_UINT8',
+    'uint16': 'TS_TYPE_UINT16',
+    'uint32': 'TS_TYPE_UINT32',
+    'uint64': 'TS_TYPE_UINT64',
+    'float16': 'TS_TYPE_FLOAT16',
+    'float32': 'TS_TYPE_FLOAT32',
+    'float64': 'TS_TYPE_FLOAT64',
+    'string': 'TS_TYPE_STRING'
 }
 
 
@@ -227,7 +227,7 @@ def generate_C_struct_definition(typedef):
 
 
 def generate_C_type_definition_header(typedef):
-    return ['extern const msgbus_type_definition_t {}_type;'.format(typedef.typename)]
+    return ['extern const ts_type_definition_t {}_type;'.format(typedef.typename)]
 
 
 def generate_C_header(filename, elements):
@@ -290,7 +290,7 @@ def generate_C_type_definition_entry(typename, entry):
 
 def generate_C_type_definition_entries(typedef):
     out = []
-    out.append('static const msgbus_type_entry_t {}_entries[] = {{'.format(typedef.typename))
+    out.append('static const ts_type_entry_t {}_entries[] = {{'.format(typedef.typename))
     for e in typedef.entries:
         out += generate_C_type_definition_entry(typedef.typename, e)
     out.append('};')
@@ -299,7 +299,7 @@ def generate_C_type_definition_entries(typedef):
 
 def generate_C_type_definition_object(typedef, types_dict):
     out = []
-    out.append('const msgbus_type_definition_t {}_type = {{'.format(typedef.typename))
+    out.append('const ts_type_definition_t {}_type = {{'.format(typedef.typename))
     hash_bytes = [hex(b) for b in typedef.get_hash(types_dict)]
     out.append('    .hash = {{{}}},'.format(', '.join(hash_bytes)))
     out.append('    .nb_elements = {},'.format(len(typedef.entries)))

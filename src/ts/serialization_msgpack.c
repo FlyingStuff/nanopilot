@@ -7,65 +7,65 @@
 #include "type_definition.h"
 
 
-bool msgbus_cmp_ser_type(const void *var,
-                         const msgbus_type_definition_t *type,
+bool ts_cmp_ser_type(const void *var,
+                         const ts_type_definition_t *type,
                          cmp_ctx_t *ctx,
                          bool compact);
-bool msgbus_cmp_ser_struct_entry(const void *var,
-                                 const msgbus_type_entry_t *entry,
+bool ts_cmp_ser_struct_entry(const void *var,
+                                 const ts_type_entry_t *entry,
                                  cmp_ctx_t *ctx,
                                  bool compact);
-bool msgbus_cmp_ser_value(const void *var,
-                          const msgbus_type_entry_t *entry,
+bool ts_cmp_ser_value(const void *var,
+                          const ts_type_entry_t *entry,
                           cmp_ctx_t *ctx,
                           bool compact);
-bool msgbus_cmp_ser_value_once(const void *var,
-                               const msgbus_type_entry_t *entry,
+bool ts_cmp_ser_value_once(const void *var,
+                               const ts_type_entry_t *entry,
                                cmp_ctx_t *ctx,
                                bool compact);
 
 
-bool msgbus_cmp_ser_value_once(const void *var,
-                               const msgbus_type_entry_t *entry,
+bool ts_cmp_ser_value_once(const void *var,
+                               const ts_type_entry_t *entry,
                                cmp_ctx_t *ctx,
                                bool compact)
 {
     if (entry->is_base_type) {
         switch (entry->base_type) {
-        case MSGBUS_TYPE_FLOAT16:
-        case MSGBUS_TYPE_FLOAT32:
+        case TS_TYPE_FLOAT16:
+        case TS_TYPE_FLOAT32:
             return cmp_write_float(ctx, *(float*)var);
-        case MSGBUS_TYPE_FLOAT64:
+        case TS_TYPE_FLOAT64:
             return cmp_write_double(ctx, *(double*)var);
-        case MSGBUS_TYPE_INT8:
+        case TS_TYPE_INT8:
             return cmp_write_int(ctx, *(int8_t*)var);
-        case MSGBUS_TYPE_INT16:
+        case TS_TYPE_INT16:
             return cmp_write_int(ctx, *(int16_t*)var);
-        case MSGBUS_TYPE_INT32:
+        case TS_TYPE_INT32:
             return cmp_write_int(ctx, *(int32_t*)var);
-        case MSGBUS_TYPE_INT64:
+        case TS_TYPE_INT64:
             return cmp_write_int(ctx, *(int64_t*)var);
-        case MSGBUS_TYPE_UINT8:
+        case TS_TYPE_UINT8:
             return cmp_write_uint(ctx, *(uint8_t*)var);
-        case MSGBUS_TYPE_UINT16:
+        case TS_TYPE_UINT16:
             return cmp_write_uint(ctx, *(uint16_t*)var);
-        case MSGBUS_TYPE_UINT32:
+        case TS_TYPE_UINT32:
             return cmp_write_uint(ctx, *(uint32_t*)var);
-        case MSGBUS_TYPE_UINT64:
+        case TS_TYPE_UINT64:
             return cmp_write_uint(ctx, *(uint64_t*)var);
-        case MSGBUS_TYPE_STRING:
+        case TS_TYPE_STRING:
             return cmp_write_str(ctx, (const char*)var, strlen((const char*)var));
         default:
             return false;
         }
     } else {
-        return msgbus_cmp_ser_type(var, entry->type, ctx, compact);
+        return ts_cmp_ser_type(var, entry->type, ctx, compact);
     }
 }
 
 
-bool msgbus_cmp_ser_value(const void *var,
-                          const msgbus_type_entry_t *entry,
+bool ts_cmp_ser_value(const void *var,
+                          const ts_type_entry_t *entry,
                           cmp_ctx_t *ctx,
                           bool compact)
 {
@@ -84,20 +84,20 @@ bool msgbus_cmp_ser_value(const void *var,
         int i;
         for (i = 0; i < len; i++) {
             const void *var_entry_i = var + entry->struct_offset + entry->size * i;
-            if (!msgbus_cmp_ser_value_once(var_entry_i, entry, ctx, compact)) {
+            if (!ts_cmp_ser_value_once(var_entry_i, entry, ctx, compact)) {
                 return false;
             }
         }
         return true;
     } else {
         const void *var_entry = var + entry->struct_offset;
-        return msgbus_cmp_ser_value_once(var_entry, entry, ctx, compact);
+        return ts_cmp_ser_value_once(var_entry, entry, ctx, compact);
     }
 }
 
 
-bool msgbus_cmp_ser_struct_entry(const void *var,
-                                 const msgbus_type_entry_t *entry,
+bool ts_cmp_ser_struct_entry(const void *var,
+                                 const ts_type_entry_t *entry,
                                  cmp_ctx_t *ctx,
                                  bool compact)
 {
@@ -106,12 +106,12 @@ bool msgbus_cmp_ser_struct_entry(const void *var,
             return false;
         }
     }
-    return msgbus_cmp_ser_value(var, entry, ctx, compact);
+    return ts_cmp_ser_value(var, entry, ctx, compact);
 }
 
 
-bool msgbus_cmp_ser_type(const void *var,
-                         const msgbus_type_definition_t *type,
+bool ts_cmp_ser_type(const void *var,
+                         const ts_type_definition_t *type,
                          cmp_ctx_t *ctx,
                          bool compact)
 {
@@ -126,7 +126,7 @@ bool msgbus_cmp_ser_type(const void *var,
     }
     int i;
     for (i = 0; i < type->nb_elements; i++) {
-        if (!msgbus_cmp_ser_struct_entry(var, &type->elements[i], ctx, compact)) {
+        if (!ts_cmp_ser_struct_entry(var, &type->elements[i], ctx, compact)) {
             return false;
         }
     }
@@ -134,8 +134,8 @@ bool msgbus_cmp_ser_type(const void *var,
 }
 
 
-bool msgbus_serialize_msgpack(const void *var,
-                              const msgbus_type_definition_t *type,
+bool ts_serialize_msgpack(const void *var,
+                              const ts_type_definition_t *type,
                               char *buf,
                               size_t buf_sz)
 {
@@ -147,8 +147,8 @@ bool msgbus_serialize_msgpack(const void *var,
 }
 
 
-bool msgbus_serialize_msgpack_compact(const void *var,
-                                      const msgbus_type_definition_t *type,
+bool ts_serialize_msgpack_compact(const void *var,
+                                      const ts_type_definition_t *type,
                                       char *buf,
                                       size_t buf_sz)
 {

@@ -55,7 +55,7 @@ static char *buffer_get_pos(struct buffer_s *b)
     return &b->buf[b->write];
 }
 
-static bool serialize_header(const msgbus_type_definition_t *type,
+static bool serialize_header(const ts_type_definition_t *type,
                             struct buffer_s *buf,
                             char *prefix_start,
                             size_t prefix_len)
@@ -120,7 +120,7 @@ static bool serialize_header(const msgbus_type_definition_t *type,
 }
 
 
-int msgbus_serialize_csv_header(const msgbus_type_definition_t *type,
+int ts_serialize_csv_header(const ts_type_definition_t *type,
                                  char *buf,
                                  size_t buf_sz)
 {
@@ -136,35 +136,35 @@ int msgbus_serialize_csv_header(const msgbus_type_definition_t *type,
 }
 
 
-static bool serialize_type(const void *var, const msgbus_type_definition_t *type, struct buffer_s *buf);
-static bool serialize_entry(const void *var, const msgbus_type_entry_t *entry, struct buffer_s *buf);
+static bool serialize_type(const void *var, const ts_type_definition_t *type, struct buffer_s *buf);
+static bool serialize_entry(const void *var, const ts_type_entry_t *entry, struct buffer_s *buf);
 
-static bool serialize_entry(const void *var, const msgbus_type_entry_t *entry, struct buffer_s *buf)
+static bool serialize_entry(const void *var, const ts_type_entry_t *entry, struct buffer_s *buf)
 {
     if (entry->is_base_type) {
         switch (entry->base_type) {
-        case MSGBUS_TYPE_FLOAT16:
-        case MSGBUS_TYPE_FLOAT32:
+        case TS_TYPE_FLOAT16:
+        case TS_TYPE_FLOAT32:
             return buffer_printf(buf, "%f,", *(float*)var);
-        case MSGBUS_TYPE_FLOAT64:
+        case TS_TYPE_FLOAT64:
             return buffer_printf(buf, "%lf,", *(double*)var);
-        case MSGBUS_TYPE_INT8:
+        case TS_TYPE_INT8:
             return buffer_printf(buf, "%"PRId8",", *(int8_t*)var);
-        case MSGBUS_TYPE_INT16:
+        case TS_TYPE_INT16:
             return buffer_printf(buf, "%"PRId16",", *(int16_t*)var);
-        case MSGBUS_TYPE_INT32:
+        case TS_TYPE_INT32:
             return buffer_printf(buf, "%"PRId32",", *(int32_t*)var);
-        case MSGBUS_TYPE_INT64:
+        case TS_TYPE_INT64:
             return buffer_printf(buf, "%"PRId64",", *(int64_t*)var);
-        case MSGBUS_TYPE_UINT8:
+        case TS_TYPE_UINT8:
             return buffer_printf(buf, "%"PRIu8",", *(uint8_t*)var);
-        case MSGBUS_TYPE_UINT16:
+        case TS_TYPE_UINT16:
             return buffer_printf(buf, "%"PRIu16",", *(uint16_t*)var);
-        case MSGBUS_TYPE_UINT32:
+        case TS_TYPE_UINT32:
             return buffer_printf(buf, "%"PRIu32",", *(uint32_t*)var);
-        case MSGBUS_TYPE_UINT64:
+        case TS_TYPE_UINT64:
             return buffer_printf(buf, "%"PRIu64",", *(uint64_t*)var);
-        case MSGBUS_TYPE_STRING:
+        case TS_TYPE_STRING:
             return buffer_write(buf, (const char*)var, strlen((const char*)var))
                    && buffer_write_s(buf, ",");
         default:
@@ -177,11 +177,11 @@ static bool serialize_entry(const void *var, const msgbus_type_entry_t *entry, s
 }
 
 
-static bool serialize_type(const void *var, const msgbus_type_definition_t *type, struct buffer_s *buf)
+static bool serialize_type(const void *var, const ts_type_definition_t *type, struct buffer_s *buf)
 {
     int i;
     for (i = 0; i < type->nb_elements; i++) {
-        const msgbus_type_entry_t *entry = &type->elements[i];
+        const ts_type_entry_t *entry = &type->elements[i];
         if (entry->is_dynamic_array) {
             return false;
         }
@@ -202,8 +202,8 @@ static bool serialize_type(const void *var, const msgbus_type_definition_t *type
 }
 
 
-int msgbus_serialize_csv(const void *var,
-                          const msgbus_type_definition_t *type,
+int ts_serialize_csv(const void *var,
+                          const ts_type_definition_t *type,
                           char *buf,
                           size_t buf_sz)
 {

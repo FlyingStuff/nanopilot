@@ -38,7 +38,7 @@ static void advertise_topic(msgbus_t *bus, msgbus_topic_t *topic)
 
 void msgbus_topic_create(msgbus_topic_t *topic,
                          msgbus_t *bus,
-                         const msgbus_type_definition_t *type,
+                         const ts_type_definition_t *type,
                          void *buffer,
                          const char *name)
 {
@@ -151,7 +151,7 @@ void msgbus_topic_publish(msgbus_topic_t *topic, const void *val)
 }
 
 
-const msgbus_type_definition_t *msgbus_topic_get_type(msgbus_topic_t *topic)
+const ts_type_definition_t *msgbus_topic_get_type(msgbus_topic_t *topic)
 {
     return topic->type;
 }

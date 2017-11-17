@@ -7,7 +7,7 @@
 #include "onboardsensors.h"
 #include "serial-datagram/serial_datagram.h"
 #include "parameter/parameter_print.h"
-#include "msgbus/type_print.h"
+#include "ts/type_print.h"
 #include "git_revision.h"
 #include "syscalls.h"
 #include "error.h"
@@ -175,14 +175,14 @@ static void cmd_topic_print(BaseSequentialStream *stream, int argc, char *argv[]
     if (msgbus_topic_subscribe(&sub, &bus, argv[0], MSGBUS_TIMEOUT_IMMEDIATE)) {
         if (msgbus_subscriber_topic_is_valid(&sub)) {
             msgbus_topic_t *topic = msgbus_subscriber_get_topic(&sub);
-            const msgbus_type_definition_t *type = msgbus_topic_get_type(topic);
+            const ts_type_definition_t *type = msgbus_topic_get_type(topic);
             void *buf = malloc(type->struct_size);
             if (buf == NULL) {
                 chprintf(stream, "malloc failed\n");
                 return;
             }
             msgbus_subscriber_read(&sub, buf);
-            msgbus_print_type((void (*)(void *, const char *, ...))chprintf,
+            ts_print_type((void (*)(void *, const char *, ...))chprintf,
                               stream, type, buf);
             free(buf);
         } else {

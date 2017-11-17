@@ -1,5 +1,5 @@
-#ifndef MSGBUS_SERIALIZATION_MSGPACK_H
-#define MSGBUS_SERIALIZATION_MSGPACK_H
+#ifndef TS_SERIALIZATION_MSGPACK_H
+#define TS_SERIALIZATION_MSGPACK_H
 
 
 #include "type_definition.h"
@@ -9,18 +9,18 @@
 extern "C" {
 #endif
 
-bool msgbus_serialize_msgpack(const void *var,
-                              const msgbus_type_definition_t *type,
+bool ts_serialize_msgpack(const void *var,
+                              const ts_type_definition_t *type,
                               char *buf,
                               size_t buf_sz);
 
-bool msgbus_serialize_msgpack_compact(const void *var,
-                                      const msgbus_type_definition_t *type,
+bool ts_serialize_msgpack_compact(const void *var,
+                                      const ts_type_definition_t *type,
                                       char *buf,
                                       size_t buf_sz);
 
-bool msgbus_cmp_ser_type(const void *var,
-                         const msgbus_type_definition_t *type,
+bool ts_cmp_ser_type(const void *var,
+                         const ts_type_definition_t *type,
                          cmp_ctx_t *ctx,
                          bool compact);
 
@@ -28,4 +28,4 @@ bool msgbus_cmp_ser_type(const void *var,
 }
 #endif
 
-#endif /* MSGBUS_SERIALIZATION_MSGPACK_H */
+#endif /* TS_SERIALIZATION_MSGPACK_H */

@@ -7,7 +7,7 @@
 namespace msgbus {
 
 
-template <typename msg_type, const msgbus_type_definition_t *msg_type_def>
+template <typename msg_type, const ts_type_definition_t *msg_type_def>
 class Topic
 {
     msg_type buffer;
@@ -29,7 +29,7 @@ public:
 };
 
 
-template <typename msg_type, const msgbus_type_definition_t *msg_type_def>
+template <typename msg_type, const ts_type_definition_t *msg_type_def>
 class Subscriber
 {
 public:

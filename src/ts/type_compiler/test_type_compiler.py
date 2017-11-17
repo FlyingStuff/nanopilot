@@ -189,7 +189,7 @@ class TestCCodeGeneration(unittest.TestCase):
             '        .array_len = 0,',
             '        .dynamic_array_len_struct_offset = 0,',
             '        .struct_offset = offsetof(test_t, str),',
-            '        .base_type = MSGBUS_TYPE_STRING,',
+            '        .base_type = TS_TYPE_STRING,',
             '        .size = sizeof(char[11]),',
             '    },'
         ]
@@ -207,7 +207,7 @@ class TestCCodeGeneration(unittest.TestCase):
             '        .array_len = 100,',
             '        .dynamic_array_len_struct_offset = 0,',
             '        .struct_offset = offsetof(test_t, x),',
-            '        .base_type = MSGBUS_TYPE_INT32,',
+            '        .base_type = TS_TYPE_INT32,',
             '        .size = sizeof(int32_t),',
             '    },'
         ]
@@ -225,7 +225,7 @@ class TestCCodeGeneration(unittest.TestCase):
             '        .array_len = 100,',
             '        .dynamic_array_len_struct_offset = offsetof(test_t, x_len),',
             '        .struct_offset = offsetof(test_t, x),',
-            '        .base_type = MSGBUS_TYPE_INT32,',
+            '        .base_type = TS_TYPE_INT32,',
             '        .size = sizeof(int32_t),',
             '    },'
         ]
@@ -236,7 +236,7 @@ class TestCCodeGeneration(unittest.TestCase):
         t.get_hash = Mock(return_value=b'\xaa\xbb\xcc\xdd')
         type_defintion = generate_C_type_definition_object(t, {})
         expect = [
-            'const msgbus_type_definition_t test_type = {',
+            'const ts_type_definition_t test_type = {',
             '    .hash = {0xaa, 0xbb, 0xcc, 0xdd},',
             '    .nb_elements = 3,',
             '    .elements = test_entries,',

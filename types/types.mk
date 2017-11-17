@@ -1,4 +1,4 @@
-TYPEC = python3 $(PROJROOT)/src/msgbus/type_compiler/type_compiler.py
+TYPEC = python3 $(PROJROOT)/src/ts/type_compiler/type_compiler.py
 TYPE_DIR := $(PROJROOT)/types
 
 TYPE_OUT_DIR = $(BUILDDIR)/types

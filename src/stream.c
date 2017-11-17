@@ -6,11 +6,11 @@
 #include "rate_limiter.h"
 #include "parameter/parameter.h"
 #include "msgbus_scheduler.h"
-#include "msgbus/type_print.h"
+#include "ts/type_print.h"
 #include "log.h"
 #include <string.h>
 #include <cmp_mem_access/cmp_mem_access.h>
-#include "msgbus/serialization_msgpack.h"
+#include "ts/serialization_msgpack.h"
 #include "datagram_message_comm.h"
 
 #include "stream.h"
@@ -39,7 +39,7 @@ void stream_cb(void *arg)
         return;
     }
     msgbus_topic_t *topic = msgbus_subscriber_get_topic(&s->sub);
-    const msgbus_type_definition_t *type = msgbus_topic_get_type(topic);
+    const ts_type_definition_t *type = msgbus_topic_get_type(topic);
     void *topic_buf = malloc(type->struct_size);
     if (topic_buf == NULL) {
         chprintf(s->out_fd, "malloc failed\n");
@@ -53,7 +53,7 @@ void stream_cb(void *arg)
     cmp_mem_access_t mem;
     cmp_mem_access_init(&ctx, &mem, msg_buffer, sizeof(msg_buffer));
     msg_header_write(&ctx, msgbus_topic_get_name(topic));
-    if (msgbus_cmp_ser_type(topic_buf, type, &ctx, true)) {
+    if (ts_cmp_ser_type(topic_buf, type, &ctx, true)) {
         datagram_message_send(msg_buffer, cmp_mem_access_get_pos(&mem));
     } else {
         log_warning("topic %s serialization failed", topic->name);
