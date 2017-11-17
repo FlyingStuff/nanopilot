@@ -1,5 +1,4 @@
 #include "msgbus.h"
-#include "type_definition.h"
 
 #define MsgBusSubscriber(typename) msgbus::Subscriber<typename##_t, &typename##_type>
 #define MsgBusTopic(typename) msgbus::Topic<typename##_t, &typename##_type>

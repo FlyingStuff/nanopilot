@@ -5,22 +5,30 @@ set(CMAKE_BUILD_TYPE Debug)
 
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/src/msgbus")
-find_package(msgbus)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/src/msgbus/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/src/ts/cmake")
 
-add_subdirectory(src/msgbus) # to build tests
+include(msgbus)
+include(ts)
+include(cmp)
+include(cmp_mem_access)
 
-include(${CMAKE_CURRENT_LIST_DIR}/src/msgbus/cmake/type_compiler.cmake)
 
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 
+# add unit test targets (from other CMakeLists.txt)
+add_subdirectory(src/msgbus)
+add_subdirectory(src/ts)
+# ...
+
+
 add_executable(
     ins-board-unittests
     ./src/tests/runner.cpp
-    ./lib/comm/cmp/cmp.c
+    ${CMP_SOURCES}
     ./lib/comm/cmp_mem_access/cmp_mem_access.c
     ./lib/comm/crc/crc32.c
     ./lib/comm/datagram-messages/msg_dispatcher.c
@@ -30,7 +38,7 @@ add_executable(
     ./src/tests/msgbus_scheduler_test.cpp
     ${MSGBUS_SOURCES}
     ${MSGBUS_PORT_UNITTEST_MOCK_SOURCES}
-    ${CMAKE_CURRENT_BINARY_DIR}/types/test.c
+    ${TYPE_OUTPUT_DIR}/test.c
     ./src/parameter/parameter.c
     ./src/parameter/parameter_msgpack.c
     ./src/parameter/parameter_print.c
@@ -73,7 +81,7 @@ target_link_libraries(
     )
 
 enable_testing()
-add_test(ins-board-unittests ins-board-unittests)
+add_test(ins-board-unittests ins-board-unittests;-c)
 
 list(APPEND ALL_UNIT_TESTS ${CMAKE_CURRENT_BINARY_DIR}/ins-board-unittests)
 

@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "type_definition.h"
+#include <ts/type_definition.h>
 #include <msgbus_port.h>
 
 typedef struct msgbus_topic_s msgbus_topic_t;
