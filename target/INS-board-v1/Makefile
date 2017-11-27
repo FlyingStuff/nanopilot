@@ -90,14 +90,14 @@ TARGETROOT = .
 
 # Imported source files and paths
 CHIBIOS = $(PROJROOT)/lib/mcu/ChibiOS
-include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
+include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 include $(CHIBIOS)/os/rt/rt.mk
-include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
+include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 include $(CHIBIOS)/test/rt/test.mk
-# ChibiOS C++ bindings
+
 include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
 include $(PROJROOT)/lib/fatfs/fatfs.mk
 include $(PROJROOT)/src/src.mk
@@ -107,7 +107,7 @@ include $(TARGETROOT)/src/src.mk
 include $(PROJROOT)/types/types.mk
 
 # Define linker script file here
-LDSCRIPT= STM32F405xG.ld
+LDSCRIPT= $(STARTUPLD)/STM32F405xG.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -122,7 +122,6 @@ CSRC = $(PROJCSRC) \
        $(BOARDSRC) \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
        $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
-       $(CHIBIOS)/os/various/shell.c \
        $(FATFSSRC) \
        $(TYPECSRC) \
        $(PROJROOT)/src/git_revision.c \
@@ -152,13 +151,11 @@ TCSRC =
 TCPPSRC =
 
 # List ASM source files here
-ASMSRC = $(PORTASM) $(OSALASM)
-# Note: Using custom crt0_v7m.s instead of $(STARTUPASM)
-#       This might create problems if the original crt0_v7m.s is updated or
-# 		further startup assembly sources are added to STARTUPASM.
-ASMSRC += $(PROJASMSRC) crt0_v7m.s #$(STARTUPASM)
+ASMSRC =
+ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 
-INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) $(STARTUPINC) \
+
+INCDIR = $(CHIBIOS)/os/license $(PORTINC) $(KERNINC) $(TESTINC) $(STARTUPINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
          $(FATFSINC) $(CHIBIOS)/os/various $(CHCPPINC) \
          $(CHIBIOS)/os/hal/lib/streams \
@@ -234,8 +231,8 @@ ULIBS = -lm
 
 GLOBAL_SRC_DEP =
 
-RULESPATH = $(PROJROOT)
-include $(PROJROOT)/rules.mk
+RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC
+include $(RULESPATH)/rules.mk
 -include tools.mk
 
 PRE_MAKE_ALL_RULE_HOOK: $(notdir $(TYPECSRC))

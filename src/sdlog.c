@@ -1,4 +1,5 @@
 #include <ch.h>
+#include <hal.h>
 #include <string.h>
 #include <memstreams.h>
 #include <chprintf.h>

@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <ch.h>
+#include <hal.h>
 #include "parameter/parameter.h"
 #include "msgbus/msgbus.h"
 

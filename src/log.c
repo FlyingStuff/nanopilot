@@ -10,9 +10,9 @@ MUTEX_DECL(log_lock);
 
 static void write_entry_format(BaseSequentialStream *stream, const char *loglevel)
 {
-    const char *thread_name = "";
-    if (ch.rlist.r_current != NULL && ch.rlist.r_current->p_name != NULL) {
-        thread_name = ch.rlist.r_current->p_name;
+    const char *thread_name = chRegGetThreadNameX(chThdGetSelfX());
+    if (thread_name == NULL) {
+        thread_name = "";
     }
 
     uint32_t ts = timestamp_get();
@@ -39,7 +39,7 @@ void log_message(const char *lvl, const char *fmt, ...)
 
     chprintf((BaseSequentialStream *)&writebuf_stream, "\n");
 
-    chSequentialStreamWrite(stdout, writebuf, writebuf_stream.eos);
+    streamWrite(stdout, writebuf, writebuf_stream.eos);
 
     chMtxUnlock(&log_lock);
 }

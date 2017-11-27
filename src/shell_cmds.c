@@ -33,13 +33,13 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[]) {
     tp = chRegFirstThread();
     do {
         chprintf(chp, "%08lx %08lx %5u %4lu %9s %8lu %s\n",
-                 (uint32_t)tp->p_ctx.r13->lr,
-                 (uint32_t)tp->p_ctx.r13,
-                 (char *)tp->p_ctx.r13 - (char *)tp->p_stklimit,
-                 (uint32_t)tp->p_prio,
-                 states[tp->p_state],
+                 (uint32_t)tp->ctx.sp->lr,
+                 (uint32_t)tp->ctx.sp,
+                 (char *)tp->ctx.sp - (char *)tp->wabase,
+                 (uint32_t)tp->prio,
+                 states[tp->state],
                  chThdGetTicksX(tp),
-                 tp->p_name);
+                 tp->name);
         tp = chRegNextThread(tp);
     } while (tp != NULL);
     chprintf(chp, "[sytick %d @ %d Hz]\n", chVTGetSystemTime(), CH_CFG_ST_FREQUENCY);
@@ -91,7 +91,7 @@ static void cmd_cpu(BaseSequentialStream *chp, int argc, char *argv[]) {
             chprintf(chp, "%8lu  %4u %s\n",
                     thread_times[i].t2,
                     share,
-                    thread_times[i].tp->p_name);
+                    thread_times[i].tp->name);
         }
 
         free(thread_times);

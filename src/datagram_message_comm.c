@@ -1,4 +1,5 @@
 #include <ch.h>
+#include "hal.h"
 #include "thread_prio.h"
 #include "serial-datagram/serial_datagram.h"
 #include "datagram-messages/msg_dispatcher.h"
@@ -14,7 +15,7 @@
 static void _serial_datagram_write_cb(void *arg, const void *p, size_t len)
 {
     if (len > 0 && arg != NULL) {
-        chSequentialStreamWrite((BaseSequentialStream*)arg, (const uint8_t*)p, len);
+        streamWrite((BaseSequentialStream*)arg, (const uint8_t*)p, len);
     }
 }
 
@@ -146,7 +147,7 @@ static THD_FUNCTION(stream, arg)
                                      (void(*)(const void*, size_t, void*))msg_dispatcher,
                                      dispatcher_table);
     while (true) {
-        char c = chSequentialStreamGet(in);
+        char c = streamGet(in);
         int ret = serial_datagram_receive(&rcv_handler, &c, 1);
         switch (ret) {
         case SERIAL_DATAGRAM_RCV_CRC_MISMATCH:

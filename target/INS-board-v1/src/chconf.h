@@ -28,6 +28,9 @@
 #ifndef _CHCONF_H_
 #define _CHCONF_H_
 
+#define _CHIBIOS_RT_CONF_
+
+
 /*===========================================================================*/
 /**
  * @name System timers settings
@@ -356,12 +359,18 @@
 
 /**
  * @brief   Debug option, trace buffer.
- * @details If enabled then the context switch circular trace buffer is
- *          activated.
+ * @details If enabled then the trace buffer is activated.
  *
- * @note    The default is @p FALSE.
+ * @note    The default is @p CH_DBG_TRACE_MASK_DISABLED.
  */
-#define CH_DBG_ENABLE_TRACE                 FALSE
+#define CH_DBG_TRACE_MASK                   CH_DBG_TRACE_MASK_DISABLED
+
+/**
+ * @brief   Trace buffer entries.
+ * @note    The trace buffer is only allocated if @p CH_DBG_TRACE_MASK is
+ *          different from @p CH_DBG_TRACE_MASK_DISABLED.
+ */
+#define CH_DBG_TRACE_BUFFER_SIZE            128
 
 /**
  * @brief   Debug option, stack checks.
@@ -444,6 +453,20 @@
 }
 
 /**
+ * @brief   ISR enter hook.
+ */
+#define CH_CFG_IRQ_PROLOGUE_HOOK() {                                        \
+  /* IRQ prologue code here.*/                                              \
+}
+
+/**
+ * @brief   ISR exit hook.
+ */
+#define CH_CFG_IRQ_EPILOGUE_HOOK() {                                        \
+  /* IRQ epilogue code here.*/                                              \
+}
+
+/**
  * @brief   Idle thread enter hook.
  * @note    This hook is invoked within a critical zone, no OS functions
  *          should be invoked from here.
@@ -503,6 +526,16 @@ void panic_handler(const char *reason);
   panic_handler(reason);                                                    \
 }
 
+
+/**
+ * @brief   Trace hook.
+ * @details This hook is invoked each time a new record is written in the
+ *          trace buffer.
+ */
+#define CH_CFG_TRACE_HOOK(tep) {                                            \
+  /* Trace code here.*/                                                     \
+}
+
 /** @} */
 
 /*===========================================================================*/
@@ -512,6 +545,7 @@ void panic_handler(const char *reason);
 
 // chprintf float enable
 #define CHPRINTF_USE_FLOAT true
+#define SHELL_CMD_MEM_ENABLED false
 
 #endif  /* _CHCONF_H_ */
 

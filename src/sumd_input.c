@@ -1,4 +1,5 @@
 #include <ch.h>
+#include <hal.h>
 #include "thread_prio.h"
 #include "hott/sumd.h"
 #include "sumd_input.h"
@@ -20,7 +21,7 @@ static THD_FUNCTION(sumd_input_task, arg)
     struct sumd_receiver_s rc;
     sumd_receiver_init(&rc);
     while (1) {
-        char c = chSequentialStreamGet(input);
+        char c = streamGet(input);
         int ret = sumd_receive(&rc, c);
         if (ret == SUMD_RECEIVE_COMPLETE) {
             chSysLock();

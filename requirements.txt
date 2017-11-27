@@ -2,6 +2,6 @@ nose
 pyserial
 msgpack-python
 zmq
--e ./src/serial-datagram/python
--e ./src/datagram-messages/python
+-e ./lib/comm/serial-datagram/python
+-e ./lib/comm/datagram-messages/python
 -e ./tools/zmqmsgbus

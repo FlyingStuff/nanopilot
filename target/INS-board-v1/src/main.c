@@ -9,7 +9,6 @@
 #include "git_revision.h"
 #include "thread_prio.h"
 #include "sdcard.h"
-#include "shell_cmds.h"
 #include "sumd_input.h"
 #include "onboardsensors.h"
 #include "serial-datagram/serial_datagram.h"
@@ -27,7 +26,6 @@
 #include "main.h"
 
 BaseSequentialStream* stdout;
-SerialUSBDriver SDU1;
 
 parameter_namespace_t parameters;
 parameter_t board_name;
@@ -210,6 +208,38 @@ static void services_start(void)
     run_attitude_determination();
 }
 
+#include "ts/type_print.h"
+
+static void cmd_topic_print(BaseSequentialStream *stream, int argc, char *argv[]) {
+    if (argc != 1) {
+        chprintf(stream, "usage: topic_print name\n");
+        return;
+    }
+    msgbus_subscriber_t sub;
+    if (msgbus_topic_subscribe(&sub, &bus, argv[0], MSGBUS_TIMEOUT_IMMEDIATE)) {
+        if (msgbus_subscriber_topic_is_valid(&sub)) {
+            msgbus_topic_t *topic = msgbus_subscriber_get_topic(&sub);
+            const ts_type_definition_t *type = msgbus_topic_get_type(topic);
+            void *buf = malloc(type->struct_size);
+            if (buf == NULL) {
+                chprintf(stream, "malloc failed\n");
+                return;
+            }
+            msgbus_subscriber_read(&sub, buf);
+            ts_print_type((void (*)(void *, const char *, ...))chprintf,
+                              stream, type, buf);
+            free(buf);
+        } else {
+            chprintf(stream, "topic not published yet\n");
+            return;
+        }
+    } else {
+        chprintf(stream, "topic doesn't exist\n");
+        return;
+    }
+}
+
+
 
 int main(void)
 {
@@ -271,25 +301,31 @@ int main(void)
     // start all services
     services_start();
 
-    shellInit();
-    char buf[STREAM_DEV_STR_SIZE];
-    parameter_string_get(&shell_port, buf, sizeof(buf));
-    BaseSequentialStream* shell_dev = get_base_seq_stream_device_from_str(buf);
-    static thread_t *shelltp = NULL;
-    static ShellConfig shell_cfg;
-    shell_cfg.sc_channel = shell_dev;
-    shell_cfg.sc_commands = shell_commands;
+    // shellInit();
+    // char buf[STREAM_DEV_STR_SIZE];
+    // parameter_string_get(&shell_port, buf, sizeof(buf));
+    // BaseSequentialStream* shell_dev = get_base_seq_stream_device_from_str(buf);
+    // static thread_t *shelltp = NULL;
+    // static ShellConfig shell_cfg;
+    // shell_cfg.sc_channel = shell_dev;
+    // shell_cfg.sc_commands = shell_commands;
 
     while (true) {
-        if (shelltp == NULL && shell_dev != NULL) {
-            static THD_WORKING_AREA(shell_wa, 2048);
-            shelltp = shellCreateStatic(&shell_cfg, shell_wa, sizeof(shell_wa), THD_PRIO_SHELL);
-        } else if (shelltp != NULL && chThdTerminatedX(shelltp)) {
-            shelltp = NULL;
-        }
+        // if (shelltp == NULL && shell_dev != NULL) {
+        //     static THD_WORKING_AREA(shell_wa, 2048);
+        //     shelltp = shellCreateStatic(&shell_cfg, shell_wa, sizeof(shell_wa), THD_PRIO_SHELL);
+        // } else if (shelltp != NULL && chThdTerminatedX(shelltp)) {
+        //     shelltp = NULL;
+        // }
 
         sdcard_automount();
 
+        char *argv[] = {"/sensors/mpu6000", "/sensors/ms5611"};
+        int i;
+        for (i=0; i < 2; i++) {
+            chprintf(stdout, argv[i]);
+            cmd_topic_print(stdout, 1, &argv[i]);
+        }
         chThdSleepMilliseconds(500);
     }
 }
