@@ -1,0 +1,6 @@
+
+set(NET_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/../net.c)
+
+set(NET_INCLUDE_DIR
+    ${CMAKE_CURRENT_LIST_DIR}/../..)

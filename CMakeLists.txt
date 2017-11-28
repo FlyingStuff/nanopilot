@@ -22,6 +22,7 @@ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 # add unit test targets (from other CMakeLists.txt)
 add_subdirectory(src/msgbus)
 add_subdirectory(src/ts)
+add_subdirectory(src/net)
 # ...
 
 
