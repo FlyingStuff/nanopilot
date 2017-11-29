@@ -5,8 +5,8 @@ set(CMAKE_BUILD_TYPE Debug)
 
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/src/msgbus/cmake")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/src/ts/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/lib/mcucom/msgbus/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/lib/mcucom/ts/cmake")
 
 include(msgbus)
 include(ts)
@@ -20,9 +20,9 @@ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 
 # add unit test targets (from other CMakeLists.txt)
-add_subdirectory(src/msgbus)
-add_subdirectory(src/ts)
-add_subdirectory(src/net)
+add_subdirectory(lib/mcucom/msgbus)
+add_subdirectory(lib/mcucom/ts)
+add_subdirectory(lib/mcucom/net)
 # ...
 
 

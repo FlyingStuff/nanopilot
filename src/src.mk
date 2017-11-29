@@ -1,7 +1,6 @@
 
 PROJINC += $(PROJROOT)/src/
 PROJINC += $(PROJROOT)/src/flight-stack/src/
-PROJINC += $(PROJROOT)/src/msgbus/ports/ChibiOS
 
 
 
@@ -21,10 +20,6 @@ PROJCSRC += $(PROJROOT)/src/sumd_input.c
 PROJCSRC += $(PROJROOT)/src/syscalls.c
 PROJCSRC += $(PROJROOT)/src/timestamp/timestamp_stm32.c
 PROJCSRC += $(PROJROOT)/src/hott/sumd.c
-PROJCSRC += $(PROJROOT)/src/msgbus/msgbus.c
-PROJCSRC += $(PROJROOT)/src/msgbus/ports/ChibiOS/msgbus_port.c
-PROJCSRC += $(PROJROOT)/src/ts/serialization_msgpack.c
-PROJCSRC += $(PROJROOT)/src/ts/type_print.c
 PROJCSRC += $(PROJROOT)/src/msgbus_scheduler.c
 PROJCSRC += $(PROJROOT)/src/parameter/parameter.c
 PROJCSRC += $(PROJROOT)/src/parameter/parameter_msgpack.c
