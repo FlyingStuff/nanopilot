@@ -65,9 +65,10 @@ add_executable(
 
 
 type_compile(${CMAKE_CURRENT_SOURCE_DIR}/src/tests/types/test.type)
-target_include_directories(ins-board-unittests PUBLIC ${TYPE_FILE_INCLUDE_DIR})
-target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_INCLUDE_DIR})
-target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_PORT_UNITTEST_MOCK_INCLUDE_DIR})
+target_include_directories(ins-board-unittests PUBLIC ${TS_INCLUDE})
+target_include_directories(ins-board-unittests PUBLIC ${TS_TYPE_FILE_INCLUDE})
+target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_INCLUDE})
+target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_PORT_UNITTEST_MOCK_INCLUDE})
 
 target_include_directories(ins-board-unittests PUBLIC ./lib/comm/)
 target_include_directories(ins-board-unittests PUBLIC ./src/eigen/)

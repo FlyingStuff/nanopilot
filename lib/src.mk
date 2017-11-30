@@ -5,7 +5,7 @@ PROJINC += $(PROJROOT)/lib/comm
 PROJINC += $(PROJROOT)/lib/mcu
 PROJINC += $(PROJROOT)/lib/drivers
 PROJINC += $(PROJROOT)/lib/mcucom
-PROJINC += $(PROJROOT)/lib/mcucom/msgbus/ports/ChibiOS
+PROJINC += $(PROJROOT)/lib/mcucom/port/ChibiOS
 
 
 PROJCSRC += $(PROJROOT)/lib/mcu/arm-cortex-tools/fault.c
@@ -26,6 +26,6 @@ PROJCSRC += $(PROJROOT)/lib/comm/serial-datagram/serial_datagram.c
 PROJCSRC += $(PROJROOT)/lib/comm/serial-datagram/serial_datagram_buffer_writer.c
 
 PROJCSRC += $(PROJROOT)/lib/mcucom/msgbus/msgbus.c
-PROJCSRC += $(PROJROOT)/lib/mcucom/msgbus/ports/ChibiOS/msgbus_port.c
+PROJCSRC += $(PROJROOT)/lib/mcucom/port/ChibiOS/mcucom_port_sync.c
 PROJCSRC += $(PROJROOT)/lib/mcucom/ts/serialization_msgpack.c
 PROJCSRC += $(PROJROOT)/lib/mcucom/ts/type_print.c

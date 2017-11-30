@@ -1,9 +1,7 @@
 #include "../msgbus.h"
-#include "mocks/synchronization.hpp"
 #include "types/test.h"
 
 #include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
 
 
 TEST_GROUP(TopicTests)
@@ -20,9 +18,6 @@ TEST_GROUP(TopicTests)
 
     void teardown()
     {
-        condvar_init_mock_enable(false);
-        mock().checkExpectations();
-        mock().clear();
     }
 };
 

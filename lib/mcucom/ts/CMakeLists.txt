@@ -13,7 +13,7 @@ include(ts)
 include(cmp OPTIONAL RESULT_VARIABLE CMP_FOUND)
 if (NOT CMP_FOUND) # download if not found
     set(CMP_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/cmp/cmp.c)
-    set(CMP_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+    set(CMP_INCLUDE ${CMAKE_CURRENT_BINARY_DIR})
     execute_process(COMMAND git clone https://github.com/camgunz/cmp.git -b v16
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif (NOT CMP_FOUND)
@@ -21,7 +21,7 @@ endif (NOT CMP_FOUND)
 include(cmp_mem_access OPTIONAL RESULT_VARIABLE CMP_MEM_ACCESS_FOUND)
 if (NOT CMP_FOUND) # download if not found
     set(CMP_MEM_ACCESS_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/cmp_mem_access/cmp_mem_access.c)
-    set(CMP_MEM_ACCESS_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR})
+    set(CMP_MEM_ACCESS_INCLUDE ${CMAKE_CURRENT_BINARY_DIR})
     execute_process(COMMAND git clone https://github.com/Stapelzeiger/cmp_mem_access.git
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif (NOT CMP_FOUND)
@@ -41,10 +41,10 @@ add_executable(
 
 type_compile(${CMAKE_CURRENT_SOURCE_DIR}/tests/types/test.type)
 target_include_directories(ts_unittests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-target_include_directories(ts_unittests PUBLIC ${TYPE_FILE_INCLUDE_DIR})
-target_include_directories(ts_unittests PUBLIC ${CMP_INCLUDE_DIR})
-target_include_directories(ts_unittests PUBLIC ${CMP_MEM_ACCESS_INCLUDE_DIR})
-target_include_directories(ts_unittests PUBLIC ${TS_INCLUDE_DIR})
+target_include_directories(ts_unittests PUBLIC ${TS_INCLUDE})
+target_include_directories(ts_unittests PUBLIC ${TS_TYPE_FILE_INCLUDE})
+target_include_directories(ts_unittests PUBLIC ${CMP_INCLUDE})
+target_include_directories(ts_unittests PUBLIC ${CMP_MEM_ACCESS_INCLUDE})
 
 
 target_link_libraries(

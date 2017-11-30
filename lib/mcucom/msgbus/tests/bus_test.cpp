@@ -1,5 +1,4 @@
 #include "../msgbus.h"
-#include "mocks/synchronization.hpp"
 #include "types/test.h"
 
 #include <CppUTest/TestHarness.h>
@@ -20,7 +19,7 @@ TEST_GROUP(BusTests)
 
     void teardown()
     {
-        condvar_init_mock_enable(false);
+        synchronization_init_mocks_enable(false);
         mock().checkExpectations();
         mock().clear();
     }
@@ -29,10 +28,10 @@ TEST_GROUP(BusTests)
 
 TEST(BusTests, Initializer)
 {
-    mock().expectOneCall("msgbus_condvar_init").withParameter("cond", &bus.condvar);
-    mock().expectOneCall("msgbus_mutex_init").withParameter("mutex", &bus.lock);
-    mock().expectOneCall("msgbus_mutex_init").withParameter("mutex", &bus.topic_update_lock);
-    condvar_init_mock_enable(true);
+    mock().expectOneCall("sync_mock_condvar_init").withParameter("cond", &bus.condvar);
+    mock().expectOneCall("sync_mock_mutex_init").withParameter("mutex", &bus.lock);
+    mock().expectOneCall("sync_mock_mutex_init").withParameter("mutex", &bus.topic_update_lock);
+    synchronization_init_mocks_enable(true);
     memset(&bus, 0xff, sizeof(bus));
     msgbus_init(&bus);
     POINTERS_EQUAL(NULL, bus.topics.head);

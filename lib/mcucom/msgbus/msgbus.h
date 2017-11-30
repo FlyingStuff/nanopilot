@@ -4,7 +4,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <ts/type_definition.h>
-#include <msgbus_port.h>
+
+/* os specific port */
+#include <mcucom_port_sync.h>
+#include <mcucom_port_assert.h>
+
 
 typedef struct msgbus_topic_s msgbus_topic_t;
 typedef struct msgbus_s msgbus_t;
@@ -27,14 +31,14 @@ struct msgbus_s {
     struct {
         msgbus_topic_t *head;
     } topics;
-    msgbus_mutex_t topic_update_lock;
-    msgbus_mutex_t lock;
-    msgbus_cond_t condvar;
+    mcucom_port_mutex_t topic_update_lock;
+    mcucom_port_mutex_t lock;
+    mcucom_port_cond_t condvar;
 };
 
 
 struct msgbus_cond_link_s {
-    msgbus_cond_t *cond;
+    mcucom_port_cond_t *cond;
     struct msgbus_cond_link_s *prev;
     struct msgbus_cond_link_s *next;
 };
@@ -47,8 +51,8 @@ struct msgbus_subscriber_s {
 
 
 
-#define MSGBUS_TIMEOUT_NEVER UINT32_MAX
-#define MSGBUS_TIMEOUT_IMMEDIATE 0
+#define MSGBUS_TIMEOUT_NEVER      MCUCOM_PORT_TIMEOUT_NEVER
+#define MSGBUS_TIMEOUT_IMMEDIATE  MCUCOM_PORT_TIMEOUT_IMMEDIATE
 
 #ifdef __cplusplus
 extern "C" {
@@ -217,32 +221,6 @@ uint32_t msgbus_subscriber_read(msgbus_subscriber_t *sub, void *dest);
  */
 msgbus_topic_t *msgbus_subscriber_get_topic(msgbus_subscriber_t *sub);
 
-
-/** @defgroup portable Portable functions, platform specific.
- * @{*/
-
-/** Initialize a mutex */
-extern void msgbus_mutex_init(msgbus_mutex_t *mutex);
-
-/** Acquire a reentrant mutex. */
-extern void msgbus_mutex_acquire(msgbus_mutex_t *mutex);
-
-/** Release a mutex previously acquired by msgbus_mutex_acquire. */
-extern void msgbus_mutex_release(msgbus_mutex_t *mutex);
-
-/** Initialize a condition variable */
-extern void msgbus_condvar_init(msgbus_cond_t *cond);
-
-/** Signal all tasks waiting on the given condition variable. */
-extern void msgbus_condvar_broadcast(msgbus_cond_t *cond);
-
-/** Wait on the given condition variable.
- * @returns true if the condition was signaled, false on timeout
- */
-extern bool msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us);
-
-
-/** @} */
 
 
 #ifdef __cplusplus

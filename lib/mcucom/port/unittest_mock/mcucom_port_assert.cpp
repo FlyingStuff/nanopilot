@@ -3,15 +3,15 @@
 
 bool mock_assert;
 
-void msgbus_assert_mock_enable(bool en)
+void mcucom_assert_mock_enable(bool en)
 {
     mock_assert = en;
 }
 
-void msgbus_unittest_assert(bool condition)
+void mcucom_unittest_mock_assert(bool condition)
 {
     if (mock_assert) {
-        mock().actualCall("msgbus_unittest_assert")
+        mock().actualCall("unittest_mock_assert")
               .withParameter("condition", condition);
     } else {
         assert(condition);

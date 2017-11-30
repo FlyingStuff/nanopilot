@@ -14,11 +14,10 @@ include(ts)
 
 add_executable(msgbus_unittests
     ${MSGBUS_SOURCES}
+    ${MSGBUS_PORT_UNITTEST_MOCK_SOURCES}
     ./tests/atomicity.cpp
     ./tests/bus_test.cpp
     ./tests/cpp_wrapper_test.cpp
-    ./tests/mocks/assert.cpp
-    ./tests/mocks/synchronization.cpp
     ./tests/signaling.cpp
     ./tests/subscriber_test.cpp
     ./tests/topic_test.cpp
@@ -28,8 +27,9 @@ add_executable(msgbus_unittests
 
 type_compile(${CMAKE_CURRENT_SOURCE_DIR}/tests/types/test.type)
 target_include_directories(msgbus_unittests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-target_include_directories(msgbus_unittests PUBLIC ${TYPE_FILE_INCLUDE_DIR})
-target_include_directories(msgbus_unittests PUBLIC ${TS_INCLUDE_DIR})
+target_include_directories(msgbus_unittests PUBLIC ${MSGBUS_PORT_UNITTEST_MOCK_INCLUDE})
+target_include_directories(msgbus_unittests PUBLIC ${TS_TYPE_FILE_INCLUDE})
+target_include_directories(msgbus_unittests PUBLIC ${TS_INCLUDE})
 
 
 
@@ -61,13 +61,13 @@ add_executable(
     msgbus_demo
     ./msgbus.c
     ./examples/posix/demo.c
-    ./ports/posix/msgbus_port.c
+    ${MSGBUS_PORT_POSIX_SOURCES}
     ${TYPE_OUTPUT_DIR}/example_type.c
     )
 
 type_compile(${CMAKE_CURRENT_SOURCE_DIR}/examples/posix/example_type.type)
-target_include_directories(msgbus_demo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ports/posix)
-target_include_directories(msgbus_demo PUBLIC ${TYPE_FILE_INCLUDE_DIR})
+target_include_directories(msgbus_demo PUBLIC ${MSGBUS_PORT_POSIX_INCLUDE})
+target_include_directories(msgbus_demo PUBLIC ${TS_TYPE_FILE_INCLUDE})
 
 target_link_libraries(
     msgbus_demo

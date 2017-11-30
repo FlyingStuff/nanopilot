@@ -1,8 +1,8 @@
+#include "mcucom_port_sync.h"
+
 #include <functional>
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
-#include "../../msgbus.h"
-#include <msgbus_port.h>
 
 static bool lock_enabled = false;
 static bool condvar_enabled = false;
@@ -10,64 +10,64 @@ static bool init_enabled = false;
 static bool condvar_ignore_cv_pointer_arg = false;
 static std::function<void()> condvar_wait_side_effect = [](){};
 
-void msgbus_mutex_init(msgbus_mutex_t *lock)
+void mcucom_port_mutex_init(mcucom_port_mutex_t *lock)
 {
     if (init_enabled) {
-        mock().actualCall("msgbus_mutex_init")
+        mock().actualCall("sync_mock_mutex_init")
             .withParameter("mutex", lock);
     }
 }
 
-void msgbus_condvar_init(msgbus_cond_t *cond)
+void mcucom_port_condvar_init(mcucom_port_cond_t *cond)
 {
     if (init_enabled) {
         if (condvar_ignore_cv_pointer_arg) {
-            mock().actualCall("msgbus_condvar_init");
+            mock().actualCall("sync_mock_condvar_init");
         } else {
-            mock().actualCall("msgbus_condvar_init")
+            mock().actualCall("sync_mock_condvar_init")
                 .withParameter("cond", cond);
         }
     }
 }
 
 
-void msgbus_mutex_acquire(msgbus_mutex_t *mutex)
+void mcucom_port_mutex_acquire(mcucom_port_mutex_t *mutex)
 {
     if (lock_enabled) {
-        mock().actualCall("msgbus_mutex_acquire")
+        mock().actualCall("sync_mock_mutex_acquire")
             .withParameter("mutex", mutex);
     }
 }
 
-void msgbus_mutex_release(msgbus_mutex_t *mutex)
+void mcucom_port_mutex_release(mcucom_port_mutex_t *mutex)
 {
     if (lock_enabled) {
-        mock().actualCall("msgbus_mutex_release")
+        mock().actualCall("sync_mock_mutex_release")
             .withParameter("mutex", mutex);
     }
 }
 
-void msgbus_condvar_broadcast(msgbus_cond_t *cond)
+void mcucom_port_condvar_broadcast(mcucom_port_cond_t *cond)
 {
     if (condvar_enabled) {
         if (condvar_ignore_cv_pointer_arg) {
-            mock().actualCall("msgbus_condvar_broadcast");
+            mock().actualCall("sync_mock_condvar_broadcast");
         } else {
-            mock().actualCall("msgbus_condvar_broadcast")
+            mock().actualCall("sync_mock_condvar_broadcast")
                   .withParameter("cond", cond);
         }
     }
 }
 
-bool msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
+bool mcucom_port_condvar_wait(mcucom_port_cond_t *cond, mcucom_port_mutex_t *mutex, uint32_t timeout_us)
 {
     if (condvar_enabled) {
         if (condvar_ignore_cv_pointer_arg) {
-            mock().actualCall("msgbus_condvar_wait")
+            mock().actualCall("sync_mock_condvar_wait")
                   .withParameter("mutex", mutex)
                   .withParameter("timeout_us", timeout_us);
         } else {
-            mock().actualCall("msgbus_condvar_wait")
+            mock().actualCall("sync_mock_condvar_wait")
                   .withParameter("cond", cond)
                   .withParameter("mutex", mutex)
                   .withParameter("timeout_us", timeout_us);
@@ -97,7 +97,7 @@ void condvar_mocks_enable(bool enabled)
     condvar_enabled = enabled;
 }
 
-void condvar_init_mock_enable(bool enabled)
+void synchronization_init_mocks_enable(bool enabled)
 {
     init_enabled = enabled;
 }
@@ -128,38 +128,39 @@ TEST_GROUP(LockTestGroup)
 
 TEST(LockTestGroup, CanLock)
 {
-    mock().expectOneCall("msgbus_mutex_acquire")
+    mock().expectOneCall("sync_mock_mutex_acquire")
           .withParameter("mutex", &lock);
 
-    msgbus_mutex_acquire(&lock);
+    mcucom_port_mutex_acquire(&lock);
 }
 
 TEST(LockTestGroup, CanUnlock)
 {
-    mock().expectOneCall("msgbus_mutex_release")
+    mock().expectOneCall("sync_mock_mutex_release")
           .withParameter("mutex", &lock);
 
-    msgbus_mutex_release(&lock);
+    mcucom_port_mutex_release(&lock);
 }
 
 TEST(LockTestGroup, CanBroadcastCondVar)
 {
     int cond;
-    mock().expectOneCall("msgbus_condvar_broadcast")
+    mock().expectOneCall("sync_mock_condvar_broadcast")
           .withParameter("cond", &cond);
 
-    msgbus_condvar_broadcast(&cond);
+    mcucom_port_condvar_broadcast(&cond);
 }
 
 TEST(LockTestGroup, CanWaitCondVar)
 {
     int cond, mutex;
 
-    mock().expectOneCall("msgbus_condvar_wait")
+    mock().expectOneCall("sync_mock_condvar_wait")
           .withParameter("cond", &cond)
           .withParameter("mutex", &mutex)
           .withParameter("timeout_us", 100);
 
 
-    msgbus_condvar_wait(&cond, &mutex, 100);
+    mcucom_port_condvar_wait(&cond, &mutex, 100);
 }
+

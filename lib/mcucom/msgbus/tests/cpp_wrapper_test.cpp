@@ -1,6 +1,6 @@
 #include "types/test.h"
-#include "mocks/assert.hpp"
 #include "../typesafe_wrapper.h"
+#include <mcucom_port_assert.h>
 
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
@@ -17,7 +17,7 @@ TEST_GROUP(WrapperTest)
 
     void teardown()
     {
-        msgbus_assert_mock_enable(false);
+        mcucom_assert_mock_enable(false);
         mock().checkExpectations();
         mock().clear();
     }
@@ -59,8 +59,8 @@ TEST(WrapperTest, TypeMissmatchIsDetected)
     msgbus::Topic<simple_t, &simple_type> t;
     t.advertise(&bus, "test");
 
-    msgbus_assert_mock_enable(true);
-    mock().expectOneCall("msgbus_unittest_assert")
+    mcucom_assert_mock_enable(true);
+    mock().expectOneCall("unittest_mock_assert")
           .withParameter("condition", false);
 
     msgbus::Subscriber<nested_t, &nested_type> s;

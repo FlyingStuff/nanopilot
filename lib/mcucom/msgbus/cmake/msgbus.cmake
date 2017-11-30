@@ -2,13 +2,14 @@
 set(MSGBUS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/../msgbus.c)
 set(MSGBUS_PORT_POSIX_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/../ports/posix/msgbus_port.c)
+    ${CMAKE_CURRENT_LIST_DIR}/../../port/posix/mcucom_port_sync.c)
 set(MSGBUS_PORT_UNITTEST_MOCK_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/../tests/mocks/synchronization.cpp)
+    ${CMAKE_CURRENT_LIST_DIR}/../../port/unittest_mock/mcucom_port_assert.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../port/unittest_mock/mcucom_port_sync.cpp)
 
-set(MSGBUS_INCLUDE_DIR
+set(MSGBUS_INCLUDE
     ${CMAKE_CURRENT_LIST_DIR}/../..)
-set(MSGBUS_PORT_POSIX_INCLUDE_DIR
-    ${CMAKE_CURRENT_LIST_DIR}/../ports/posix)
-set(MSGBUS_PORT_UNITTEST_MOCK_INCLUDE_DIR
-    ${CMAKE_CURRENT_LIST_DIR}/../tests)
+set(MSGBUS_PORT_POSIX_INCLUDE
+    ${CMAKE_CURRENT_LIST_DIR}/../../port/posix)
+set(MSGBUS_PORT_UNITTEST_MOCK_INCLUDE
+    ${CMAKE_CURRENT_LIST_DIR}/../../port/unittest_mock)

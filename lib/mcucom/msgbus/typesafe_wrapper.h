@@ -23,7 +23,7 @@ public:
 
     void publish(const msg_type &val)
     {
-        MSGBUS_ASSERT(is_advertised);
+        MCUCOM_PORT_ASSERT(is_advertised);
         msgbus_topic_publish(&topic, &val);
     }
 };
@@ -45,7 +45,7 @@ public:
         bool valid = msgbus_topic_subscribe(&sub, bus, name, timeout_us);
         if (valid) {
             msgbus_topic_t *topic = msgbus_subscriber_get_topic(&sub);
-            MSGBUS_ASSERT(msg_type_def == msgbus_topic_get_type(topic)); // type checking
+            MCUCOM_PORT_ASSERT(msg_type_def == msgbus_topic_get_type(topic)); // type checking
             return true;
         } else {
             return false;

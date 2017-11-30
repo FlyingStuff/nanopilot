@@ -1,6 +1,5 @@
 #include "../msgbus_scheduler.h"
 #include <types/test.h>
-#include <mocks/synchronization.hpp>
 
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
@@ -135,7 +134,7 @@ TEST(MsgBusSchedulerSpinTests, TestSpinBlocksIfNoUpdate)
 {
     condvar_mocks_enable(true);
     condvar_mocks_ignore_cv_pointer_arg(true);
-    mock().expectOneCall("msgbus_condvar_wait")
+    mock().expectOneCall("sync_mock_condvar_wait")
           .withParameter("mutex", &bus.topic_update_lock)
           .withParameter("timeout_us", 1000);
     msgbus_scheduler_spin(&sched, 1000);

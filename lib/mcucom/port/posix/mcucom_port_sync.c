@@ -3,42 +3,41 @@
 #include <time.h>
 #include <assert.h>
 #include <errno.h>
-#include "msgbus_port.h"
-#include "../../msgbus.h"
+#include "mcucom_port_sync.h"
 
 
-void msgbus_mutex_init(msgbus_mutex_t *mutex)
+void mcucom_port_mutex_init(mcucom_port_mutex_t *mutex)
 {
     assert(pthread_mutex_init(mutex, NULL) == 0);
 }
 
-void msgbus_mutex_acquire(msgbus_mutex_t *mutex)
+void mcucom_port_mutex_acquire(mcucom_port_mutex_t *mutex)
 {
     assert(pthread_mutex_lock(mutex) == 0);
 }
 
-void msgbus_mutex_release(msgbus_mutex_t *mutex)
+void mcucom_port_mutex_release(mcucom_port_mutex_t *mutex)
 {
     assert(pthread_mutex_unlock(mutex) == 0);
 }
 
-void msgbus_condvar_init(msgbus_cond_t *cond)
+void mcucom_port_condvar_init(mcucom_port_cond_t *cond)
 {
     assert(pthread_cond_init(cond, NULL) == 0);
 }
 
-void msgbus_condvar_broadcast(msgbus_cond_t *cond)
+void mcucom_port_condvar_broadcast(mcucom_port_cond_t *cond)
 {
     assert(pthread_cond_broadcast(cond) == 0);
 }
 
-#ifdef __APPLE__ // OS X has no gettitme with realtime clock
-bool msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
+#ifdef __APPLE__ // OS X has no gettime with realtime clock
+bool mcucom_port_condvar_wait(mcucom_port_cond_t *cond, mcucom_port_mutex_t *mutex, uint32_t timeout_us)
 {
-    if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
+    if (timeout_us == MCUCOM_PORT_TIMEOUT_IMMEDIATE) {
         return false;
     }
-    if (timeout_us == MSGBUS_TIMEOUT_NEVER) {
+    if (timeout_us == MCUCOM_PORT_TIMEOUT_NEVER) {
         assert(pthread_cond_wait(cond, mutex) == 0);
     } else {
         struct timespec ts;
@@ -53,12 +52,12 @@ bool msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t ti
     return true;
 }
 #else // posix
-bool msgbus_condvar_wait(msgbus_cond_t *cond, msgbus_mutex_t *mutex, uint32_t timeout_us)
+bool mcucom_port_condvar_wait(mcucom_port_cond_t *cond, mcucom_port_mutex_t *mutex, uint32_t timeout_us)
 {
-    if (timeout_us == MSGBUS_TIMEOUT_IMMEDIATE) {
+    if (timeout_us == MCUCOM_PORT_TIMEOUT_IMMEDIATE) {
         return false;
     }
-    if (timeout_us == MSGBUS_TIMEOUT_NEVER) {
+    if (timeout_us == MCUCOM_PORT_TIMEOUT_NEVER) {
         assert(pthread_cond_wait(cond, mutex) == 0);
     } else {
         struct timespec ts;
