@@ -69,7 +69,8 @@ struct net_route_tab_entry_s routing_table[ROUTING_TABLE_SIZE] = {
 
 struct net_if_s if_list[2] = {
     {.send_fn = serial_if_tx, .arg = NULL},
-    {.send_fn = serial_if_tx, .arg = NULL}
+    {.send_fn = serial_if_tx, .arg = NULL},
+    {.send_fn = NULL}
 };
 
 

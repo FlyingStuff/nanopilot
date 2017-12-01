@@ -13,7 +13,7 @@ extern "C" {
 
 #define NET_BROADCAST_DEST 0
 
-// header [dest 8bit, src 8bit, prio 3bit, protocol 5bit]
+// header [destination 8bit, source 8bit, priority 3bit, protocol 5bit]
 #define NET_HEADER_LEN 3
 
 
@@ -35,8 +35,9 @@ struct net_protocol_table_entry_s {
 
 
 struct net_if_s {
-    void (*send_fn)(void *arg, const char *frame, size_t len, uint8_t prio, uint8_t dest);
-    void *arg;
+    void (*send_fn)(void *arg, const char *frame, size_t len, uint8_t prio, uint8_t dest); // driver send function, NULL for sentinel at end of list
+    void *arg; // argument to be passed to the driver send function
+    mcucom_port_mutex_t send_lock; // lock is initialized by net_node_init
 };
 
 
@@ -44,7 +45,7 @@ typedef struct {
     uint8_t own_addr;
     uint8_t routing_table_size;
     struct net_route_tab_entry_s *routing_table;
-    const struct net_if_s *interface_list;
+    struct net_if_s *interface_list;
     const struct net_protocol_table_entry_s *protocol_table;
     mcucom_port_mutex_t node_lock;
 } net_node_t;
@@ -62,10 +63,10 @@ void net_node_init(net_node_t *node,
                    uint8_t addr,
                    struct net_route_tab_entry_s *routing_table,
                    uint8_t routing_table_size,
-                   const struct net_if_s *interface_list,
+                   struct net_if_s *interface_list,
                    const struct net_protocol_table_entry_s *protocol_table);
 
-/** Handle incoming frames
+/** Handle incoming frame
  * @parameter [in,out] node node object
  * @parameter [in] frame received frame
  * @parameter [in] len length of the received frame
@@ -200,6 +201,15 @@ void _net_read_header(const char *buf,
  */
 net_protocol_rcv_cb_t _net_get_protocol_cb(const struct net_protocol_table_entry_s *protocol_list, uint8_t protocol);
 
+
+/** Send frame over network interface
+ * @parameter [in, out] net_if pointer to the network interface
+ * @parameter [in] frame pointer to the frame buffer
+ * @parameter [in] len length of the frame buffer
+ * @parameter [in] priority priority of the frame
+ * @parameter [in] ll_addr link layer address to which the frame is sent
+ */
+void _net_if_send_frame(struct net_if_s *net_if, const char *frame, size_t len, uint8_t priority, uint8_t ll_addr);
 
 
 /** @} */ // end of internal API

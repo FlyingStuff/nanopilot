@@ -90,7 +90,7 @@ void net_node_init(net_node_t *node,
                    uint8_t addr,
                    struct net_route_tab_entry_s *routing_table,
                    uint8_t routing_table_size,
-                   const struct net_if_s *interface_list,
+                   struct net_if_s *interface_list,
                    const struct net_protocol_table_entry_s *protocol_table)
 {
     node->own_addr = addr;
@@ -99,7 +99,13 @@ void net_node_init(net_node_t *node,
     node->interface_list = interface_list;
     node->protocol_table = protocol_table;
     mcucom_port_mutex_init(&node->node_lock);
+    struct net_if_s *net_if = interface_list;
+    while (net_if->send_fn != NULL) {
+        mcucom_port_mutex_init(&net_if->send_lock);
+        net_if++;
+    }
 }
+
 
 void net_handle_incoming_frame(net_node_t *node, const char *frame, size_t len, uint8_t interface_idx, uint8_t frame_src_addr)
 {
@@ -132,12 +138,24 @@ void net_handle_incoming_frame(net_node_t *node, const char *frame, size_t len, 
         mcucom_port_mutex_release(&node->node_lock);
 
         if (if_idx != -1) {
-            const struct net_if_s *if_obj = &node->interface_list[if_idx];
-            if_obj->send_fn(if_obj->arg, frame, len, prio, via_addr);
+            struct net_if_s *net_if = &node->interface_list[if_idx];
+            _net_if_send_frame(net_if, frame, len, prio, via_addr);
         }
     }
 
 }
+
+
+void _net_if_send_frame(struct net_if_s *net_if, const char *frame, size_t len, uint8_t priority, uint8_t ll_addr)
+{
+    mcucom_port_mutex_acquire(&net_if->send_lock);
+
+    net_if->send_fn(net_if->arg, frame, len, priority, ll_addr);
+
+    mcucom_port_mutex_release(&net_if->send_lock);
+}
+
+
 
 bool net_write_header_and_send_frame(net_node_t *node, uint8_t protocol, char *frame, size_t len, uint8_t dest_addr, uint8_t priority)
 {
@@ -145,8 +163,8 @@ bool net_write_header_and_send_frame(net_node_t *node, uint8_t protocol, char *f
     uint8_t via_addr;
     int8_t if_idx = net_route_lookup(node, dest_addr, &via_addr);
     if (if_idx != -1) {
-        const struct net_if_s *if_obj = &node->interface_list[if_idx];
-        if_obj->send_fn(if_obj->arg, frame, len, priority, via_addr);
+        struct net_if_s *net_if = &node->interface_list[if_idx];
+        _net_if_send_frame(net_if, frame, len, priority, via_addr);
         return true;
     }
     return false; // no route to host

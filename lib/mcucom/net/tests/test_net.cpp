@@ -229,9 +229,10 @@ TEST_GROUP(NetNodePublicAPI)
 
     static const int routing_tab_size = 3;
     struct net_route_tab_entry_s routing_tab[routing_tab_size];
-    const struct net_if_s interface_list[2] = {
+    struct net_if_s interface_list[3] = {
         {.send_fn = if0_send, .arg = &if0_arg},
         {.send_fn = if1_send, .arg = &if1_arg},
+        {.send_fn = NULL}
     };
     const struct net_protocol_table_entry_s protocol_table[2] = {
         {.protocol_nbr = MY_PROTOCOL, .protocol_rcv_cb = protocol_cb},
