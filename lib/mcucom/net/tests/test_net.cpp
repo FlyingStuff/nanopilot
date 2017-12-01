@@ -18,7 +18,7 @@ TEST(NetRoutingTest, RoutingTableLookupNotFound)
         {.link_layer_via_interface_idx = -1}
     };
     uint8_t via_addr;
-    int8_t res = net_route_lookup(tab, 0x11, &via_addr);
+    int8_t res = _net_route_lookup_with_lock(tab, 0x11, &via_addr);
     CHECK_EQUAL(-1, res);
 }
 
@@ -30,7 +30,7 @@ TEST(NetRoutingTest, RoutingTableLookupMatch)
         {.link_layer_via_interface_idx = -1}
     };
     uint8_t via_addr;
-    int8_t res = net_route_lookup(tab, 0x10, &via_addr);
+    int8_t res = _net_route_lookup_with_lock(tab, 0x10, &via_addr);
     CHECK_EQUAL(0, res);
     CHECK_EQUAL(0x2a, via_addr);
 }
@@ -45,7 +45,7 @@ TEST(NetRoutingTest, RoutingTableLookupSecondMatch)
         {.link_layer_via_interface_idx = -1}
     };
     uint8_t via_addr;
-    int8_t res = net_route_lookup(tab, 0x11, &via_addr);
+    int8_t res = _net_route_lookup_with_lock(tab, 0x11, &via_addr);
     CHECK_EQUAL(1, res);
     CHECK_EQUAL(0x2b, via_addr);
 }
@@ -58,7 +58,7 @@ TEST(NetRoutingTest, RoutingTableLookupMatchWithMask)
         {.link_layer_via_interface_idx = -1}
     };
     uint8_t via_addr;
-    int8_t res = net_route_lookup(tab, 0x0a, &via_addr);
+    int8_t res = _net_route_lookup_with_lock(tab, 0x0a, &via_addr);
     CHECK_EQUAL(0, res);
     CHECK_EQUAL(0x2a, via_addr);
 }
@@ -73,7 +73,7 @@ TEST(NetRoutingTest, RoutingTableLookupMulitpleMatchesReportFirst)
         {.link_layer_via_interface_idx = -1}
     };
     uint8_t via_addr;
-    int8_t res = net_route_lookup(tab, 0x10, &via_addr);
+    int8_t res = _net_route_lookup_with_lock(tab, 0x10, &via_addr);
     CHECK_EQUAL(0, res);
     CHECK_EQUAL(0x2a, via_addr);
 }
@@ -92,7 +92,7 @@ TEST(NetRoutingTest, RouteAdd)
     uint8_t mask = 0xff;
     uint8_t if_idx = 2;
     uint8_t via_addr = 0x2c;
-    bool res = net_route_add(tab, 4, dest, mask, if_idx, via_addr);
+    bool res = _net_route_add_with_lock(tab, 4, dest, mask, if_idx, via_addr);
 
     CHECK_EQUAL(true, res);
     CHECK_EQUAL(dest, tab[2].dest_addr);
@@ -110,7 +110,7 @@ TEST(NetRoutingTest, RouteAddFailsWhenTableIsFull)
         {.link_layer_via_interface_idx = -1},
         {.link_layer_via_interface_idx = -1}, // this is to check it doesnt write outside buffer
     };
-    bool res = net_route_add(tab, 2, 0, 0, 0, 0);
+    bool res = _net_route_add_with_lock(tab, 2, 0, 0, 0, 0);
     CHECK_EQUAL(false, res);
     CHECK_EQUAL(-1, tab[1].link_layer_via_interface_idx); // didnt overwrite sentinel
     CHECK_EQUAL(-1, tab[2].link_layer_via_interface_idx); // didnt overwrite outside buffer
@@ -131,7 +131,7 @@ TEST(NetHeaderTest, TestWrite)
     uint8_t prio = 3;
     uint8_t protocol = 20;
 
-    net_write_header(bufp, dest, src, prio, protocol);
+    _net_write_header(bufp, dest, src, prio, protocol);
 
     CHECK_EQUAL(dest, buf[0]);
     CHECK_EQUAL(src, buf[1]);
@@ -150,7 +150,7 @@ TEST(NetHeaderTest, TestRead)
     char *bufp = (char*)buf;
     uint8_t read_dest, read_src, read_prio, read_protocol;
 
-    net_read_header(bufp, &read_dest, &read_src, &read_prio, &read_protocol);
+    _net_read_header(bufp, &read_dest, &read_src, &read_prio, &read_protocol);
 
     CHECK_EQUAL(dest, read_dest);
     CHECK_EQUAL(src, read_src);
@@ -172,8 +172,8 @@ TEST(NetProtocolLookup, TestLookup)
         {.protocol_nbr = 2, .protocol_rcv_cb = (net_protocol_rcv_cb_t)0xcc},
         {.protocol_nbr = -1},
     };
-    POINTERS_EQUAL((net_protocol_rcv_cb_t)0xbb, net_get_protocol_cb(list, 1));
-    POINTERS_EQUAL((net_protocol_rcv_cb_t)0xcc, net_get_protocol_cb(list, 2));
+    POINTERS_EQUAL((net_protocol_rcv_cb_t)0xbb, _net_get_protocol_cb(list, 1));
+    POINTERS_EQUAL((net_protocol_rcv_cb_t)0xcc, _net_get_protocol_cb(list, 2));
 }
 
 TEST(NetProtocolLookup, TestLookupFails)
@@ -184,7 +184,7 @@ TEST(NetProtocolLookup, TestLookupFails)
         {.protocol_nbr = 2, .protocol_rcv_cb = (net_protocol_rcv_cb_t)0xcc},
         {.protocol_nbr = -1},
     };
-    POINTERS_EQUAL((net_protocol_rcv_cb_t)NULL, net_get_protocol_cb(list, 5));
+    POINTERS_EQUAL((net_protocol_rcv_cb_t)NULL, _net_get_protocol_cb(list, 5));
 }
 
 
@@ -229,7 +229,7 @@ TEST_GROUP(NetNodePublicAPI)
 
     static const int routing_tab_size = 3;
     struct net_route_tab_entry_s routing_tab[routing_tab_size];
-    const net_if_t interface_list[2] = {
+    const struct net_if_s interface_list[2] = {
         {.send_fn = if0_send, .arg = &if0_arg},
         {.send_fn = if1_send, .arg = &if1_arg},
     };
@@ -270,7 +270,7 @@ TEST(NetNodePublicAPI, HandleIncomingCallProtocolHandler)
     uint8_t src_addr = 23;
     size_t len = sizeof(frame);
     uint8_t protocol = MY_PROTOCOL;
-    net_write_header(frame, node_addr, src_addr, prio, protocol);
+    _net_write_header(frame, node_addr, src_addr, prio, protocol);
 
     mock().expectOneCall("protocol_cb")
         .withParameter("pkt", &frame[NET_HEADER_LEN]) // handler receives frame without header
@@ -291,7 +291,7 @@ TEST(NetNodePublicAPI, HandleIncomingNoProtocolHandler)
     uint8_t src_addr = 23;
     size_t len = sizeof(frame);
     uint8_t protocol = NON_EXISTENT_PROTOCOL;
-    net_write_header(frame, node_addr, src_addr, prio, protocol);
+    _net_write_header(frame, node_addr, src_addr, prio, protocol);
 
     net_handle_incoming_frame(&node, frame, len, 0, 0);
 
@@ -306,7 +306,7 @@ TEST(NetNodePublicAPI, PacketWithUnknownSourceRouteGetsAddedToRoutingTable)
     uint8_t pkt_src_addr = 22;
     size_t len = sizeof(frame);
     uint8_t protocol = NON_EXISTENT_PROTOCOL;
-    net_write_header(frame, node_addr, pkt_src_addr, prio, protocol);
+    _net_write_header(frame, node_addr, pkt_src_addr, prio, protocol);
     uint8_t source_if = 2;
     uint8_t source_ll_addr = 88;
 
@@ -325,7 +325,7 @@ TEST(NetNodePublicAPI, PacketWithKnownSourceRouteDoesntGetAddedToRoutingTable)
     uint8_t pkt_src_addr = 23;
     size_t len = sizeof(frame);
     uint8_t protocol = NON_EXISTENT_PROTOCOL;
-    net_write_header(frame, node_addr, pkt_src_addr, prio, protocol);
+    _net_write_header(frame, node_addr, pkt_src_addr, prio, protocol);
     uint8_t source_if = 2;
     uint8_t source_ll_addr = 88;
 
@@ -341,7 +341,7 @@ TEST(NetNodePublicAPI, PacketThatIsNotForNodeGetsRouted)
     uint8_t pkt_src_addr = 22;
     size_t len = sizeof(frame);
     uint8_t protocol = MY_PROTOCOL;
-    net_write_header(frame, 23, pkt_src_addr, prio, protocol);
+    _net_write_header(frame, 23, pkt_src_addr, prio, protocol);
     uint8_t source_if = 2;
     uint8_t source_ll_addr = 88;
 
@@ -365,7 +365,7 @@ TEST(NetNodePublicAPI, BroadcastPacketsAreHandledByNode)
     size_t len = sizeof(frame);
     uint8_t protocol = MY_PROTOCOL;
     uint8_t broadcast_addr = 0;
-    net_write_header(frame, broadcast_addr, src_addr, prio, protocol);
+    _net_write_header(frame, broadcast_addr, src_addr, prio, protocol);
     uint8_t source_if = 2;
     uint8_t source_ll_addr = 88;
 

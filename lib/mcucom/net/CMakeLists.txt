@@ -14,10 +14,13 @@ include(net)
 add_executable(
     net_unittests
     ${NET_SOURCES}
+    ${NET_PORT_UNITTEST_MOCK_SOURCES}
     ./tests/test_net.cpp
+    ./tests/test_locking.cpp
     ./tests/runner.cpp
     )
 
+target_include_directories(net_unittests PUBLIC ${NET_PORT_UNITTEST_MOCK_INCLUDE})
 
 target_link_libraries(
     net_unittests

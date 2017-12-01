@@ -67,7 +67,7 @@ struct net_route_tab_entry_s routing_table[ROUTING_TABLE_SIZE] = {
     {.link_layer_via_interface_idx = -1}
 };
 
-net_if_t if_list[] = {
+struct net_if_s if_list[2] = {
     {.send_fn = serial_if_tx, .arg = NULL},
     {.send_fn = serial_if_tx, .arg = NULL}
 };
@@ -179,7 +179,7 @@ int main(void) {
     // interface 1 UART connection to other node
     chThdCreateStatic(net_rx1_thd_wa, sizeof(net_rx1_thd_wa),
                       NORMALPRIO - 1, net_rx1_thd, &SD2);
-    net_route_add(routing_table, ROUTING_TABLE_SIZE, other_addr, 0xff, 1, 0);
+    net_route_add(&net_node, other_addr, 0xff, 1, 0);
 
     int i = 0;
     while (true) {
