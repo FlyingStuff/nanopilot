@@ -1,122 +1,121 @@
 #include <ch.h>
 #include <hal.h>
+#include <log.h>
 #include <string.h>
-#include <memstreams.h>
-#include <chprintf.h>
 #include <ff.h>
+#include <assert.h>
 #include "main.h"
-#include "onboardsensors.h"
-#include "sumd_input.h"
-#include "git_revision.h"
+#include "msgbus/msgbus.h"
+#include "ts/serialization_csv.h"
+#include "msgbus_scheduler.h"
 
 #include "sdlog.h"
 
-#define ONBOARDSENSOR_EVENT 1
-/*
-static THD_WORKING_AREA(sdlog_wa, 512);
+
+struct logfile_s {
+    const char *topic;
+    const char *logfile;
+    FIL fd;
+    bool fd_valid;
+    int sync_countdown;
+    msgbus_subscriber_t sub;
+};
+
+
+static void file_write(struct logfile_s *l, char *buf, size_t size)
+{
+    if (!l->fd_valid) {
+        return;
+    }
+    UINT _bytes_written;
+    int ret = f_write(&l->fd, buf, size, &_bytes_written);
+    if (ret != 0) {
+        log_error("%s write failed: %d", l->logfile, ret);
+    }
+    if (ret == 9) {
+        log_info("reopening file %s", l->logfile, ret);
+        f_open(&l->fd, l->logfile, FA_WRITE);
+        f_lseek(&l->fd, f_size(&l->fd));
+    }
+    if (l->sync_countdown == 0) {
+        f_sync(&l->fd);
+        l->sync_countdown = 100;
+    }
+    l->sync_countdown--;
+}
+
+static void topic_serialize_csv_init(struct logfile_s *l)
+{
+    l->sync_countdown = 0;
+    char linebuffer[200];
+    assert(msgbus_topic_subscribe(&l->sub, &bus, l->topic, MSGBUS_TIMEOUT_NEVER));
+    FRESULT res = f_open(&l->fd, l->logfile, FA_WRITE | FA_CREATE_ALWAYS);
+    if (res) {
+        log_warning("error %d opening %s\n", res, l->logfile);
+        l->fd_valid = false;
+        return;
+    }
+    l->fd_valid = true;
+    msgbus_topic_t *topic = msgbus_subscriber_get_topic(&l->sub);
+    const ts_type_definition_t *type = msgbus_topic_get_type(topic);
+    int bytes_written = ts_serialize_csv_header(type, linebuffer, sizeof(linebuffer));
+    if (bytes_written > 0) {
+        file_write(l, linebuffer, bytes_written);
+    }
+}
+
+static void topic_serialize_csv(struct logfile_s *l) {
+    char linebuffer[200];
+    if (msgbus_subscriber_topic_is_valid(&l->sub)) {
+        msgbus_topic_t *topic = msgbus_subscriber_get_topic(&l->sub);
+        const ts_type_definition_t *type = msgbus_topic_get_type(topic);
+
+        void *buf = malloc(type->struct_size);
+        if (buf == NULL) {
+            log_warning("sdlog, malloc failed\n");
+            return;
+        }
+        msgbus_subscriber_read(&l->sub, buf);
+        int bytes_written;
+        bytes_written = ts_serialize_csv(buf, type, linebuffer, sizeof(linebuffer));
+        free(buf);
+        if (bytes_written > 0) {
+            file_write(l, linebuffer, bytes_written);
+        }
+    }
+}
+
+
+static THD_WORKING_AREA(sdlog_wa, 2000);
 static THD_FUNCTION(sdlog, arg)
 {
     (void)arg;
     chRegSetThreadName("sdlog");
-    static event_listener_t sensor_listener;
-    chEvtRegisterMaskWithFlags(&sensor_events, &sensor_listener,
-                               (eventmask_t)ONBOARDSENSOR_EVENT,
-                               (eventflags_t)SENSOR_EVENT_MPU6000);
-    static uint8_t writebuf[200];
-    static MemoryStream writebuf_stream;
-    bool error = false;
-    UINT _bytes_written;
 
-    FRESULT res;
+    static struct logfile_s log_files[] = {
+        {.topic="/sensors/mpu6000", .logfile="/log/mpu6000.csv"},
+        {.topic="/sensors/ms5611", .logfile="/log/ms5611.csv"}
+    };
 
-    static FIL version_fd;
-    res = f_open(&version_fd, "/log/version", FA_WRITE | FA_CREATE_ALWAYS);
-    if (res) {
-        chprintf(stdout, "error %d opening %s\n", res, "/log/version");
-        return;
-    }
-    msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
-            chprintf((BaseSequentialStream*)&writebuf_stream,
-                      "git version: %s (%s)\n"
-                      "compiler:    %s\n"
-                      "built:       %s\n",
-                      build_git_version, build_git_branch,
-                      PORT_COMPILER_NAME,
-                      build_date);
-    error = error || f_write(&version_fd, writebuf, writebuf_stream.eos, &_bytes_written);
-    f_close(&version_fd);
+    msgbus_scheduler_t sched;
+    static msgbus_scheduler_task_buffer_space_t buf[sizeof(log_files)/sizeof(struct logfile_s)];
+    msgbus_scheduler_init(&sched, &bus, buf, sizeof(buf)/sizeof(buf[0]));
 
-    static FIL mpu6000_fd;
-    res = f_open(&mpu6000_fd, "/log/mpu6000.csv", FA_WRITE | FA_CREATE_ALWAYS);
-    if (res) {
-        chprintf(stdout, "error %d opening %s\n", res, "/log/mpu6000.csv");
-        return;
-    }
-    const char *mpu_descr = "time,gyro_x,gyro_y,gyro_z,acc_x,acc_y,acc_z,temp\n";
-    error |= error || f_write(&mpu6000_fd, mpu_descr, strlen(mpu_descr), &_bytes_written);
-    static FIL rc_fd;
-    res = f_open(&rc_fd, "/log/rc.csv", FA_WRITE | FA_CREATE_ALWAYS);
-    if (res) {
-        chprintf(stdout, "error %d opening %s\n", res, "/log/rc.csv");
-        return;
-    }
-    const char *rc_descr = "time,signal,ch1,ch2,ch3,ch4,ch5\n";
-    error |= error || f_write(&rc_fd, rc_descr, strlen(rc_descr), &_bytes_written);
-
-    while (!error) {
-        eventmask_t events = chEvtWaitAny(ONBOARDSENSOR_EVENT);
-        float t = (float)chVTGetSystemTimeX() / CH_CFG_ST_FREQUENCY;
-
-        if (events & ONBOARDSENSOR_EVENT) {
-            chEvtGetAndClearFlags(&sensor_listener);
-            rate_gyro_sample_t gyro;
-            accelerometer_sample_t acc;
-
-            onboard_sensor_get_mpu6000_gyro_sample(&gyro);
-            onboard_sensor_get_mpu6000_acc_sample(&acc);
-            float temp = onboard_sensor_get_mpu6000_temp();
-
-            msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
-            chprintf((BaseSequentialStream*)&writebuf_stream,
-                      "%f,%f,%f,%f,%f,%f,%f,%f\n", gyro.timestamp, gyro.rate[0], gyro.rate[1], gyro.rate[2], acc.acceleration[0], acc.acceleration[1], acc.acceleration[2], temp);
-            UINT _bytes_written;
-            int ret = f_write(&mpu6000_fd, writebuf, writebuf_stream.eos, &_bytes_written);
-            if (ret != 0) {
-                chprintf(stdout, "write failed %d\n", ret);
-            }
-            if (ret == 9) {
-                f_open(&mpu6000_fd, "/log/mpu6000.csv", FA_WRITE);
-                f_lseek(&mpu6000_fd, f_size(&mpu6000_fd));
-            }
-            static int sync_needed = 0;
-            sync_needed++;
-            if (sync_needed == 100) {
-                f_sync(&mpu6000_fd);
-                sync_needed = 0;
-            }
-        }
-        if (false) {
-            static struct rc_input_s rc_in;
-            sumd_input_get(&rc_in);
-            msObjectInit(&writebuf_stream, writebuf, sizeof(writebuf), 0);
-            chprintf((BaseSequentialStream*)&writebuf_stream,
-                      "%f,%d,%f,%f,%f,%f,%f\n", t, !rc_in.no_signal, rc_in.channel[0], rc_in.channel[1], rc_in.channel[2], rc_in.channel[3], rc_in.channel[4]);
-            UINT _bytes_written;
-            int ret = f_write(&rc_fd, writebuf, writebuf_stream.eos, &_bytes_written);
-            if (ret != 0) {
-                chprintf(stdout, "write failed %d\n", ret);
-            }
-            static int sync_needed = 0;
-            sync_needed++;
-            if (sync_needed == 100) {
-                f_sync(&rc_fd);
-                sync_needed = 0;
-            }
+    unsigned i;
+    for (i = 0; i < sizeof(log_files)/sizeof(struct logfile_s); i++) {
+        topic_serialize_csv_init(&log_files[i]);
+        if (!msgbus_scheduler_add_task(&sched, &log_files[i].sub, (void (*)(void *))topic_serialize_csv, &log_files[i])) {
+            log_warning("log for %s could not be allocated", log_files[i].topic);
         }
     }
+
+    while (1) {
+        msgbus_scheduler_spin(&sched, MSGBUS_TIMEOUT_NEVER);
+    }
+
 }
-*/
+
 void sdlog_start(void)
 {
-    // chThdCreateStatic(sdlog_wa, sizeof(sdlog_wa), LOWPRIO, sdlog, NULL);
+    chThdCreateStatic(sdlog_wa, sizeof(sdlog_wa), LOWPRIO, sdlog, NULL);
 }

@@ -29,3 +29,4 @@ PROJCSRC += $(PROJROOT)/lib/mcucom/msgbus/msgbus.c
 PROJCSRC += $(PROJROOT)/lib/mcucom/port/ChibiOS/mcucom_port_sync.c
 PROJCSRC += $(PROJROOT)/lib/mcucom/ts/serialization_msgpack.c
 PROJCSRC += $(PROJROOT)/lib/mcucom/ts/type_print.c
+PROJCSRC += $(PROJROOT)/lib/mcucom/ts/serialization_csv.c
