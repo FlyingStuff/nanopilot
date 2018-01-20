@@ -195,9 +195,10 @@ TEST_GROUP(NetNodePublicAPI)
 
     const int8_t MY_PROTOCOL = 2;
     const int8_t NON_EXISTENT_PROTOCOL = 3;
-    static void protocol_cb(const char *pkt, size_t len, uint8_t src_addr, uint8_t prio, uint8_t interface_idx)
+    static void protocol_cb(net_node_t *node, const char *pkt, size_t len, uint8_t src_addr, uint8_t prio, uint8_t interface_idx)
     {
         mock().actualCall("protocol_cb")
+            .withParameter("node", node)
             .withParameter("pkt", pkt)
             .withParameter("len", len)
             .withParameter("src_addr", src_addr)
@@ -274,6 +275,7 @@ TEST(NetNodePublicAPI, HandleIncomingCallProtocolHandler)
     _net_write_header(frame, node_addr, src_addr, prio, protocol);
 
     mock().expectOneCall("protocol_cb")
+        .withParameter("node", &node)
         .withParameter("pkt", &frame[NET_HEADER_LEN]) // handler receives frame without header
         .withParameter("len", len - NET_HEADER_LEN)
         .withParameter("src_addr", src_addr)
@@ -371,6 +373,7 @@ TEST(NetNodePublicAPI, BroadcastPacketsAreHandledByNode)
     uint8_t source_ll_addr = 88;
 
     mock().expectOneCall("protocol_cb")
+        .withParameter("node", &node)
         .withParameter("pkt", &frame[NET_HEADER_LEN]) // handler receives frame without header
         .withParameter("len", len - NET_HEADER_LEN)
         .withParameter("src_addr", src_addr)

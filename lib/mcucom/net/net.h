@@ -16,6 +16,7 @@ extern "C" {
 // header [destination 8bit, source 8bit, priority 3bit, protocol 5bit]
 #define NET_HEADER_LEN 3
 
+typedef struct net_node_s net_node_t;
 
 
 struct net_route_tab_entry_s {
@@ -26,7 +27,7 @@ struct net_route_tab_entry_s {
 };
 
 
-typedef void (*net_protocol_rcv_cb_t)(const char *pkt, size_t len, uint8_t src_addr, uint8_t prio, uint8_t interface_idx);
+typedef void (*net_protocol_rcv_cb_t)(net_node_t *node, const char *pkt, size_t len, uint8_t src_addr, uint8_t prio, uint8_t interface_idx);
 
 struct net_protocol_table_entry_s {
     int8_t protocol_nbr; // last entry set to -1 for sentinel
@@ -41,14 +42,14 @@ struct net_if_s {
 };
 
 
-typedef struct {
+struct net_node_s {
     uint8_t own_addr;
     uint8_t routing_table_size;
     struct net_route_tab_entry_s *routing_table;
     struct net_if_s *interface_list;
     const struct net_protocol_table_entry_s *protocol_table;
     mcucom_port_mutex_t node_lock;
-} net_node_t;
+};
 
 
 /** Initialize Network Node

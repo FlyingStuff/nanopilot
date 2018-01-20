@@ -128,7 +128,7 @@ void net_handle_incoming_frame(net_node_t *node, const char *frame, size_t len, 
         mcucom_port_mutex_release(&node->node_lock);
 
         if (cb != NULL) {
-            cb(&frame[NET_HEADER_LEN], len - NET_HEADER_LEN, src_addr, prio, interface_idx);
+            cb(node, &frame[NET_HEADER_LEN], len - NET_HEADER_LEN, src_addr, prio, interface_idx);
         }
     } else {
         // route packet

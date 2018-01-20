@@ -20,8 +20,9 @@ TEST_GROUP(NetLockingTest)
     }
 
     static const int MY_PROTOCOL = 2;
-    static void empy_protocol(const char *pkt, size_t len, uint8_t src_addr, uint8_t prio, uint8_t interface_idx)
+    static void empy_protocol(net_node_t *node, const char *pkt, size_t len, uint8_t src_addr, uint8_t prio, uint8_t interface_idx)
     {
+        (void)node;
         (void)pkt;
         (void)len;
         (void)src_addr;
