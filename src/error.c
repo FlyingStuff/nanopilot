@@ -123,3 +123,28 @@ void error_init(void)
     mpu_init();
     fault_init();
 }
+
+
+
+// ChibiOS exception handlers
+
+void NMI_Handler(void)
+{
+    chSysHalt("NMI_Handler");
+}
+void HardFault_Handler(void)
+{
+    chSysHalt("HardFault_Handler");
+}
+void MemManage_Handler(void)
+{
+    chSysHalt("MemManage_Handler");
+}
+void BusFault_Handler(void)
+{
+    chSysHalt("BusFault_Handler");
+}
+void UsageFault_Handler(void)
+{
+    chSysHalt("UsageFault_Handler");
+}
