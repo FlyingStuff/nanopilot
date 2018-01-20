@@ -120,7 +120,7 @@ CSRC = $(PROJCSRC) \
        $(PLATFORMSRC) \
        $(STARTUPSRC) \
        $(BOARDSRC) \
-       $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
+       $(PROJROOT)/src/chprintf_long_long.c \
        $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
        $(FATFSSRC) \
        $(TYPECSRC) \
