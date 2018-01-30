@@ -23,6 +23,7 @@ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 add_subdirectory(lib/mcucom/msgbus)
 add_subdirectory(lib/mcucom/ts)
 add_subdirectory(lib/mcucom/net)
+add_subdirectory(lib/drivers/sensors)
 # ...
 
 
