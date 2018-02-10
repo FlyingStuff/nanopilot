@@ -94,7 +94,8 @@ static THD_FUNCTION(sdlog, arg)
 
     static struct logfile_s log_files[] = {
         {.topic="/sensors/mpu6000", .logfile="/log/mpu6000.csv"},
-        {.topic="/sensors/ms5611", .logfile="/log/ms5611.csv"}
+        {.topic="/sensors/ms5611", .logfile="/log/ms5611.csv"},
+        {.topic="/sensors/ms4525do", .logfile="/log/ms4525do.csv"},
     };
 
     msgbus_scheduler_t sched;

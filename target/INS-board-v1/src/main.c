@@ -11,6 +11,7 @@
 #include "sdcard.h"
 #include "sumd_input.h"
 #include "onboardsensors.h"
+#include "ms4525do_publisher.h"
 #include "serial-datagram/serial_datagram.h"
 #include "cmp/cmp.h"
 #include "cmp_mem_access/cmp_mem_access.h"
@@ -22,6 +23,8 @@
 #include "datagram_message_comm.h"
 #include "timestamp/timestamp_stm32.h"
 #include "attitude_determination.h"
+
+#include "sensors/ms4525do.h"
 
 #include "main.h"
 
@@ -177,8 +180,15 @@ static void io_setup(void)
     sdStart(&UART_CONN3, &uart_config);
     uart_config.speed = parameter_integer_get(&uart_conn4_baud);
     sdStart(&UART_CONN4, &uart_config);
-    uart_config.speed = parameter_integer_get(&uart_conn_i2c_baud);
-    sdStart(&UART_CONN_I2C, &uart_config);
+
+    // uart_config.speed = parameter_integer_get(&uart_conn_i2c_baud);
+    // sdStart(&UART_CONN_I2C, &uart_config);
+    const I2CConfig i2c_cfg = {
+        .op_mode = OPMODE_I2C,
+        .clock_speed = 400000,
+        .duty_cycle = FAST_DUTY_CYCLE_2
+    };
+    i2cStart(&I2C_CONN, &i2c_cfg);
 }
 
 
@@ -195,6 +205,7 @@ static void services_start(void)
 {
     char buf[STREAM_DEV_STR_SIZE];
     onboard_sensors_start();
+    ms4525do_publisher_start(&I2C_CONN, "/sensors/ms4525do");
 
     parameter_string_get(&sumd_in_uart, buf, sizeof(buf));
     sumd_input_start(get_base_seq_stream_device_from_str(buf));

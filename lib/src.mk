@@ -17,6 +17,7 @@ PROJCSRC += $(PROJROOT)/lib/drivers/sensors/h3lis331dl.c
 PROJCSRC += $(PROJROOT)/lib/drivers/sensors/hmc5883l.c
 PROJCSRC += $(PROJROOT)/lib/drivers/sensors/mpu60X0.c
 PROJCSRC += $(PROJROOT)/lib/drivers/sensors/ms5611.c
+PROJCSRC += $(PROJROOT)/lib/drivers/sensors/ms4525do.c
 PROJCSRC += $(PROJROOT)/lib/comm/cmp/cmp.c
 PROJCSRC += $(PROJROOT)/lib/comm/cmp_mem_access/cmp_mem_access.c
 PROJCSRC += $(PROJROOT)/lib/comm/crc/crc32.c

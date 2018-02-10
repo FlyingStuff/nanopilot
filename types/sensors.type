@@ -13,3 +13,8 @@ barometer_sample:
     float32 static_pressure # [Pa]
     float32 temperature # [deg C]
     uint64 timestamp # [us]
+
+dynamic_pressure_sample:
+    float32 dynamic_pressure # [Pa]
+    float32 temperature # [deg C]
+    uint64 timestamp # [us]

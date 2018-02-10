@@ -21,6 +21,7 @@
 #define UART_CONN3 SD2
 #define UART_CONN4 SD6
 #define UART_CONN_I2C SD3
+#define I2C_CONN I2CD2
 
 /*
  * IO pins assignments.

@@ -12,6 +12,7 @@ PROJCPPSRC += $(PROJROOT)/src/attitude_determination.cpp
 PROJCSRC += $(PROJROOT)/src/datagram_message_comm.c
 PROJCSRC += $(PROJROOT)/src/log.c
 PROJCSRC += $(PROJROOT)/src/onboardsensors.c
+PROJCSRC += $(PROJROOT)/src/ms4525do_publisher.c
 PROJCSRC += $(PROJROOT)/src/sdcard.c
 PROJCSRC += $(PROJROOT)/src/sdlog.c
 PROJCSRC += $(PROJROOT)/src/sqrtpatch.c

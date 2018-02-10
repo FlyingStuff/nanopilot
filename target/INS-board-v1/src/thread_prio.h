@@ -11,6 +11,7 @@
 #define THD_PRIO_SENSOR_DRV_I2C                         10
 #define THD_PRIO_SENSOR_DRV_I2C_BARO                    10
 #define THD_PRIO_SENSOR_DRV_SPI                         11
+#define THD_PRIO_SENSOR_DRV_I2C_EXT                     10
 #define THD_PRIO_SENSOR_ATTITUDE_DETERMINATION          20
 
 #endif /* THREAD_PRIO_H */
