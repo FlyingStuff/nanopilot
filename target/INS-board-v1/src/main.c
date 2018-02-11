@@ -250,6 +250,12 @@ static void cmd_topic_print(BaseSequentialStream *stream, int argc, char *argv[]
     }
 }
 
+static log_handler_t log_handler_stdout;
+static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
+{
+    (void)lvl;
+    streamWrite(stdout, (uint8_t*)msg, len);
+}
 
 
 int main(void)
@@ -269,6 +275,8 @@ int main(void)
     // standard output
     sdStart(&UART_CONN1, NULL);
     stdout = (BaseSequentialStream*)&UART_CONN1;
+    log_init();
+    log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
 
     boot_message();
 
@@ -293,9 +301,9 @@ int main(void)
     sdcard_mount();
 
     // load parameters from SD card
-    log_info("loading parameters from sd card")
+    log_info("loading parameters from sd card");
     sdcard_read_parameter(&parameters, "/config.msgpack");
-    log_info("current parameters:")
+    log_info("current parameters:");
     parameter_print(&parameters, (parameter_printfn_t)chprintf, stdout);
 
     // UART driver

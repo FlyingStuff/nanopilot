@@ -62,6 +62,8 @@ add_executable(
     ./src/tests/timestamp_mock.c
     ./src/tests/timestamp_mock_test.cpp
     ./src/timestamp/timestamp_test.cpp
+    ./src/log.c
+    ./src/tests/log_test.cpp
     )
 
 
