@@ -23,6 +23,7 @@
 #include "datagram_message_comm.h"
 #include "timestamp/timestamp_stm32.h"
 #include "attitude_determination.h"
+#include <ff.h>
 
 #include "sensors/ms4525do.h"
 
@@ -85,13 +86,11 @@ static THD_FUNCTION(led_task, arg)
 
 static void boot_message(void)
 {
-    chprintf(stdout, "\n\n\n");
-
     const char *panic_msg = get_panic_message();
     if (panic_msg != NULL) {
         log_warning("reboot after panic:\n%s\n", panic_msg);
     } else {
-        log_info("boot");
+        log_info("normal boot");
     }
     if (safemode_active()) {
         log_warning("safemode active");
@@ -258,6 +257,31 @@ static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
 }
 
 
+static FIL log_file_sdcard;
+static log_handler_t log_handler_sdcard;
+static void log_handler_sdcard_cb(log_level_t lvl, const char *msg, size_t len)
+{
+    (void)lvl;
+    UINT _bytes_written;
+    int ret = f_write(&log_file_sdcard, msg, len, &_bytes_written);
+    if (ret == 0) {
+        f_sync(&log_file_sdcard);
+    }
+}
+
+static void log_handler_sdcard_init(const char *path, log_level_t log_lvl)
+{
+    FRESULT res = f_open(&log_file_sdcard, path, FA_WRITE | FA_CREATE_ALWAYS);
+    if (res == 0) {
+        log_handler_register(&log_handler_sdcard, log_lvl, log_handler_sdcard_cb);
+        log_info("log file %s successfully opened", path);
+    } else {
+        log_warning("opening log file %s failed", path);
+    }
+}
+
+
+
 int main(void)
 {
     halInit();
@@ -275,8 +299,20 @@ int main(void)
     // standard output
     sdStart(&UART_CONN1, NULL);
     stdout = (BaseSequentialStream*)&UART_CONN1;
+    chprintf(stdout, "\n\n\n");
+
     log_init();
     log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
+    log_info("=== boot ===");
+
+    // mount SD card
+    chThdSleepMilliseconds(100);
+    board_sdcard_pwr_en(true);
+    chThdSleepMilliseconds(100);
+    sdcStart(&SDCD1, NULL);
+    sdcard_mount();
+
+    log_handler_sdcard_init("/log/log.txt", LOG_LVL_INFO);
 
     boot_message();
 
@@ -293,12 +329,6 @@ int main(void)
 
     services_init();
 
-    // mount SD card
-    chThdSleepMilliseconds(100);
-    board_sdcard_pwr_en(true);
-    chThdSleepMilliseconds(100);
-    sdcStart(&SDCD1, NULL);
-    sdcard_mount();
 
     // load parameters from SD card
     log_info("loading parameters from sd card");
