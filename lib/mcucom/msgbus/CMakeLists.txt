@@ -68,6 +68,7 @@ add_executable(
 type_compile(${CMAKE_CURRENT_SOURCE_DIR}/examples/posix/example_type.type)
 target_include_directories(msgbus_demo PUBLIC ${MSGBUS_PORT_POSIX_INCLUDE})
 target_include_directories(msgbus_demo PUBLIC ${TS_TYPE_FILE_INCLUDE})
+target_include_directories(msgbus_demo PUBLIC ${TS_INCLUDE})
 
 target_link_libraries(
     msgbus_demo
