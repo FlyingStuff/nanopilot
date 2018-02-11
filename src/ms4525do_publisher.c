@@ -19,7 +19,7 @@ static THD_FUNCTION(ms4525do_publisher, arg)
     chRegSetThreadName("ms4525do_publisher");
     ms4525do_t ms4525do;
     static msgbus_topic_t ms4525do_topic; // must be static in case the thread exits
-    dynamic_pressure_sample_t ms4525do_topic_buf;
+    static dynamic_pressure_sample_t ms4525do_topic_buf; // must be static in case the thread exits
     msgbus_topic_create(&ms4525do_topic, &bus, &dynamic_pressure_sample_type, &ms4525do_topic_buf, topic_name);
 
     i2cAcquireBus(i2c_driver);
