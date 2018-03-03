@@ -51,7 +51,7 @@ static void topic_serialize_csv_init(struct logfile_s *l)
     assert(msgbus_topic_subscribe(&l->sub, &bus, l->topic, MSGBUS_TIMEOUT_NEVER));
     FRESULT res = f_open(&l->fd, l->logfile, FA_WRITE | FA_CREATE_ALWAYS);
     if (res) {
-        log_warning("error %d opening %s\n", res, l->logfile);
+        log_warning("error %d opening %s", res, l->logfile);
         l->fd_valid = false;
         return;
     }
@@ -72,7 +72,7 @@ static void topic_serialize_csv(struct logfile_s *l) {
 
         void *buf = malloc(type->struct_size);
         if (buf == NULL) {
-            log_warning("sdlog, malloc failed\n");
+            log_warning("sdlog, malloc failed");
             return;
         }
         msgbus_subscriber_read(&l->sub, buf);

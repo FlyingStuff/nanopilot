@@ -236,8 +236,11 @@ static void cmd_topic_print(BaseSequentialStream *stream, int argc, char *argv[]
                 return;
             }
             msgbus_subscriber_read(&sub, buf);
+            chThdSleepMilliseconds(1000);
+            uint32_t rate = msgbus_subscriber_read(&sub, buf);
             ts_print_type((void (*)(void *, const char *, ...))chprintf,
                               stream, type, buf);
+            chprintf(stream, "rate %d Hz\n\n", rate);
             free(buf);
         } else {
             chprintf(stream, "topic not published yet\n");
@@ -333,7 +336,7 @@ int main(void)
     // load parameters from SD card
     log_info("loading parameters from sd card");
     sdcard_read_parameter(&parameters, "/config.msgpack");
-    log_info("current parameters:");
+    chprintf(stdout, "current parameters:");
     parameter_print(&parameters, (parameter_printfn_t)chprintf, stdout);
 
     // UART driver
@@ -359,6 +362,8 @@ int main(void)
     // shell_cfg.sc_channel = shell_dev;
     // shell_cfg.sc_commands = shell_commands;
 
+    chThdSleepMilliseconds(500);
+
     while (true) {
         // if (shelltp == NULL && shell_dev != NULL) {
         //     static THD_WORKING_AREA(shell_wa, 2048);
@@ -369,10 +374,10 @@ int main(void)
 
         sdcard_automount();
 
-        char *argv[] = {"/sensors/mpu6000", "/sensors/ms5611"};
+        char *argv[] = {"/sensors/mpu6000", "/sensors/ms5611", "/attitude_estimator_inertial/attitude_body_to_world"};
         int i;
-        for (i=0; i < 2; i++) {
-            chprintf(stdout, argv[i]);
+        for (i=0; i < 3; i++) {
+            chprintf(stdout, "\n%s:\n", argv[i]);
             cmd_topic_print(stdout, 1, &argv[i]);
         }
         chThdSleepMilliseconds(500);

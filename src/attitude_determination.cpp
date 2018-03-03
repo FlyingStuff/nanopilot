@@ -1,15 +1,14 @@
 #include <ch.h>
 #include "thread_prio.h"
-#include "onboardsensors.h"
 #include "main.h"
-#include "chprintf.h"
-
 #include "attitude_estimation/ekf_gyro_acc_mag.h"
+#include "msgbus/typesafe_wrapper.h"
+#include "types/sensors.h"
+#include "types/geometry.h"
+#include "timestamp/timestamp.h"
+#include "log.h"
+#include <cmath>
 
-static Eigen::Quaternionf attitude;
-
-
-/*
 typedef struct {
     float max[3];
     float min[3];
@@ -52,75 +51,69 @@ static void magneto_calibration_apply(magneto_calib_t *calib, float *mag)
 }
 
 
-#define ONBOARDSENSOR_EVENT     1
 
-static THD_WORKING_AREA(attitude_determination_wa, 1024);
+static THD_WORKING_AREA(attitude_determination_wa, 2048);
 static THD_FUNCTION(attitude_determination, arg)
 {
     (void)arg;
     chRegSetThreadName("attitude determination");
-    chThdSleepMilliseconds(100);
 
+    static EKFGyroAccMag attitude_estimator;
+    static MsgBusTopic(pose) att_pub;
+    att_pub.advertise(&bus, "/attitude_estimator_inertial/attitude_body_to_world");
 
-    event_listener_t sensor_event_listener;
-    chEvtRegisterMaskWithFlags(&sensor_events, &sensor_event_listener,
-                               (eventmask_t)ONBOARDSENSOR_EVENT,
-                               (eventflags_t)SENSOR_EVENT_MPU6000 | SENSOR_EVENT_HMC5883L);
+    static MsgBusSubscriber(mems_imu_sample) imu_sub;
+    static MsgBusSubscriber(magnetometer_sample) mag_sub;
+    imu_sub.subscribe(&bus, "/sensors/mpu6000");
+    mag_sub.subscribe(&bus, "/sensors/hmc5883l");
 
-
-    EKFGyroAccMag attitude_estimator;
-
-    magneto_calib_t mag_calib;
+    static magneto_calib_t mag_calib;
     magneto_calibration_init(&mag_calib);
-    timestamp_t prev_mpu6000_timestamp = 0;
+    uint64_t prev_mpu6000_timestamp = 0;
+
     while (1) {
-        eventmask_t events = chEvtWaitAny(ONBOARDSENSOR_EVENT);
-        if (events & ONBOARDSENSOR_EVENT) {
-            eventflags_t event_flags = chEvtGetAndClearFlags(&sensor_event_listener);
-            if (event_flags & SENSOR_EVENT_MPU6000) {
-                rate_gyro_sample_t gyro;
-                accelerometer_sample_t acc;
-                onboard_sensor_get_mpu6000_gyro_sample(&gyro);
-                onboard_sensor_get_mpu6000_acc_sample(&acc);
+        msgbus_subscriber_t *inputs[] = {&imu_sub.sub, &mag_sub.sub};
+        msgbus_subscriber_wait_for_update_on_any(inputs, 2, MSGBUS_TIMEOUT_NEVER);
+        if (imu_sub.has_update()) {
+            mems_imu_sample_t imu;
+            imu_sub.read(imu);
+            // log_debug("imu %lu %f %f %f", imu.timestamp, imu.rate[1], imu.rate[1], imu.rate[1]);
 
-                if (prev_mpu6000_timestamp == 0) {
-                    prev_mpu6000_timestamp = gyro.timestamp;
-                } else {
-                    float delta_t = timestamp_duration_s(prev_mpu6000_timestamp, gyro.timestamp);
-                    prev_mpu6000_timestamp = gyro.timestamp;
-
-                    attitude_estimator.update_imu(gyro.rate, acc.acceleration, delta_t);
-                    chSysLock();
-                    attitude = attitude_estimator.get_attitude();
-                    chSysUnlock();
-                }
+            if (prev_mpu6000_timestamp == 0) {
+                prev_mpu6000_timestamp = imu.timestamp;
+            } else {
+                float delta_t = ltimestamp_duration_s(prev_mpu6000_timestamp, imu.timestamp);
+                prev_mpu6000_timestamp = imu.timestamp;
+                attitude_estimator.update_imu(imu.rate, imu.acceleration, delta_t);
+                Eigen::Quaternionf attitude = attitude_estimator.get_attitude();
+                pose_t pose;
+                pose.attitude.r = attitude.w();
+                pose.attitude.i = attitude.x();
+                pose.attitude.j = attitude.y();
+                pose.attitude.k = attitude.z();
+                pose.position.x = NAN;
+                pose.position.y = NAN;
+                pose.position.z = NAN;
+                pose.timestamp = imu.timestamp;
+                att_pub.publish(pose);
             }
-            if (event_flags & SENSOR_EVENT_HMC5883L) {
-                magnetometer_sample_t mag;
-                onboard_sensor_get_hmc5883l_mag_sample(&mag);
-                if (magneto_calibration_update(&mag_calib, &mag.magnetic_field[0])) {
-                    status_led_toggle();
-                    magneto_calibration_apply(&mag_calib, &mag.magnetic_field[0]);
-                    // chprintf(stdout, "calibrated field %f %f %f\n",mag.magnetic_field[0], mag.magnetic_field[1], mag.magnetic_field[2]);
-                    attitude_estimator.update_mag(&mag.magnetic_field[0]);
-                }
+        }
+        if (mag_sub.has_update()) {
+            magnetometer_sample_t mag;
+            mag_sub.read(mag);
+            // log_debug("mag %llu", mag.timestamp);
+            if (magneto_calibration_update(&mag_calib, &mag.magnetic_field[0])) {
+                status_led_toggle();
+                magneto_calibration_apply(&mag_calib, &mag.magnetic_field[0]);
+                attitude_estimator.update_mag(&mag.magnetic_field[0]);
             }
         }
     }
+
 }
-*/
+
 extern "C" void run_attitude_determination(void)
 {
-    // chThdCreateStatictic(attitude_determination_wa, sizeof(attitude_determination_wa), THD_PRIO_SENSOR_ATTITUDE_DETERMINATION, attitude_determination, NULL);
+    chThdCreateStatic(attitude_determination_wa, sizeof(attitude_determination_wa), THD_PRIO_SENSOR_ATTITUDE_DETERMINATION, attitude_determination, NULL);
 }
 
-
-extern "C" void attitude_determination_get_attitude(float *quaternion)
-{
-    chSysLock();
-    quaternion[0] = attitude.w();
-    quaternion[1] = attitude.x();
-    quaternion[2] = attitude.y();
-    quaternion[3] = attitude.z();
-    chSysUnlock();
-}

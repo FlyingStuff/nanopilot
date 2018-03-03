@@ -1,0 +1,16 @@
+
+rotation_quaternion:
+    float32 r
+    float32 i
+    float32 j
+    float32 k
+
+vector_e3:
+    float32 x
+    float32 y
+    float32 z
+
+pose:
+    rotation_quaternion attitude
+    vector_e3 position
+    uint64 timestamp

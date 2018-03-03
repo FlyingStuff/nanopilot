@@ -10,7 +10,7 @@ C_OPT_REPRODUCIBLE_BUILD += -Wno-builtin-macro-redefined
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16 $(C_OPT_REPRODUCIBLE_BUILD)
+  USE_OPT = -Os -ggdb -fomit-frame-pointer -falign-functions=16 $(C_OPT_REPRODUCIBLE_BUILD)
 endif
 
 # C specific options here (added to USE_OPT).

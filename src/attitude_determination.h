@@ -6,8 +6,6 @@ extern "C" {
 #endif
 
 void run_attitude_determination(void);
-void attitude_determination_get_attitude(float *quaternion);
-
 
 #ifdef __cplusplus
 }
