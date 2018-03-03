@@ -15,7 +15,6 @@ void log_warning(const char *fmt, ...);
 void log_error(const char *fmt, ...);
 
 
-
 typedef enum {
     LOG_LVL_DEBUG = 0,
     LOG_LVL_INFO,
@@ -23,16 +22,6 @@ typedef enum {
     LOG_LVL_ERROR,
 } log_level_t;
 
-
-// #define LOG_LVL_INFO ""
-// #define LOG_LVL_WARNING LOG_COLOR_RED "\033[0;33mWARNING " LOG_COLOR_CLEAR
-// #define LOG_LVL_ERROR LOG_COLOR_RED "ERROR " LOG_COLOR_CLEAR
-
-// #define log_info(...) log_message(LOG_LVL_INFO, __VA_ARGS__);
-// #define log_warning(...) log_message(LOG_LVL_WARNING, __VA_ARGS__);
-// #define log_error(...) log_message(LOG_LVL_ERROR, __VA_ARGS__);
-
-// void log_message(const char *lvl, const char *fmt, ...);
 
 typedef struct log_handler_s log_handler_t;
 struct log_handler_s {
