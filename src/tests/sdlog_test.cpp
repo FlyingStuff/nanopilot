@@ -62,4 +62,7 @@ TEST(SDLog, log_topic)
     CHECK_EQUAL(FR_OK, read_res);
     read_buf[bytes_read] = '\0'; // terminate string
     STRCMP_EQUAL("x\n42\n", read_buf);
+
+    FRESULT close_res = f_close(&file);
+    CHECK_EQUAL(FR_OK, close_res);
 }

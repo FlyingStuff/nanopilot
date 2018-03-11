@@ -28,7 +28,6 @@ struct logfile_s {
     const char *logfile;
     FIL _fd;
     bool _fd_valid;
-    int _sync_countdown;
     msgbus_subscriber_t _sub;
 };
 

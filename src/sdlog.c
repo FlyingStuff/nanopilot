@@ -18,24 +18,18 @@ static void file_write(struct logfile_s *l, char *buf, size_t size)
     }
     UINT _bytes_written;
     int ret = f_write(&l->_fd, buf, size, &_bytes_written);
-    if (ret != 0) {
+    if (ret != FR_OK) {
         log_error("%s write failed: %d", l->logfile, ret);
     }
-    if (ret == 9) {
+    if (ret == FR_INVALID_OBJECT) {
         log_info("reopening file %s", l->logfile, ret);
         f_open(&l->_fd, l->logfile, FA_WRITE);
         f_lseek(&l->_fd, f_size(&l->_fd));
     }
-    if (l->_sync_countdown == 0) {
-        f_sync(&l->_fd);
-        l->_sync_countdown = 100;
-    }
-    l->_sync_countdown--;
 }
 
 static int topic_serialize_csv_init(struct logfile_s *l, msgbus_t *bus)
 {
-    l->_sync_countdown = 0;
     char linebuffer[200];
     if (!msgbus_topic_subscribe(&l->_sub, bus, l->topic, MSGBUS_TIMEOUT_NEVER)) {
         return -1;
@@ -117,15 +111,22 @@ static THD_FUNCTION(sdlog, arg)
         {.topic="/sensors/ms5611", .logfile="/log/ms5611.csv"},
         {.topic="/sensors/ms4525do", .logfile="/log/ms4525do.csv"},
     };
+#define NB_LOGFILES (sizeof(log_files)/sizeof(struct logfile_s))
 
     static msgbus_scheduler_t sched;
-    static msgbus_scheduler_task_buffer_space_t buf[sizeof(log_files)/sizeof(struct logfile_s)];
-    msgbus_scheduler_init(&sched, &bus, buf, sizeof(buf)/sizeof(buf[0]));
+    static msgbus_scheduler_task_buffer_space_t buf[NB_LOGFILES];
+    msgbus_scheduler_init(&sched, &bus, buf, NB_LOGFILES);
 
-    sdlog_initialize_and_add_to_scheduler(&sched, log_files, sizeof(log_files)/sizeof(struct logfile_s));
+    sdlog_initialize_and_add_to_scheduler(&sched, log_files, NB_LOGFILES);
 
+    int periodic_sync_countdown = 0;
     while (1) {
-        msgbus_scheduler_spin(&sched, MSGBUS_TIMEOUT_NEVER);
+        msgbus_scheduler_spin(&sched, 10);
+        if (periodic_sync_countdown == 0) {
+            sdlog_sync(log_files, NB_LOGFILES);
+            periodic_sync_countdown = 100;
+        }
+        periodic_sync_countdown--;
     }
 
 }
