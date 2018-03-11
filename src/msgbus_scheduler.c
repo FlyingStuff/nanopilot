@@ -33,6 +33,7 @@ bool msgbus_scheduler_add_task(msgbus_scheduler_t *sched,
 
 void msgbus_scheduler_spin(msgbus_scheduler_t *sched, uint32_t timeout_us)
 {
+    MCUCOM_PORT_ASSERT(sched->nb_entries > 0);
     msgbus_subscriber_wait_for_update_on_any(sched->subs, sched->nb_entries, timeout_us);
     int i;
     for (i=0; i < sched->nb_entries; i++) {

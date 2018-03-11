@@ -244,6 +244,7 @@ bool msgbus_subscriber_wait_for_update_on_any(msgbus_subscriber_t **subs,
                                               int nb_subs,
                                               uint32_t timeout_us)
 {
+    MCUCOM_PORT_ASSERT(nb_subs > 0);
     mcucom_port_mutex_acquire(&subs[0]->topic->bus->topic_update_lock);
 
     bool has_updates = subscriber_any_has_update_with_lock(subs, nb_subs);

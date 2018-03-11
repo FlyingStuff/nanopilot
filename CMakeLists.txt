@@ -34,6 +34,9 @@ add_executable(
     ${FATFS_SOURCES}
     ./src/tests/mock/fatfs_diskio_mem_drv.c
     ./src/tests/fatfs_tests.cpp
+    ./src/sdlog.c
+    ./src/tests/sdlog_test.cpp
+    ./src/tests/mock/main.c
     ${CMP_SOURCES}
     ./lib/comm/cmp_mem_access/cmp_mem_access.c
     ./lib/comm/crc/crc32.c
@@ -44,6 +47,7 @@ add_executable(
     ./src/tests/msgbus_scheduler_test.cpp
     ${MSGBUS_SOURCES}
     ${MSGBUS_PORT_UNITTEST_MOCK_SOURCES}
+    ${TS_SOURCES}
     ${TYPE_OUTPUT_DIR}/test.c
     ./src/parameter/parameter.c
     ./src/parameter/parameter_msgpack.c
@@ -82,6 +86,7 @@ target_include_directories(ins-board-unittests PUBLIC ./lib/comm/)
 target_include_directories(ins-board-unittests PUBLIC ./src/eigen/)
 target_include_directories(ins-board-unittests PUBLIC ./src/flight-stack/src/)
 target_include_directories(ins-board-unittests PUBLIC ./src/)
+target_include_directories(ins-board-unittests PUBLIC ./src/tests/mock)
 
 target_link_libraries(
     ins-board-unittests

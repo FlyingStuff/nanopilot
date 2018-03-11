@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "mcucom_port_assert.h"
 #include <CppUTestExt/MockSupport.h>
 
 bool mock_assert;
