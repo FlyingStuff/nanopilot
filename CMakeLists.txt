@@ -12,11 +12,12 @@ include(msgbus)
 include(ts)
 include(cmp)
 include(cmp_mem_access)
+include(fatfs)
 
 
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall")
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -g")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
 
 
 # add unit test targets (from other CMakeLists.txt)
@@ -30,6 +31,9 @@ add_subdirectory(lib/drivers/sensors)
 add_executable(
     ins-board-unittests
     ./src/tests/runner.cpp
+    ${FATFS_SOURCES}
+    ./src/tests/mock/fatfs_diskio_mem_drv.c
+    ./src/tests/fatfs_tests.cpp
     ${CMP_SOURCES}
     ./lib/comm/cmp_mem_access/cmp_mem_access.c
     ./lib/comm/crc/crc32.c
@@ -72,6 +76,7 @@ target_include_directories(ins-board-unittests PUBLIC ${TS_INCLUDE})
 target_include_directories(ins-board-unittests PUBLIC ${TS_TYPE_FILE_INCLUDE})
 target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_INCLUDE})
 target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_PORT_UNITTEST_MOCK_INCLUDE})
+target_include_directories(ins-board-unittests PUBLIC ${FATFS_INCLUDE})
 
 target_include_directories(ins-board-unittests PUBLIC ./lib/comm/)
 target_include_directories(ins-board-unittests PUBLIC ./src/eigen/)
