@@ -1,9 +1,8 @@
 #include <ch.h>
-#include <log.h>
+#include "log.h"
 #include <string.h>
 #include <ff.h>
 #include <assert.h>
-#include "main.h"
 #include "msgbus/msgbus.h"
 #include "ts/serialization_csv.h"
 #include "msgbus_scheduler.h"
@@ -103,7 +102,7 @@ void sdlog_sync(struct logfile_s *log_files, unsigned nb_log_files)
 static THD_WORKING_AREA(sdlog_wa, 2000);
 static THD_FUNCTION(sdlog, arg)
 {
-    (void)arg;
+    msgbus_t *bus = (msgbus_t*)arg;
     chRegSetThreadName("sdlog");
 
     static struct logfile_s log_files[] = {
@@ -115,7 +114,7 @@ static THD_FUNCTION(sdlog, arg)
 
     static msgbus_scheduler_t sched;
     static msgbus_scheduler_task_buffer_space_t buf[NB_LOGFILES];
-    msgbus_scheduler_init(&sched, &bus, buf, NB_LOGFILES);
+    msgbus_scheduler_init(&sched, bus, buf, NB_LOGFILES);
 
     sdlog_initialize_and_add_to_scheduler(&sched, log_files, NB_LOGFILES);
 
@@ -131,7 +130,7 @@ static THD_FUNCTION(sdlog, arg)
 
 }
 
-void sdlog_start(void)
+void sdlog_start(msgbus_t *bus)
 {
-    chThdCreateStatic(sdlog_wa, sizeof(sdlog_wa), LOWPRIO, sdlog, NULL);
+    chThdCreateStatic(sdlog_wa, sizeof(sdlog_wa), LOWPRIO, sdlog, bus);
 }

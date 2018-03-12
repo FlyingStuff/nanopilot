@@ -1,11 +1,13 @@
 #ifndef SDLOG_H
 #define SDLOG_H
 
+#include "msgbus/msgbus.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void sdlog_start(void);
+void sdlog_start(msgbus_t *bus);
 
 #ifdef __cplusplus
 }
@@ -16,7 +18,6 @@ void sdlog_start(void);
 /* Internal, for integration tests */
 
 #include <ff.h>
-#include "msgbus/msgbus.h"
 #include "msgbus_scheduler.h"
 
 #ifdef __cplusplus

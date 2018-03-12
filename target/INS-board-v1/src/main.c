@@ -157,7 +157,7 @@ static void services_start(void)
     parameter_string_get(&sumd_in_uart, buf, sizeof(buf));
     sumd_input_start(get_base_seq_stream_device_from_str(buf));
 
-    sdlog_start();
+    sdlog_start(&bus);
 
     parameter_string_get(&datagram_message_port, buf, sizeof(buf));
     datagram_message_start(get_base_seq_stream_device_from_str(buf));
