@@ -186,3 +186,16 @@ void status_led_toggle(void)
     palTogglePad(GPIOB, GPIOB_LED_STATUS);
     chSysUnlock();
 }
+
+bool board_sdcard_present(void)
+{
+    return !palReadPad(GPIOC, GPIOC_SDCARD_DETECT);
+}
+
+void board_power_cycle_sdcard(void)
+{
+    board_sdcard_pwr_en(false);
+    chThdSleepMilliseconds(100);
+    board_sdcard_pwr_en(true);
+    chThdSleepMilliseconds(100);
+}

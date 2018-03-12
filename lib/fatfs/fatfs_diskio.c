@@ -32,6 +32,12 @@ extern RTCDriver RTCD1;
 #define SDC     0
 
 
+void (*io_cb)(void) = NULL;
+
+void fatfs_diskio_set_io_callback(void (*cb)(void))
+{
+  io_cb = cb;
+}
 
 /*-----------------------------------------------------------------------*/
 /* Inidialize a Drive                                                    */
@@ -113,6 +119,9 @@ DRESULT disk_read (
     UINT count        /* Number of sectors to read (1..255) */
 )
 {
+  if (io_cb) {
+    io_cb();
+  }
   switch (pdrv) {
 #if HAL_USE_MMC_SPI
   case MMC:
@@ -154,6 +163,9 @@ DRESULT disk_write (
     UINT count        /* Number of sectors to write (1..255) */
 )
 {
+  if (io_cb) {
+    io_cb();
+  }
   switch (pdrv) {
 #if HAL_USE_MMC_SPI
   case MMC:

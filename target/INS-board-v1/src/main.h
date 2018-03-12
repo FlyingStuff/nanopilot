@@ -17,8 +17,6 @@ extern parameter_t board_name;
 
 extern msgbus_t bus;
 
-void sd_card_activity(void);
-
 #ifdef __cplusplus
 }
 #endif

@@ -7,14 +7,15 @@ extern "C" {
 
 #include <ch.h>
 #include "parameter/parameter.h"
+#include "log.h"
 
-extern bool fatfs_mounted;
-
-void sdcard_mount(void);
+bool sdcard_mount(void);
 void sdcard_unmount(void);
-void sdcard_automount(void);
-void file_cat(BaseSequentialStream *out, const char *file_path);
+bool sdcard_is_mounted(void);
+
 void sdcard_read_parameter(parameter_namespace_t *ns, const char *file_path);
+
+void sdcard_log_handler_init(const char *path, log_level_t log_lvl);
 
 #ifdef __cplusplus
 }

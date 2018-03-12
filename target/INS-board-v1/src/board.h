@@ -545,6 +545,9 @@ void board_sensor_pwr_en(bool en);
 void board_sdcard_pwr_en(bool en);
 void board_can_standby(bool en);
 
+void board_power_cycle_sdcard(void);
+bool board_sdcard_present(void);
+
 void status_led_on(void);
 void status_led_off(void);
 void status_led_toggle(void);

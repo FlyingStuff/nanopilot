@@ -6,4 +6,4 @@ FATFSSRC = $(PROJROOT)/lib/fatfs/fatfs_diskio.c \
            $(PROJROOT)/lib/fatfs/src/ff.c \
            $(PROJROOT)/lib/fatfs/src/ffunicode.c
 
-FATFSINC = $(PROJROOT)/lib/fatfs/src
+FATFSINC = $(PROJROOT)/lib/fatfs/src $(PROJROOT)/lib/fatfs

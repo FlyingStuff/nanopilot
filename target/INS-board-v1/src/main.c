@@ -1,20 +1,16 @@
 #include <ch.h>
 #include <hal.h>
 #include <chprintf.h>
-
 #include <string.h>
-#include <usbcfg.h>
 
+#include "usbcfg.h"
 #include "log.h"
+#include "led.h"
 #include "git_revision.h"
-#include "thread_prio.h"
 #include "sdcard.h"
 #include "sumd_input.h"
 #include "onboardsensors.h"
 #include "ms4525do_publisher.h"
-#include "serial-datagram/serial_datagram.h"
-#include "cmp/cmp.h"
-#include "cmp_mem_access/cmp_mem_access.h"
 #include "error.h"
 #include "parameter/parameter.h"
 #include "parameter/parameter_print.h"
@@ -23,8 +19,6 @@
 #include "datagram_message_comm.h"
 #include "timestamp/timestamp_stm32.h"
 #include "attitude_determination.h"
-#include <ff.h>
-
 #include "sensors/ms4525do.h"
 
 #include "main.h"
@@ -37,54 +31,8 @@ char board_name_p_buf[32];
 
 msgbus_t bus;
 
-void sd_card_activity(void)
-{
-    chSysLock();
-    palTogglePad(GPIOB, GPIOB_LED_SDCARD);
-    chSysUnlock();
-}
 
-
-static void sd_card_activity_periodic_reset(void)
-{
-    if (fatfs_mounted) {
-        palSetPad(GPIOB, GPIOB_LED_SDCARD);
-    } else {
-        palClearPad(GPIOB, GPIOB_LED_SDCARD);
-    }
-}
-
-
-/*
- *  Heartbeat LED thread
- *
- * The Heartbeat-LED double-flashes every second in normal mode and continuously
- *  flashes in safemode.
- */
-static THD_WORKING_AREA(led_task_wa, 128);
-static THD_FUNCTION(led_task, arg)
-{
-    (void)arg;
-    chRegSetThreadName("led_task");
-    while (1) {
-        palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(80);
-        palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(80);
-        palSetPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        chThdSleepMilliseconds(80);
-        palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-        if (safemode_active()) {
-            chThdSleepMilliseconds(80);
-        } else {
-            chThdSleepMilliseconds(760);
-        }
-        sd_card_activity_periodic_reset();
-    }
-}
-
-
-static void boot_message(void)
+static void log_boot_message(void)
 {
     const char *panic_msg = get_panic_message();
     if (panic_msg != NULL) {
@@ -218,39 +166,6 @@ static void services_start(void)
     run_attitude_determination();
 }
 
-#include "ts/type_print.h"
-
-static void cmd_topic_print(BaseSequentialStream *stream, int argc, char *argv[]) {
-    if (argc != 1) {
-        chprintf(stream, "usage: topic_print name\n");
-        return;
-    }
-    msgbus_subscriber_t sub;
-    if (msgbus_topic_subscribe(&sub, &bus, argv[0], MSGBUS_TIMEOUT_IMMEDIATE)) {
-        if (msgbus_subscriber_topic_is_valid(&sub)) {
-            msgbus_topic_t *topic = msgbus_subscriber_get_topic(&sub);
-            const ts_type_definition_t *type = msgbus_topic_get_type(topic);
-            void *buf = malloc(type->struct_size);
-            if (buf == NULL) {
-                chprintf(stream, "malloc failed\n");
-                return;
-            }
-            msgbus_subscriber_read(&sub, buf);
-            chThdSleepMilliseconds(1000);
-            uint32_t rate = msgbus_subscriber_read(&sub, buf);
-            ts_print_type((void (*)(void *, const char *, ...))chprintf,
-                              stream, type, buf);
-            chprintf(stream, "rate %d Hz\n\n", rate);
-            free(buf);
-        } else {
-            chprintf(stream, "topic not published yet\n");
-            return;
-        }
-    } else {
-        chprintf(stream, "topic doesn't exist\n");
-        return;
-    }
-}
 
 static log_handler_t log_handler_stdout;
 static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
@@ -258,31 +173,6 @@ static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
     (void)lvl;
     streamWrite(stdout, (uint8_t*)msg, len);
 }
-
-
-static FIL log_file_sdcard;
-static log_handler_t log_handler_sdcard;
-static void log_handler_sdcard_cb(log_level_t lvl, const char *msg, size_t len)
-{
-    (void)lvl;
-    UINT _bytes_written;
-    int ret = f_write(&log_file_sdcard, msg, len, &_bytes_written);
-    if (ret == 0) {
-        f_sync(&log_file_sdcard);
-    }
-}
-
-static void log_handler_sdcard_init(const char *path, log_level_t log_lvl)
-{
-    FRESULT res = f_open(&log_file_sdcard, path, FA_WRITE | FA_CREATE_ALWAYS);
-    if (res == 0) {
-        log_handler_register(&log_handler_sdcard, log_lvl, log_handler_sdcard_cb);
-        log_info("log file %s successfully opened", path);
-    } else {
-        log_warning("opening log file %s failed", path);
-    }
-}
-
 
 
 int main(void)
@@ -297,8 +187,6 @@ int main(void)
 
     error_init();
 
-    chThdCreateStatic(led_task_wa, sizeof(led_task_wa), THD_PRIO_LED, led_task, NULL);
-
     // standard output
     sdStart(&UART_CONN1, NULL);
     stdout = (BaseSequentialStream*)&UART_CONN1;
@@ -308,16 +196,17 @@ int main(void)
     log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
     log_info("=== boot ===");
 
+    led_start();
+
     // mount SD card
-    chThdSleepMilliseconds(100);
-    board_sdcard_pwr_en(true);
-    chThdSleepMilliseconds(100);
+    board_power_cycle_sdcard();
     sdcStart(&SDCD1, NULL);
     sdcard_mount();
+    if (sdcard_is_mounted()) {
+        sdcard_log_handler_init("/log/log.txt", LOG_LVL_INFO);
+    }
 
-    log_handler_sdcard_init("/log/log.txt", LOG_LVL_INFO);
-
-    boot_message();
+    log_boot_message();
 
     // initialization
     parameter_namespace_declare(&parameters, NULL, NULL); // root namespace
@@ -372,14 +261,6 @@ int main(void)
         //     shelltp = NULL;
         // }
 
-        sdcard_automount();
-
-        char *argv[] = {"/sensors/mpu6000", "/sensors/ms5611", "/attitude_estimator_inertial/attitude_body_to_world"};
-        int i;
-        for (i=0; i < 3; i++) {
-            chprintf(stdout, "\n%s:\n", argv[i]);
-            cmd_topic_print(stdout, 1, &argv[i]);
-        }
         chThdSleepMilliseconds(500);
     }
 }

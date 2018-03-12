@@ -77,8 +77,6 @@ static THD_FUNCTION(attitude_determination, arg)
         if (imu_sub.has_update()) {
             mems_imu_sample_t imu;
             imu_sub.read(imu);
-            // log_debug("imu %lu %f %f %f", imu.timestamp, imu.rate[1], imu.rate[1], imu.rate[1]);
-
             if (prev_mpu6000_timestamp == 0) {
                 prev_mpu6000_timestamp = imu.timestamp;
             } else {
@@ -101,7 +99,6 @@ static THD_FUNCTION(attitude_determination, arg)
         if (mag_sub.has_update()) {
             magnetometer_sample_t mag;
             mag_sub.read(mag);
-            // log_debug("mag %llu", mag.timestamp);
             if (magneto_calibration_update(&mag_calib, &mag.magnetic_field[0])) {
                 status_led_toggle();
                 magneto_calibration_apply(&mag_calib, &mag.magnetic_field[0]);
