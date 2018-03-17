@@ -25,29 +25,6 @@ TEST(SDLog, log_filename_overflow)
     STRCMP_EQUAL("", buf);
 }
 
-TEST(SDLog, find_log_file_dir)
-{
-    FATFS fs;
-    FRESULT mkfs_res = f_mkfs("", FM_ANY, 0, NULL, 0);
-    CHECK_EQUAL(FR_OK, mkfs_res);
-    FRESULT mount_res = f_mount(&fs, "", 1);
-    CHECK_EQUAL(FR_OK, mount_res);
-
-    FRESULT mkdir_res = f_mkdir("/logs");
-    CHECK_EQUAL(FR_OK, mkdir_res);
-    mkdir_res = f_mkdir("/logs/log_1");
-    CHECK_EQUAL(FR_OK, mkdir_res);
-    mkdir_res = f_mkdir("/logs/log_02");
-    CHECK_EQUAL(FR_OK, mkdir_res);
-    mkdir_res = f_mkdir("/logs/log_10");
-    CHECK_EQUAL(FR_OK, mkdir_res);
-
-    char buf[100];
-    int ret = sdlog_find_logfile_dir("/logs", "log_", buf, sizeof(buf));
-    CHECK_EQUAL(11, ret);
-    STRCMP_EQUAL(buf, "/logs/log_11");
-}
-
 TEST(SDLog, log_topic_integration_test)
 {
     // init logging
@@ -70,6 +47,8 @@ TEST(SDLog, log_topic_integration_test)
     CHECK_EQUAL(FR_OK, mkfs_res);
     FRESULT mount_res = f_mount(&fs, "", 1);
     CHECK_EQUAL(FR_OK, mount_res);
+    FRESULT mkdir_res = f_mkdir("/log");
+    CHECK_EQUAL(FR_OK, mkdir_res);
 
     // initialize logger & scheduler
     msgbus_scheduler_t sched;
@@ -83,6 +62,7 @@ TEST(SDLog, log_topic_integration_test)
     // publish a value and spin the scheduler
     test_t value = {.x = 42};
     msgbus_topic_publish(&topic, &value);
+    CHECK_EQUAL(1, msgbus_scheduler_get_nb_tasks(&sched));
     msgbus_scheduler_spin(&sched, MSGBUS_TIMEOUT_IMMEDIATE);
 
     // make sure all files are written

@@ -1,9 +1,10 @@
 #include <ch.h>
 #include <hal.h>
-#include <chprintf.h>
 #include "parameter/parameter.h"
 #include "parameter/parameter_msgpack.h"
 #include "log.h"
+#include <string.h>
+#include <stdio.h>
 
 #include "sdcard.h"
 
@@ -64,6 +65,52 @@ void sdcard_read_parameter(parameter_namespace_t *ns, const char *file_path)
         parameter_msgpack_read(ns, config_file_buffer, sizeof(config_file_buffer), read_param_cb, (void *)file_path);
     }
     f_close(&f);
+}
+
+
+
+int sdcard_find_next_file_nbr_with_prefix(const char *path, const char *prefix)
+{
+    DIR dir;
+    FILINFO finfo;
+    FRESULT res = f_opendir(&dir, path);
+
+    size_t prefix_len = strlen(prefix);
+    int max_file_nbr = 0;
+    if (res == FR_OK) {
+        while (true) {
+            res = f_readdir(&dir, &finfo);
+            if (res != FR_OK || finfo.fname[0] == 0) {
+                break;
+            }
+            if (strncmp(prefix, finfo.fname, prefix_len) == 0) { // match prefix
+                int file_nbr = atoi(&finfo.fname[prefix_len]);
+                if (file_nbr > max_file_nbr) {
+                    max_file_nbr = file_nbr;
+                }
+            }
+        }
+        f_closedir(&dir);
+        return max_file_nbr + 1;
+    }
+    return -1;
+}
+
+int sdcard_find_next_file_name_with_prefix(const char *path,
+    const char *prefix,
+    char *outbuf,
+    size_t outbuf_size)
+{
+    outbuf[0] = '\0';
+    int file_nbr = sdcard_find_next_file_nbr_with_prefix(path, prefix);
+    if (file_nbr < 0) {
+        return -1;
+    }
+    int ret = snprintf(outbuf, outbuf_size, "%s/%s%d", path, prefix, file_nbr);
+    if (ret <= 0 || (unsigned)ret >= outbuf_size) {
+        return -1;
+    }
+    return file_nbr;
 }
 
 

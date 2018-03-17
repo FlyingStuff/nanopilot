@@ -1,7 +1,6 @@
 #include <ch.h>
 #include "log.h"
 #include <string.h>
-#include <stdio.h>
 #include <ff.h>
 #include <assert.h>
 #include "msgbus/msgbus.h"
@@ -104,10 +103,6 @@ void sdlog_initialize_and_add_to_scheduler(msgbus_scheduler_t *sched,
         unsigned nb_log_files,
         const char *log_dir)
 {
-    FRESULT res = f_mkdir(log_dir);
-    if (!(res == FR_OK || res == FR_EXIST)) {
-        log_warning("could not create directory %s", log_dir);
-    }
     unsigned i;
     for (i = 0; i < nb_log_files; i++) {
         if (topic_serialize_csv_init(&log_files[i], msgbus_scheduler_get_bus(sched), log_dir) != 0) {
@@ -131,55 +126,14 @@ void sdlog_sync(struct logfile_s *log_files, unsigned nb_log_files)
     }
 }
 
-int sdlog_find_logfile_nbr(const char *path, const char *prefix)
-{
-    DIR dir;
-    FILINFO finfo;
-    FRESULT res = f_opendir(&dir, path);
 
-    size_t prefix_len = strlen(prefix);
-    int max_log_nbr = 0;
-    if (res == FR_OK) {
-        while (true) {
-            res = f_readdir(&dir, &finfo);
-            if (res != FR_OK || finfo.fname[0] == 0) {
-                break;
-            }
-            if (strncmp(prefix, finfo.fname, prefix_len) == 0) { // match prefix
-                int log_nbr = atoi(&finfo.fname[prefix_len]);
-                if (log_nbr > max_log_nbr) {
-                    max_log_nbr = log_nbr;
-                }
-            }
-        }
-        f_closedir(&dir);
-        return max_log_nbr + 1;
-    }
-    return -1;
-}
-
-int sdlog_find_logfile_dir(const char *path,
-    const char *prefix,
-    char *logdir,
-    size_t logdir_size)
-{
-    int log_nbr = sdlog_find_logfile_nbr(path, prefix);
-    if (log_nbr < 0) {
-        return -1;
-    }
-    int ret = snprintf(logdir, logdir_size, "%s/%s%d", path, prefix, log_nbr);
-    if (ret <= 0 || (unsigned)ret >= logdir_size) {
-        return -1;
-    }
-    return log_nbr;
-}
-
-
+static msgbus_t *_bus = NULL;
+const char *_logdir = NULL;
 
 static THD_WORKING_AREA(sdlog_wa, 2000);
 static THD_FUNCTION(sdlog, arg)
 {
-    msgbus_t *bus = (msgbus_t*)arg;
+    (void)arg;
     chRegSetThreadName("sdlog");
 
     static struct logfile_s log_files[] = {
@@ -191,15 +145,9 @@ static THD_FUNCTION(sdlog, arg)
 
     static msgbus_scheduler_t sched;
     static msgbus_scheduler_task_buffer_space_t buf[NB_LOGFILES];
-    msgbus_scheduler_init(&sched, bus, buf, NB_LOGFILES);
+    msgbus_scheduler_init(&sched, _bus, buf, NB_LOGFILES);
 
-    static char logdir[100];
-    if (sdlog_find_logfile_dir("/", "log_", logdir, sizeof(logdir)) < 0) {
-        log_error("could not determine log file directory");
-        return;
-    }
-
-    sdlog_initialize_and_add_to_scheduler(&sched, log_files, NB_LOGFILES, logdir);
+    sdlog_initialize_and_add_to_scheduler(&sched, log_files, NB_LOGFILES, _logdir);
 
     if (msgbus_scheduler_get_nb_tasks(&sched) == 0) {
         log_warning("no logfiles to log, exiting");
@@ -217,7 +165,9 @@ static THD_FUNCTION(sdlog, arg)
 
 }
 
-void sdlog_start(msgbus_t *bus)
+void sdlog_start(msgbus_t *bus, const char *logdir)
 {
-    chThdCreateStatic(sdlog_wa, sizeof(sdlog_wa), LOWPRIO, sdlog, bus);
+    _bus = bus;
+    _logdir = logdir;
+    chThdCreateStatic(sdlog_wa, sizeof(sdlog_wa), LOWPRIO, sdlog, NULL);
 }

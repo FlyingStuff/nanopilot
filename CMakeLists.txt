@@ -36,6 +36,8 @@ add_executable(
     ./src/tests/fatfs_tests.cpp
     ./src/sdlog.c
     ./src/tests/sdlog_test.cpp
+    ./src/sdcard.c
+    ./src/tests/sdcard_test.cpp
     ${CMP_SOURCES}
     ./lib/comm/cmp_mem_access/cmp_mem_access.c
     ./lib/comm/crc/crc32.c

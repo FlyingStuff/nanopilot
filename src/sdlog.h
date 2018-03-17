@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void sdlog_start(msgbus_t *bus);
+void sdlog_start(msgbus_t *bus, const char *logdir);
 
 #ifdef __cplusplus
 }
@@ -40,11 +40,6 @@ void sdlog_filename_from_logdir_and_topic(char *buffer,
     size_t size,
     const char *dir,
     const char *topic);
-
-int sdlog_find_logfile_dir(const char *path,
-    const char *prefix,
-    char *logdir,
-    size_t logdir_size);
 
 #ifdef __cplusplus
 }

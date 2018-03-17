@@ -148,7 +148,7 @@ static void services_init(void)
 }
 
 
-static void services_start(void)
+static void services_start(const char *logdir)
 {
     char buf[STREAM_DEV_STR_SIZE];
     onboard_sensors_start();
@@ -157,7 +157,7 @@ static void services_start(void)
     parameter_string_get(&sumd_in_uart, buf, sizeof(buf));
     sumd_input_start(get_base_seq_stream_device_from_str(buf));
 
-    sdlog_start(&bus);
+    sdlog_start(&bus, logdir);
 
     parameter_string_get(&datagram_message_port, buf, sizeof(buf));
     datagram_message_start(get_base_seq_stream_device_from_str(buf));
@@ -202,8 +202,22 @@ int main(void)
     board_power_cycle_sdcard();
     sdcStart(&SDCD1, NULL);
     sdcard_mount();
+
+    static char logdir[100];
+    if (sdcard_find_next_file_name_with_prefix("/", "log_", logdir, sizeof(logdir)) < 0) {
+        log_error("could not determine log file directory");
+    }
+    FRESULT res = f_mkdir(logdir);
+    if (!(res == FR_OK || res == FR_EXIST)) {
+        log_warning("could not create log directory %s", logdir);
+    }
+    size_t logdir_strlen = strlen(logdir);
     if (sdcard_is_mounted()) {
-        sdcard_log_handler_init("/log/log.txt", LOG_LVL_INFO);
+        // add .txt to logdir
+        strncpy(&logdir[logdir_strlen], "/log.txt", sizeof(logdir) - logdir_strlen);
+        logdir[sizeof(logdir)-1] = '\0';
+        sdcard_log_handler_init(logdir, LOG_LVL_INFO);
+        logdir[logdir_strlen] = '\0'; // reset log dir string
     }
 
     log_boot_message();
@@ -240,7 +254,7 @@ int main(void)
     usbConnectBus(serusbcfg.usbp);
 
     // start all services
-    services_start();
+    services_start(logdir);
 
     // shellInit();
     // char buf[STREAM_DEV_STR_SIZE];
