@@ -34,6 +34,7 @@ bool msgbus_scheduler_add_task(msgbus_scheduler_t *sched,
                                void *arg);
 void msgbus_scheduler_spin(msgbus_scheduler_t *sched, uint32_t timeout_us);
 
+int msgbus_scheduler_get_nb_tasks(msgbus_scheduler_t *sched);
 
 #ifdef __cplusplus
 }

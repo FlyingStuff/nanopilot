@@ -69,6 +69,15 @@ TEST(MsgBusSchedulerTests, TestAddBufferFull)
     CHECK_FALSE(msgbus_scheduler_add_task(&sched, &sub, fn, &arg));
 }
 
+TEST(MsgBusSchedulerTests, TestGetNbTasks)
+{
+    msgbus_subscriber_t sub;
+    void (*fn)(void*) = [](void *arg) {};
+    int arg;
+    CHECK_TRUE(msgbus_scheduler_add_task(&sched, &sub, fn, &arg));
+    CHECK_TRUE(msgbus_scheduler_add_task(&sched, &sub, fn, &arg));
+    CHECK_EQUAL(2, msgbus_scheduler_get_nb_tasks(&sched));
+}
 
 
 TEST_GROUP(MsgBusSchedulerSpinTests)

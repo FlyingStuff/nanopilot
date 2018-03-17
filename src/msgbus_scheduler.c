@@ -47,3 +47,8 @@ msgbus_t *msgbus_scheduler_get_bus(msgbus_scheduler_t *sched)
 {
     return sched->bus;
 }
+
+int msgbus_scheduler_get_nb_tasks(msgbus_scheduler_t *sched)
+{
+    return sched->nb_entries;
+}
