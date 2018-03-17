@@ -11,8 +11,44 @@ TEST_GROUP(SDLog)
 
 };
 
+TEST(SDLog, log_filename)
+{
+    char buf[1000];
+    sdlog_filename_from_logdir_and_topic(buf, sizeof(buf), "/log/dir", "/my/topic");
+    STRCMP_EQUAL("/log/dir/my_topic.csv", buf);
+}
 
-TEST(SDLog, log_topic)
+TEST(SDLog, log_filename_overflow)
+{
+    char buf[21];
+    sdlog_filename_from_logdir_and_topic(buf, sizeof(buf), "/log/dir", "/my/topic");
+    STRCMP_EQUAL("", buf);
+}
+
+TEST(SDLog, find_log_file_dir)
+{
+    FATFS fs;
+    FRESULT mkfs_res = f_mkfs("", FM_ANY, 0, NULL, 0);
+    CHECK_EQUAL(FR_OK, mkfs_res);
+    FRESULT mount_res = f_mount(&fs, "", 1);
+    CHECK_EQUAL(FR_OK, mount_res);
+
+    FRESULT mkdir_res = f_mkdir("/logs");
+    CHECK_EQUAL(FR_OK, mkdir_res);
+    mkdir_res = f_mkdir("/logs/log_1");
+    CHECK_EQUAL(FR_OK, mkdir_res);
+    mkdir_res = f_mkdir("/logs/log_02");
+    CHECK_EQUAL(FR_OK, mkdir_res);
+    mkdir_res = f_mkdir("/logs/log_10");
+    CHECK_EQUAL(FR_OK, mkdir_res);
+
+    char buf[100];
+    int ret = sdlog_find_logfile_dir("/logs", "log_", buf, sizeof(buf));
+    CHECK_EQUAL(11, ret);
+    STRCMP_EQUAL(buf, "/logs/log_11");
+}
+
+TEST(SDLog, log_topic_integration_test)
 {
     // init logging
     log_init();
@@ -40,9 +76,9 @@ TEST(SDLog, log_topic)
     msgbus_scheduler_task_buffer_space_t buf[10];
     msgbus_scheduler_init(&sched, &bus, buf, 10);
     static struct logfile_s log_files[] = {
-        {.topic="/test", .logfile="/test.csv"},
+        {.topic="/test"},
     };
-    sdlog_initialize_and_add_to_scheduler(&sched, log_files, 1);
+    sdlog_initialize_and_add_to_scheduler(&sched, log_files, 1, "/log");
 
     // publish a value and spin the scheduler
     test_t value = {.x = 42};
@@ -54,7 +90,7 @@ TEST(SDLog, log_topic)
 
     // read the log file
     FIL file;
-    FRESULT open_res = f_open(&file, "/test.csv", FA_READ);
+    FRESULT open_res = f_open(&file, "/log/test.csv", FA_READ);
     CHECK_EQUAL(FR_OK, open_res);
     char read_buf[1000];
     UINT bytes_read;
