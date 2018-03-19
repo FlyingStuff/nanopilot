@@ -6,6 +6,7 @@
 #include <arm-cortex-tools/fault.h>
 #include <memstreams.h>
 #include <chprintf.h>
+#include "blocking_uart.h"
 #include "error.h"
 
 
@@ -59,14 +60,6 @@ void panic_handler(const char *reason)
     palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
     palClearPad(GPIOB, GPIOB_LED_SDCARD);
 
-    static volatile uint32_t ipsr;
-    static volatile const char *msg;
-    msg = reason;
-    ipsr = __get_IPSR();
-
-    (void)msg;
-    (void)ipsr;
-
     chprintf((BaseSequentialStream *)&panic_bss, "%s", reason);
 
     // add terminating '\0' character
@@ -78,8 +71,11 @@ void panic_handler(const char *reason)
     panic_buffer_crc = crc32(PANIC_CRC_INIT, panic_buffer, sizeof(panic_buffer));
 
 #ifdef DEBUG // debug builds block to be able to connect a debugger
+    BlockingUARTDriver uart;
+    blocking_uart_init(&uart, UART_CONN1.usart, SERIAL_DEFAULT_BITRATE);
     while (1) {
-        // todo print error over uart
+        blocking_uart_write(&uart, (uint8_t*)panic_buffer, strlen(panic_buffer));
+        __asm__("BKPT");
     }
 
 #else // non-debug builds reboot in safemode
@@ -126,25 +122,7 @@ void error_init(void)
 
 
 
-// ChibiOS exception handlers
-
 void NMI_Handler(void)
 {
     chSysHalt("NMI_Handler");
-}
-void HardFault_Handler(void)
-{
-    chSysHalt("HardFault_Handler");
-}
-void MemManage_Handler(void)
-{
-    chSysHalt("MemManage_Handler");
-}
-void BusFault_Handler(void)
-{
-    chSysHalt("BusFault_Handler");
-}
-void UsageFault_Handler(void)
-{
-    chSysHalt("UsageFault_Handler");
 }

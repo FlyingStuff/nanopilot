@@ -151,7 +151,7 @@ TCSRC =
 TCPPSRC =
 
 # List ASM source files here
-ASMSRC =
+ASMSRC = $(PROJASMSRC)
 ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 
 
