@@ -8,6 +8,7 @@
 #define THD_PRIO_STREAM                                 4
 #define THD_PRIO_DATAGRAM_MSG_HANDLER                   5
 #define THD_PRIO_RC_SUMD_IN                             9
+#define THD_PRIO_HOTT_TM                                20
 #define THD_PRIO_SENSOR_DRV_I2C                         10
 #define THD_PRIO_SENSOR_DRV_I2C_BARO                    10
 #define THD_PRIO_SENSOR_DRV_SPI                         11

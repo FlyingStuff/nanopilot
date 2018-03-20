@@ -9,6 +9,7 @@
 #include "git_revision.h"
 #include "sdcard.h"
 #include "sumd_input.h"
+#include "hott_tm.h"
 #include "onboardsensors.h"
 #include "ms4525do_publisher.h"
 #include "error.h"
@@ -67,6 +68,9 @@ BaseSequentialStream *get_base_seq_stream_device_from_str(const char *name)
     if (strcmp(name, "CONN_I2C") == 0) {
         return (BaseSequentialStream*)&UART_CONN_I2C;
     }
+    if (strcmp(name, "OFF") == 0) {
+        return NULL;
+    }
     log_warning("unknown io port %s", name);
     return NULL;
 }
@@ -77,6 +81,8 @@ static parameter_t shell_port;
 static char shell_port_buf[STREAM_DEV_STR_SIZE];
 static parameter_t sumd_in_uart;
 static char sumd_in_uart_buf[STREAM_DEV_STR_SIZE];
+static parameter_t hott_tm_uart;
+static char hott_tm_uart_buf[STREAM_DEV_STR_SIZE];
 static parameter_t datagram_message_port;
 static char datagram_message_port_buf[STREAM_DEV_STR_SIZE];
 
@@ -90,10 +96,13 @@ static void service_parameters_declare(parameter_namespace_t *root)
             sizeof(shell_port_buf), "CONN1");
     parameter_string_declare_with_default(&sumd_in_uart,
             &service_param, "sumd_input", sumd_in_uart_buf,
-            sizeof(sumd_in_uart_buf), "CONN2");
+            sizeof(sumd_in_uart_buf), "OFF");
+    parameter_string_declare_with_default(&hott_tm_uart,
+            &service_param, "hott_tm", hott_tm_uart_buf,
+            sizeof(hott_tm_uart_buf), "CONN2");
     parameter_string_declare_with_default(&datagram_message_port,
             &service_param, "datagram_message_port", datagram_message_port_buf,
-            sizeof(datagram_message_port_buf), "CONN3");
+            sizeof(datagram_message_port_buf), "OFF");
 }
 
 
@@ -108,7 +117,7 @@ static void io_parameters_declare(parameter_namespace_t *root)
     parameter_namespace_declare(&io_param, root, "io");
 
     parameter_integer_declare_with_default(&uart_conn2_baud,
-            &io_param, "conn2_baud", SERIAL_DEFAULT_BITRATE);
+            &io_param, "conn2_baud", 19200);
     parameter_integer_declare_with_default(&uart_conn3_baud,
             &io_param, "conn3_baud", SERIAL_DEFAULT_BITRATE);
     parameter_integer_declare_with_default(&uart_conn4_baud,
@@ -156,6 +165,10 @@ static void services_start(const char *logdir)
 
     parameter_string_get(&sumd_in_uart, buf, sizeof(buf));
     sumd_input_start(get_base_seq_stream_device_from_str(buf));
+
+    parameter_string_get(&hott_tm_uart, buf, sizeof(buf));
+    hott_tm_start(&bus, get_base_seq_stream_device_from_str(buf));
+
 
     sdlog_start(&bus, logdir);
 

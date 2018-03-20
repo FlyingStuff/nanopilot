@@ -44,6 +44,8 @@ add_executable(
     ./lib/comm/datagram-messages/msg_dispatcher.c
     ./lib/comm/datagram-messages/service_call.c
     ./src/hott/sumd.c
+    ./src/hott/telemetry.c
+    ./src/tests/hott/telemetry_test.cpp
     ./src/msgbus_scheduler.c
     ./src/tests/msgbus_scheduler_test.cpp
     ${MSGBUS_SOURCES}
