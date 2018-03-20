@@ -161,6 +161,15 @@ bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
                             const char *name,
                             uint32_t timeout_us);
 
+/** Assert the type of a subscribed topic
+ *
+ * @parameter [in] sub Subscriber object
+ * @parameter [in] type expected topic type
+ * The assert fails if the subscriber has no topic or the type doesn't match
+ */
+void msgbus_subscriber_assert_type(const msgbus_subscriber_t *sub,
+                                   const ts_type_definition_t *type);
+
 /** Wait for a topic update
  *
  * @parameter [in] sub Subscriber object

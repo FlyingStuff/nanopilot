@@ -182,6 +182,13 @@ bool msgbus_topic_subscribe(msgbus_subscriber_t *sub,
     return true;
 }
 
+void msgbus_subscriber_assert_type(const msgbus_subscriber_t *sub,
+                                   const ts_type_definition_t *type)
+{
+    MCUCOM_PORT_ASSERT(sub->topic);
+    MCUCOM_PORT_ASSERT(sub->topic->type == type);
+}
+
 
 static uint32_t subscriber_get_nb_updates_with_lock(msgbus_subscriber_t *sub)
 {
