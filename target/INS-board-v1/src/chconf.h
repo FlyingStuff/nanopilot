@@ -413,13 +413,25 @@
  * @{
  */
 /*===========================================================================*/
+#define USE_PER_THREAD_NEWLIB_REENT_STRUCT
 
+#if !defined(_FROM_ASM_)
+#ifdef USE_PER_THREAD_NEWLIB_REENT_STRUCT
+#include <stdlib.h> // for newlib _reent struct
+#include <string.h> // memset
+#endif
+#endif
 /**
  * @brief   Threads descriptor structure extension.
  * @details User fields added to the end of the @p thread_t structure.
  */
+#ifdef USE_PER_THREAD_NEWLIB_REENT_STRUCT
+#define CH_CFG_THREAD_EXTRA_FIELDS                                          \
+  struct _reent newlib_reent;
+#else
 #define CH_CFG_THREAD_EXTRA_FIELDS                                          \
   /* Add threads custom fields here.*/
+#endif
 
 /**
  * @brief   Threads initialization hook.
@@ -428,9 +440,19 @@
  * @note    It is invoked from within @p chThdInit() and implicitly from all
  *          the threads creation APIs.
  */
+#ifdef USE_PER_THREAD_NEWLIB_REENT_STRUCT
+#ifndef _REENT_INIT_PTR_ZEROED
+#define _REENT_INIT_PTR_ZEROED(p) _REENT_INIT_PTR(p)
+#endif
+#define CH_CFG_THREAD_INIT_HOOK(tp) {                                       \
+  memset(&tp->newlib_reent, 0, sizeof(struct _reent));                      \
+  _REENT_INIT_PTR_ZEROED(&tp->newlib_reent);                                \
+}
+#else
 #define CH_CFG_THREAD_INIT_HOOK(tp) {                                       \
   /* Add threads initialization code here.*/                                \
 }
+#endif
 
 /**
  * @brief   Threads finalization hook.
@@ -448,9 +470,16 @@
  * @brief   Context switch hook.
  * @details This hook is invoked just before switching between threads.
  */
+#ifdef USE_PER_THREAD_NEWLIB_REENT_STRUCT
 #define CH_CFG_CONTEXT_SWITCH_HOOK(ntp, otp) {                              \
-  /* System halt code here.*/                                               \
+  _impure_ptr = &ntp->newlib_reent;                                         \
 }
+#else
+#define CH_CFG_CONTEXT_SWITCH_HOOK(ntp, otp) {                              \
+  /* Context switch code here.*/                                            \
+}
+#endif
+
 
 /**
  * @brief   ISR enter hook.
