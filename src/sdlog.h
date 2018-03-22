@@ -29,6 +29,7 @@ struct logfile_s {
     FIL _fd;
     bool _fd_valid;
     msgbus_subscriber_t _sub;
+    void *_msg_buf;
 };
 
 void sdlog_initialize_and_add_to_scheduler(msgbus_scheduler_t *sched,

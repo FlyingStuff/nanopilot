@@ -1,5 +1,6 @@
 #include "../sdlog.h"
 #include "../log.h"
+#include "timestamp_mock.h"
 #include <types/test.h>
 #include <iostream>
 #include <CppUTest/TestHarness.h>
@@ -61,6 +62,7 @@ TEST(SDLog, log_topic_integration_test)
 
     // publish a value and spin the scheduler
     test_t value = {.x = 42};
+    timestamp_mock_set_time_raw(10000);
     msgbus_topic_publish(&topic, &value);
     CHECK_EQUAL(1, msgbus_scheduler_get_nb_tasks(&sched));
     msgbus_scheduler_spin(&sched, MSGBUS_TIMEOUT_IMMEDIATE);
@@ -77,7 +79,7 @@ TEST(SDLog, log_topic_integration_test)
     FRESULT read_res = f_read(&file, read_buf, 1000, &bytes_read);
     CHECK_EQUAL(FR_OK, read_res);
     read_buf[bytes_read] = '\0'; // terminate string
-    STRCMP_EQUAL("x\n42\n", read_buf);
+    STRCMP_EQUAL("log_timestamp,x\n10000,42\n", read_buf);
 
     FRESULT close_res = f_close(&file);
     CHECK_EQUAL(FR_OK, close_res);

@@ -3,14 +3,17 @@
 #include <string.h>
 #include <ff.h>
 #include <assert.h>
+#include <stdio.h>
+#include <inttypes.h>
 #include "msgbus/msgbus.h"
 #include "ts/serialization_csv.h"
 #include "msgbus_scheduler.h"
+#include "timestamp/timestamp.h"
 
 #include "sdlog.h"
 
 
-static void file_write(struct logfile_s *l, char *buf, size_t size)
+static void file_write(struct logfile_s *l, const char *buf, size_t size)
 {
     if (!l->_fd_valid) {
         return;
@@ -53,22 +56,29 @@ void sdlog_filename_from_logdir_and_topic(char *buffer,
 
 static int topic_serialize_csv_init(struct logfile_s *l, msgbus_t *bus, const char *log_dir)
 {
+    l->_fd_valid = false;
     char linebuffer[200];
     char *filename = &linebuffer[0];
     if (!msgbus_topic_subscribe(&l->_sub, bus, l->topic, 1000000)) {
         log_warning("topic %s not found", l->topic);
         return -1;
     }
+    msgbus_topic_t *topic = msgbus_subscriber_get_topic(&l->_sub);
+    const ts_type_definition_t *type = msgbus_topic_get_type(topic);
+    l->_msg_buf = malloc(type->struct_size);
+    if (l->_msg_buf == NULL) {
+        log_warning("sdlog, malloc failed");
+        return -2;
+    }
     sdlog_filename_from_logdir_and_topic(filename, sizeof(linebuffer), log_dir, l->topic);
     FRESULT res = f_open(&l->_fd, filename, FA_WRITE | FA_CREATE_ALWAYS);
     if (res) {
         log_warning("error %d opening %s", res, filename);
-        l->_fd_valid = false;
-        return -2;
+        return -3;
     }
     l->_fd_valid = true;
-    msgbus_topic_t *topic = msgbus_subscriber_get_topic(&l->_sub);
-    const ts_type_definition_t *type = msgbus_topic_get_type(topic);
+    const char *log_ts_header = "log_timestamp,";
+    file_write(l, log_ts_header, strlen(log_ts_header));
     int bytes_written = ts_serialize_csv_header(type, linebuffer, sizeof(linebuffer));
     if (bytes_written > 0) {
         file_write(l, linebuffer, bytes_written);
@@ -82,15 +92,11 @@ static void topic_serialize_csv(struct logfile_s *l) {
         msgbus_topic_t *topic = msgbus_subscriber_get_topic(&l->_sub);
         const ts_type_definition_t *type = msgbus_topic_get_type(topic);
 
-        void *buf = malloc(type->struct_size);
-        if (buf == NULL) {
-            log_warning("sdlog, malloc failed");
-            return;
-        }
-        msgbus_subscriber_read(&l->_sub, buf);
-        int bytes_written;
-        bytes_written = ts_serialize_csv(buf, type, linebuffer, sizeof(linebuffer));
-        free(buf);
+        msgbus_subscriber_read(&l->_sub, l->_msg_buf);
+        uint64_t ts = timestamp_get();
+        int bytes_written = snprintf(linebuffer, sizeof(linebuffer), "%"PRIu64",", ts);
+        file_write(l, linebuffer, bytes_written);
+        bytes_written = ts_serialize_csv(l->_msg_buf, type, linebuffer, sizeof(linebuffer));
         if (bytes_written > 0) {
             file_write(l, linebuffer, bytes_written);
         }
