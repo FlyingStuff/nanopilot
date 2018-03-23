@@ -1,8 +1,8 @@
-#include <timestamp/timestamp.h>
+#include <timestamp.h>
 #include "timestamp_mock.h"
 #include "CppUTest/TestHarness.h"
 
-#define TIMESTAMP_RES 1000000 // timestamp is in us
+#define TIMESTAMP_RES 1000000000UL // timestamp is in ns
 
 TEST_GROUP(TimestampMockTest)
 {
@@ -41,5 +41,5 @@ TEST(TimestampMockTest, DurationWorks)
     timestamp_t start = timestamp_get();
     timestamp_mock_inc_time_s(23);
     timestamp_t end = timestamp_get();
-    CHECK_EQUAL(23, timestamp_duration_s(start, end));
+    CHECK_EQUAL(23, timestamp_duration(start, end));
 }

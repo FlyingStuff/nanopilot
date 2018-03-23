@@ -18,7 +18,7 @@
 #include "sdlog.h"
 #include "stream.h"
 #include "datagram_message_comm.h"
-#include "timestamp/timestamp_stm32.h"
+#include "timestamp_stm32.h"
 #include "attitude_determination.h"
 #include "sensors/ms4525do.h"
 

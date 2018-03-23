@@ -2,7 +2,7 @@
 #include "types/sensors.h"
 #include "log.h"
 #include "main.h"
-#include "timestamp/timestamp.h"
+#include "timestamp.h"
 #include "msgbus/msgbus.h"
 #include "sensors/ms4525do.h"
 #include <assert.h>
@@ -36,7 +36,7 @@ static THD_FUNCTION(ms4525do_publisher, arg)
         if (status == MS4525DO_READ_RES_OK) {
             ms4525do_sample.dynamic_pressure = p;
             ms4525do_sample.temperature = temp;
-            ms4525do_sample.timestamp = ts;
+            ms4525do_sample.timestamp_ns = ts;
             msgbus_topic_publish(&ms4525do_topic, &ms4525do_sample);
 
             // log_info("ms4525do status: %d, %f Pa, %f °C", status, p, temp);

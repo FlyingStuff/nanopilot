@@ -58,7 +58,7 @@ add_executable(
     ./src/rate_limiter.c
     ./lib/comm/serial-datagram/serial_datagram.c
     ./lib/comm/serial-datagram/serial_datagram_buffer_writer.c
-    ./src/timestamp/timestamp.c
+    ./src/timestamp.c
     ./lib/comm/cmp_mem_access/cmp_mem_access_test.cpp
     ./lib/comm/crc/test/crc32_test.cpp
     ./lib/comm/datagram-messages/tests/msg_dispatcher_test.cpp
@@ -72,7 +72,7 @@ add_executable(
     ./src/tests/rate_limiter_test.cpp
     ./src/tests/timestamp_mock.c
     ./src/tests/timestamp_mock_test.cpp
-    ./src/timestamp/timestamp_test.cpp
+    ./src/tests/timestamp_test.cpp
     ./src/log.c
     ./src/tests/log_test.cpp
     )

@@ -8,7 +8,7 @@
 #include "msgbus/msgbus.h"
 #include "ts/serialization_csv.h"
 #include "msgbus_scheduler.h"
-#include "timestamp/timestamp.h"
+#include "timestamp.h"
 
 #include "sdlog.h"
 
@@ -77,7 +77,7 @@ static int topic_serialize_csv_init(struct logfile_s *l, msgbus_t *bus, const ch
         return -3;
     }
     l->_fd_valid = true;
-    const char *log_ts_header = "log_timestamp,";
+    const char *log_ts_header = "log_timestamp_ns,";
     file_write(l, log_ts_header, strlen(log_ts_header));
     int bytes_written = ts_serialize_csv_header(type, linebuffer, sizeof(linebuffer));
     if (bytes_written > 0) {

@@ -2,7 +2,7 @@
 #define SENSORS_H
 
 #include <stdint.h>
-#include "timestamp/timestamp.h"
+#include "timestamp.h"
 
 typedef struct {
     const char *device;

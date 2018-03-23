@@ -13,4 +13,4 @@ vector_e3:
 pose:
     rotation_quaternion attitude
     vector_e3 position
-    uint64 timestamp
+    uint64 timestamp_ns

@@ -10,7 +10,7 @@
 #include "exti.h"
 #include "parameter/parameter.h"
 #include "sensors.h"
-#include "timestamp/timestamp.h"
+#include "timestamp.h"
 #include "msgbus/msgbus.h"
 #include "types/sensors.h"
 #include "onboardsensors.h"
@@ -132,7 +132,7 @@ static THD_FUNCTION(spi_sensors, arg)
         mpu6000_sample.rate[0] = gyro[1];
         mpu6000_sample.rate[1] = -gyro[0];
         mpu6000_sample.rate[2] = gyro[2];
-        mpu6000_sample.timestamp = t;
+        mpu6000_sample.timestamp_ns = t;
         mpu6000_sample.acceleration[0] = acc[1];
         mpu6000_sample.acceleration[1] = -acc[0];
         mpu6000_sample.acceleration[2] = acc[2];
@@ -184,7 +184,7 @@ static THD_FUNCTION(i2c_barometer, arg)
         barometer_sample_t ms5611_sample;
         ms5611_sample.static_pressure = press;
         ms5611_sample.temperature = (float)temp/100;
-        ms5611_sample.timestamp = timestamp;
+        ms5611_sample.timestamp_ns = timestamp;
         msgbus_topic_publish(&ms5611_topic, &ms5611_sample);
     }
 }
@@ -273,7 +273,7 @@ static THD_FUNCTION(i2c_sensors, arg)
             h3lis331dl_sample.rate[0] = NAN;
             h3lis331dl_sample.rate[1] = NAN;
             h3lis331dl_sample.rate[2] = NAN;
-            h3lis331dl_sample.timestamp = t;
+            h3lis331dl_sample.timestamp_ns = t;
             h3lis331dl_sample.acceleration[0] = acc[0];
             h3lis331dl_sample.acceleration[1] = acc[1];
             h3lis331dl_sample.acceleration[2] = acc[2];
@@ -290,7 +290,7 @@ static THD_FUNCTION(i2c_sensors, arg)
             hmc5883l_sample.magnetic_field[0] = mag[0];
             hmc5883l_sample.magnetic_field[1] = mag[1];
             hmc5883l_sample.magnetic_field[2] = mag[2];
-            hmc5883l_sample.timestamp = t;
+            hmc5883l_sample.timestamp_ns = t;
             msgbus_topic_publish(&hmc5883l_topic, &hmc5883l_sample);
         }
     }

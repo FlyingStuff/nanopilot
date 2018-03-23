@@ -35,7 +35,7 @@ static void log_v(log_level_t lvl, const char *fmt, va_list args)
 #else
 
 #include <hal.h>
-#include "timestamp/timestamp.h"
+#include "timestamp.h"
 
 MUTEX_DECL(log_lock);
 
@@ -52,7 +52,7 @@ static void log_v(log_level_t lvl, const char *fmt, va_list args)
 {
     static char log_buffer[200];
     chMtxLock(&log_lock);
-    size_t len = log_vformat_message(log_buffer, sizeof(log_buffer), timestamp_get(), lvl, thread_name_get(), fmt, args);
+    size_t len = log_vformat_message(log_buffer, sizeof(log_buffer), timestamp_get()/1000, lvl, thread_name_get(), fmt, args);
     log_call_handlers(lvl, log_buffer, len);
     chMtxUnlock(&log_lock);
 }

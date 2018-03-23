@@ -16,9 +16,6 @@
 [submodule "src/parameter"]
 	path = src/parameter
 	url = https://github.com/Stapelzeiger/parameter
-[submodule "src/timestamp"]
-	path = src/timestamp
-	url = https://github.com/Stapelzeiger/timestamp.git
 [submodule "src/sensors"]
 	path = lib/drivers/sensors
 	url = https://github.com/Stapelzeiger/sensor-drivers.git

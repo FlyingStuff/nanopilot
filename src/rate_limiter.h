@@ -2,7 +2,7 @@
 #define RATE_LIMITER_H
 
 #include <parameter/parameter.h>
-#include <timestamp/timestamp.h>
+#include <timestamp.h>
 
 #ifdef __cplusplus
 extern "C" {

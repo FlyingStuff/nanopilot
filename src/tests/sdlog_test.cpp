@@ -79,7 +79,7 @@ TEST(SDLog, log_topic_integration_test)
     FRESULT read_res = f_read(&file, read_buf, 1000, &bytes_read);
     CHECK_EQUAL(FR_OK, read_res);
     read_buf[bytes_read] = '\0'; // terminate string
-    STRCMP_EQUAL("log_timestamp,x\n10000,42\n", read_buf);
+    STRCMP_EQUAL("log_timestamp_ns,x\n10000,42\n", read_buf);
 
     FRESULT close_res = f_close(&file);
     CHECK_EQUAL(FR_OK, close_res);

@@ -5,7 +5,7 @@
 #include "msgbus/typesafe_wrapper.h"
 #include "types/sensors.h"
 #include "types/geometry.h"
-#include "timestamp/timestamp.h"
+#include "timestamp.h"
 #include "log.h"
 #include <cmath>
 
@@ -78,10 +78,10 @@ static THD_FUNCTION(attitude_determination, arg)
             mems_imu_sample_t imu;
             imu_sub.read(imu);
             if (prev_mpu6000_timestamp == 0) {
-                prev_mpu6000_timestamp = imu.timestamp;
+                prev_mpu6000_timestamp = imu.timestamp_ns;
             } else {
-                float delta_t = ltimestamp_duration_s(prev_mpu6000_timestamp, imu.timestamp);
-                prev_mpu6000_timestamp = imu.timestamp;
+                float delta_t = timestamp_duration(prev_mpu6000_timestamp, imu.timestamp_ns);
+                prev_mpu6000_timestamp = imu.timestamp_ns;
                 attitude_estimator.update_imu(imu.rate, imu.acceleration, delta_t);
                 Eigen::Quaternionf attitude = attitude_estimator.get_attitude();
                 pose_t pose;
@@ -92,7 +92,7 @@ static THD_FUNCTION(attitude_determination, arg)
                 pose.position.x = NAN;
                 pose.position.y = NAN;
                 pose.position.z = NAN;
-                pose.timestamp = imu.timestamp;
+                pose.timestamp_ns = imu.timestamp_ns;
                 att_pub.publish(pose);
             }
         }

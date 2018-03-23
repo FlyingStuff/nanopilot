@@ -12,7 +12,7 @@ bool rate_limiter_should_run(rate_limiter_t *rl)
     bool should_run = true;
     timestamp_t now = timestamp_get();
 
-    if (timestamp_duration_s(rl->last_update, now) >= 1.0f/parameter_scalar_read(&rl->rate)) {
+    if (timestamp_duration(rl->last_update, now) >= 1.0f/parameter_scalar_read(&rl->rate)) {
         should_run = true;
         rl->last_update = now;
     } else {

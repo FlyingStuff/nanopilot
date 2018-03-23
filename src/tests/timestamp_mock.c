@@ -1,6 +1,6 @@
-#include <timestamp/timestamp.h>
+#include <timestamp.h>
 
-#define TIMESTAMP_RES 1000000 // timestamp is in us
+#define TIMESTAMP_RES 1000000000UL // timestamp is in ns
 
 static uint64_t current_time = 0;
 

@@ -19,11 +19,18 @@ extern "C" {
 
 // CK_CNT = CK_INT / (PSC[15:0] + 1)
 #if STM32_PPRE1 == STM32_PPRE1_DIV1
-#define PRESCALER       (STM32_PCLK1/1000000 - 1)
+#define PRESCALER       (STM32_PCLK1/2000000 - 1)
 #else
-#define PRESCALER       (2*STM32_PCLK1/1000000 - 1)
+#define PRESCALER       (2*STM32_PCLK1/2000000 - 1)
 #endif
 #define INTERRUPT_PRIO  5
+
+#if (PRESCALER < 0)
+// todo check for rounding
+#error bad prescaler
+#endif
+
+#define TICK_PERIOD_NS 500
 
 #ifdef __cplusplus
 }
