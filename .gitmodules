@@ -14,7 +14,7 @@
 	path = lib/mcu/ChibiOS
 	url = https://github.com/Stapelzeiger/ChibiOS.git
 [submodule "src/parameter"]
-	path = src/parameter
+	path = lib/parameter
 	url = https://github.com/Stapelzeiger/parameter
 [submodule "src/sensors"]
 	path = lib/drivers/sensors

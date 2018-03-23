@@ -52,9 +52,13 @@ add_executable(
     ${MSGBUS_PORT_UNITTEST_MOCK_SOURCES}
     ${TS_SOURCES}
     ${TYPE_OUTPUT_DIR}/test.c
-    ./src/parameter/parameter.c
-    ./src/parameter/parameter_msgpack.c
-    ./src/parameter/parameter_print.c
+    ./lib/parameter/parameter.c
+    ./lib/parameter/parameter_msgpack.c
+    ./lib/parameter/parameter_print.c
+    ./lib/parameter/tests/msgpack_test.cpp
+    ./lib/parameter/tests/parameter_print_test.cpp
+    ./lib/parameter/tests/parameter_test.cpp
+    ./lib/parameter/tests/parameter_types_test.cpp
     ./src/rate_limiter.c
     ./lib/comm/serial-datagram/serial_datagram.c
     ./lib/comm/serial-datagram/serial_datagram_buffer_writer.c
@@ -63,10 +67,6 @@ add_executable(
     ./lib/comm/crc/test/crc32_test.cpp
     ./lib/comm/datagram-messages/tests/msg_dispatcher_test.cpp
     ./lib/comm/datagram-messages/tests/service_call_test.cpp
-    ./src/parameter/tests/msgpack_test.cpp
-    ./src/parameter/tests/parameter_print_test.cpp
-    ./src/parameter/tests/parameter_test.cpp
-    ./src/parameter/tests/parameter_types_test.cpp
     ./lib/comm/serial-datagram/tests/serial_datagram_buffer_writer_tests.cpp
     ./lib/comm/serial-datagram/tests/serial_datagram_test.cpp
     ./src/tests/rate_limiter_test.cpp
@@ -85,6 +85,7 @@ target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_INCLUDE})
 target_include_directories(ins-board-unittests PUBLIC ${MSGBUS_PORT_UNITTEST_MOCK_INCLUDE})
 target_include_directories(ins-board-unittests PUBLIC ${FATFS_INCLUDE})
 
+target_include_directories(ins-board-unittests PUBLIC ./lib/)
 target_include_directories(ins-board-unittests PUBLIC ./lib/comm/)
 target_include_directories(ins-board-unittests PUBLIC ./src/eigen/)
 target_include_directories(ins-board-unittests PUBLIC ./src/flight-stack/src/)
