@@ -10,25 +10,6 @@ extern "C" {
 }
 #include "cmp_mem_access/cmp_mem_access.h"
 
-extern "C" {
-bool ts_cmp_ser_type(const void *var,
-                         const ts_type_definition_t *type,
-                         cmp_ctx_t *ctx,
-                         bool compact);
-bool ts_cmp_ser_struct_entry(const void *var,
-                                 const ts_type_entry_t *entry,
-                                 cmp_ctx_t *ctx,
-                                 bool compact);
-bool ts_cmp_ser_value(const void *var,
-                          const ts_type_entry_t *entry,
-                          cmp_ctx_t *ctx,
-                          bool compact);
-bool ts_cmp_ser_value_once(const void *var,
-                               const ts_type_entry_t *entry,
-                               cmp_ctx_t *ctx,
-                               bool compact);
-}
-
 
 
 TEST_GROUP(MessagePackEntrySerializationTests)
@@ -192,7 +173,7 @@ TEST(MessagePackEntrySerializationTests, SerializeStringValue)
 }
 
 
-TEST(MessagePackEntrySerializationTests, SerializeCustomTypeValue)
+TEST(MessagePackEntrySerializationTests, SerializeStructTypeValue)
 {
     ts_type_entry_t entry = {
         .is_base_type = 0,
@@ -202,11 +183,17 @@ TEST(MessagePackEntrySerializationTests, SerializeCustomTypeValue)
         .struct_offset = 0,
     };
     simple_t var = {.x = 3.14, .y = 42};
-    CHECK_TRUE(ts_cmp_ser_value(&var, &entry, &ctx, false));
+    CHECK_TRUE(ts_cmp_ser_value(&var, &entry, &ctx, true));
     cmp_mem_access_set_pos(&mem, 0);
     uint32_t nb_elements;
-    CHECK_TRUE(cmp_read_map(&ctx, &nb_elements));
+    CHECK_TRUE(cmp_read_array(&ctx, &nb_elements));
     CHECK_EQUAL(2, nb_elements);
+    float x;
+    CHECK_TRUE(cmp_read_float(&ctx, &x));
+    CHECK_EQUAL(var.x, x);
+    int32_t y;
+    CHECK_TRUE(cmp_read_int(&ctx, &y));
+    CHECK_EQUAL(var.y, y);
 }
 
 
@@ -221,7 +208,7 @@ TEST(MessagePackEntrySerializationTests, SerializeStaticArray)
     cmp_mem_access_set_pos(&mem, 0);
 
     uint32_t nb_elements;
-    CHECK_TRUE(cmp_read_map(&ctx, &nb_elements));
+    CHECK_TRUE(cmp_read_array(&ctx, &nb_elements));
     CHECK_EQUAL(3, nb_elements);
     int32_t var_read;
     CHECK_TRUE(cmp_read_int(&ctx, &var_read));
@@ -237,11 +224,10 @@ TEST(MessagePackEntrySerializationTests, SerializeDynamicArray)
 {
     struct dynamic_array_test_s {
         int32_t list[10];
-        int list_len;
+        uint16_t list_len;
     };
     ts_type_entry_t entry = {
         .is_base_type = 1,
-        .is_array = 1,
         .is_dynamic_array = 1,
         .base_type = TS_TYPE_INT32,
         .struct_offset = offsetof(dynamic_array_test_s, list),
@@ -254,7 +240,7 @@ TEST(MessagePackEntrySerializationTests, SerializeDynamicArray)
     cmp_mem_access_set_pos(&mem, 0);
 
     uint32_t nb_elements;
-    CHECK_TRUE(cmp_read_map(&ctx, &nb_elements));
+    CHECK_TRUE(cmp_read_array(&ctx, &nb_elements));
     CHECK_EQUAL(3, nb_elements);
     int32_t var_read;
     CHECK_TRUE(cmp_read_int(&ctx, &var_read));
@@ -270,11 +256,10 @@ TEST(MessagePackEntrySerializationTests, SerializeDynamicArrayMaxSizeCheck)
 {
     struct dynamic_array_test_s {
         int32_t list[10];
-        int list_len;
+        uint16_t list_len;
     };
     ts_type_entry_t entry = {
         .is_base_type = 1,
-        .is_array = 1,
         .is_dynamic_array = 1,
         .base_type = TS_TYPE_INT32,
         .struct_offset = offsetof(dynamic_array_test_s, list),

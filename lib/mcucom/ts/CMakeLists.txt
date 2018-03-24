@@ -31,6 +31,7 @@ add_executable(
     ts_unittests
     ${TS_SOURCES}
     ./tests/serialization_msgpack_test.cpp
+    ./tests/deserialization_msgpack_test.cpp
     ./tests/serialization_csv_test.cpp
     ./tests/type_print_test.cpp
     ${TYPE_OUTPUT_DIR}/test.c

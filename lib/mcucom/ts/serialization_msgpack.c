@@ -3,26 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cmp/cmp.h"
+#include "cmp_mem_access/cmp_mem_access.h"
 
 #include "type_definition.h"
-
-
-bool ts_cmp_ser_type(const void *var,
-                         const ts_type_definition_t *type,
-                         cmp_ctx_t *ctx,
-                         bool compact);
-bool ts_cmp_ser_struct_entry(const void *var,
-                                 const ts_type_entry_t *entry,
-                                 cmp_ctx_t *ctx,
-                                 bool compact);
-bool ts_cmp_ser_value(const void *var,
-                          const ts_type_entry_t *entry,
-                          cmp_ctx_t *ctx,
-                          bool compact);
-bool ts_cmp_ser_value_once(const void *var,
-                               const ts_type_entry_t *entry,
-                               cmp_ctx_t *ctx,
-                               bool compact);
+#include "serialization_msgpack.h"
 
 
 bool ts_cmp_ser_value_once(const void *var,
@@ -70,18 +54,20 @@ bool ts_cmp_ser_value(const void *var,
                           bool compact)
 {
     if (entry->is_array || entry->is_dynamic_array) {
-        int len = 0;
+        uint16_t len = 0;
         if (entry->is_array) {
             len = entry->array_len;
         }
         if (entry->is_dynamic_array) {
-            len = *(int*)(var + entry->dynamic_array_len_struct_offset);
+            len = *(uint16_t*)(var + entry->dynamic_array_len_struct_offset);
             if (len > entry->array_len) {
                 return false;
             }
         }
-        cmp_write_map(ctx, len);
-        int i;
+        if (!cmp_write_array(ctx, len)) {
+            return false;
+        }
+        uint16_t i;
         for (i = 0; i < len; i++) {
             const void *var_entry_i = var + entry->struct_offset + entry->size * i;
             if (!ts_cmp_ser_value_once(var_entry_i, entry, ctx, compact)) {
@@ -134,28 +120,32 @@ bool ts_cmp_ser_type(const void *var,
 }
 
 
-bool ts_serialize_msgpack(const void *var,
-                              const ts_type_definition_t *type,
-                              char *buf,
-                              size_t buf_sz)
+int ts_serialize_msgpack_self_describing(const void *var,
+                                         const ts_type_definition_t *type,
+                                         char *buf,
+                                         size_t buf_sz)
 {
-    (void)var;
-    (void)type;
-    (void)buf;
-    (void)buf_sz;
-    return false; // todo
+    cmp_mem_access_t mem;
+    cmp_ctx_t cmp;
+    cmp_mem_access_init(&cmp, &mem, buf, buf_sz);
+    if (!ts_cmp_ser_type(var, type, &cmp, false)) {
+        return -1;
+    }
+    return cmp_mem_access_get_pos(&mem);
 }
 
 
-bool ts_serialize_msgpack_compact(const void *var,
-                                      const ts_type_definition_t *type,
-                                      char *buf,
-                                      size_t buf_sz)
+int ts_serialize_msgpack(const void *var,
+                         const ts_type_definition_t *type,
+                         char *buf,
+                         size_t buf_sz)
 {
-    (void)var;
-    (void)type;
-    (void)buf;
-    (void)buf_sz;
-    return false; // todo
+    cmp_mem_access_t mem;
+    cmp_ctx_t cmp;
+    cmp_mem_access_init(&cmp, &mem, buf, buf_sz);
+    if (!ts_cmp_ser_type(var, type, &cmp, true)) {
+        return -1;
+    }
+    return cmp_mem_access_get_pos(&mem);
 }
 
