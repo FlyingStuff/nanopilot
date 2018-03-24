@@ -21,6 +21,7 @@
 #include "timestamp_stm32.h"
 #include "attitude_determination.h"
 #include "sensors/ms4525do.h"
+#include "analog.h"
 
 #include "main.h"
 
@@ -137,6 +138,8 @@ static void io_setup(void)
     uart_config.speed = parameter_integer_get(&uart_conn4_baud);
     sdStart(&UART_CONN4, &uart_config);
 
+    analog_configure_conn_3(); // use CONN 3 for as ADC input
+
     // uart_config.speed = parameter_integer_get(&uart_conn_i2c_baud);
     // sdStart(&UART_CONN_I2C, &uart_config);
     const I2CConfig i2c_cfg = {
@@ -162,13 +165,13 @@ static void services_start(const char *logdir)
     char buf[STREAM_DEV_STR_SIZE];
     onboard_sensors_start();
     ms4525do_publisher_start(&I2C_CONN, "/sensors/ms4525do");
+    analog_start();
 
     parameter_string_get(&sumd_in_uart, buf, sizeof(buf));
     sumd_input_start(get_base_seq_stream_device_from_str(buf));
 
     parameter_string_get(&hott_tm_uart, buf, sizeof(buf));
     hott_tm_start(&bus, get_base_seq_stream_device_from_str(buf));
-
 
     sdlog_start(&bus, logdir);
 
@@ -287,7 +290,13 @@ int main(void)
         // } else if (shelltp != NULL && chThdTerminatedX(shelltp)) {
         //     shelltp = NULL;
         // }
-
+        log_debug("VCC %f", analog_get_vcc());
+        log_debug("Temp %f", analog_get_cpu_temp());
+        log_debug("V_DC %f", analog_get_vdc());
+        log_debug("CONN2_TX %f", analog_get_voltage(ANALOG_CH_CONN2_TX));
+        log_debug("CONN2_RX %f", analog_get_voltage(ANALOG_CH_CONN2_RX));
+        log_debug("CONN3_TX %f", analog_get_voltage(ANALOG_CH_CONN3_TX));
+        log_debug("CONN3_RX %f", analog_get_voltage(ANALOG_CH_CONN3_RX));
         chThdSleepMilliseconds(500);
     }
 }

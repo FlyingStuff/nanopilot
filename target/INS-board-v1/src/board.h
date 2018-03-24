@@ -23,6 +23,10 @@
 #define UART_CONN_I2C SD3
 #define I2C_CONN I2CD2
 
+
+// R3 = 22k, R4 = 10k
+#define VDC_VOLTAGE_DIV_GAIN 3.2f
+
 /*
  * IO pins assignments.
  */
@@ -60,7 +64,7 @@
 #define GPIOB_LED_STATUS            14
 #define GPIOB_LED_SDCARD            15
 
-#define GPIOC_VBAT_MON_AIN          0
+#define GPIOC_V_DC_MON_AIN          0
 #define GPIOC_SDCARD_DETECT         1
 #define GPIOC_MPU6000_INT           2
 #define GPIOC_MPU6000_FSYNC         3
@@ -319,7 +323,7 @@
 
 // GPIO C
 
-#define VAL_GPIOC_MODER     ( PIN_MODE_ANALOG(    GPIOC_VBAT_MON_AIN    )       \
+#define VAL_GPIOC_MODER     ( PIN_MODE_ANALOG(    GPIOC_V_DC_MON_AIN    )       \
                             | PIN_MODE_INPUT(     GPIOC_SDCARD_DETECT   )       \
                             | PIN_MODE_INPUT(     GPIOC_MPU6000_INT     )       \
                             | PIN_MODE_INPUT(     GPIOC_MPU6000_FSYNC   )       \
@@ -336,7 +340,7 @@
                             | PIN_MODE_OUTPUT(    GPIOC_VCC_A_POWER_EN  )       \
                             | PIN_MODE_INPUT(     GPIOC_H3LIS331DL_INT  ) )
 
-#define VAL_GPIOC_OTYPER    ( PIN_OTYPE_PUSHPULL( GPIOC_VBAT_MON_AIN    )   \
+#define VAL_GPIOC_OTYPER    ( PIN_OTYPE_PUSHPULL( GPIOC_V_DC_MON_AIN    )   \
                             | PIN_OTYPE_PUSHPULL( GPIOC_SDCARD_DETECT   )   \
                             | PIN_OTYPE_PUSHPULL( GPIOC_MPU6000_INT     )   \
                             | PIN_OTYPE_PUSHPULL( GPIOC_MPU6000_FSYNC   )   \
@@ -353,7 +357,7 @@
                             | PIN_OTYPE_PUSHPULL( GPIOC_VCC_A_POWER_EN  )   \
                             | PIN_OTYPE_PUSHPULL( GPIOC_H3LIS331DL_INT  ) )
 
-#define VAL_GPIOC_OSPEEDR   ( PIN_OSPEED_100M( GPIOC_VBAT_MON_AIN    )      \
+#define VAL_GPIOC_OSPEEDR   ( PIN_OSPEED_100M( GPIOC_V_DC_MON_AIN    )      \
                             | PIN_OSPEED_100M( GPIOC_SDCARD_DETECT   )      \
                             | PIN_OSPEED_100M( GPIOC_MPU6000_INT     )      \
                             | PIN_OSPEED_100M( GPIOC_MPU6000_FSYNC   )      \
@@ -370,7 +374,7 @@
                             | PIN_OSPEED_100M( GPIOC_VCC_A_POWER_EN  )      \
                             | PIN_OSPEED_100M( GPIOC_H3LIS331DL_INT  ) )
 
-#define VAL_GPIOC_PUPDR     ( PIN_PUPDR_FLOATING( GPIOC_VBAT_MON_AIN    )   \
+#define VAL_GPIOC_PUPDR     ( PIN_PUPDR_FLOATING( GPIOC_V_DC_MON_AIN    )   \
                             | PIN_PUPDR_PULLUP(   GPIOC_SDCARD_DETECT   )   \
                             | PIN_PUPDR_PULLDOWN( GPIOC_MPU6000_INT     )   \
                             | PIN_PUPDR_FLOATING( GPIOC_MPU6000_FSYNC   )   \
@@ -387,7 +391,7 @@
                             | PIN_PUPDR_FLOATING( GPIOC_VCC_A_POWER_EN  )   \
                             | PIN_PUPDR_PULLDOWN( GPIOC_H3LIS331DL_INT  ) )
 
-#define VAL_GPIOC_ODR       ( PIN_ODR_LOW(  GPIOC_VBAT_MON_AIN    )          \
+#define VAL_GPIOC_ODR       ( PIN_ODR_LOW(  GPIOC_V_DC_MON_AIN    )          \
                             | PIN_ODR_LOW(  GPIOC_SDCARD_DETECT   )          \
                             | PIN_ODR_LOW(  GPIOC_MPU6000_INT     )          \
                             | PIN_ODR_LOW(  GPIOC_MPU6000_FSYNC   )          \
@@ -404,7 +408,7 @@
                             | PIN_ODR_LOW(  GPIOC_VCC_A_POWER_EN  )          \
                             | PIN_ODR_LOW(  GPIOC_H3LIS331DL_INT  ) )
 
-#define VAL_GPIOC_AFRL      ( PIN_AFIO_AF( GPIOC_VBAT_MON_AIN    ,  0)      \
+#define VAL_GPIOC_AFRL      ( PIN_AFIO_AF( GPIOC_V_DC_MON_AIN    ,  0)      \
                             | PIN_AFIO_AF( GPIOC_SDCARD_DETECT   ,  0)      \
                             | PIN_AFIO_AF( GPIOC_MPU6000_INT     ,  0)      \
                             | PIN_AFIO_AF( GPIOC_MPU6000_FSYNC   ,  0)      \

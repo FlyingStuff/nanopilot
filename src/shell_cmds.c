@@ -11,6 +11,7 @@
 #include "git_revision.h"
 #include "syscalls.h"
 #include "error.h"
+#include "analog.h"
 #include "main.h"
 
 static void cmd_mem(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -165,6 +166,19 @@ static void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv
     }
 }
 
+static void cmd_adc(BaseSequentialStream *stream, int argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+    chprintf(stream, "VCC: %f V\n", analog_get_vcc());
+    chprintf(stream, "VCC: %f V\n", analog_get_vdc());
+    chprintf(stream, "CPU TEMP: %f deg C\n", analog_get_cpu_temp());
+    int i;
+    for (i = 0; i < ANALOG_NB_CHANNELS; i++) {
+        chprintf(stream, "adc %d:\n %4.2f = %fV\n", i,
+                 analog_get_raw(i), analog_get_voltage(i));
+    }
+}
 
 static void cmd_topic_print(BaseSequentialStream *stream, int argc, char *argv[]) {
     if (argc != 1) {
@@ -219,6 +233,7 @@ const ShellCommand shell_commands[] = {
   {"parameter_set", cmd_parameter_set},
   {"topic_print", cmd_topic_print},
   {"topic_list", cmd_topic_list},
+  {"adc", cmd_adc},
   {NULL, NULL}
 };
 

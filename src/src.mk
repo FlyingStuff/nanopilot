@@ -28,3 +28,4 @@ PROJCSRC += $(PROJROOT)/src/msgbus_scheduler.c
 PROJCSRC += $(PROJROOT)/src/rate_limiter.c
 PROJCSRC += $(PROJROOT)/src/timestamp.c
 PROJCSRC += $(PROJROOT)/src/airdata.c
+PROJCSRC += $(PROJROOT)/src/analog.c
