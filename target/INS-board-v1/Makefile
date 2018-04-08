@@ -240,6 +240,7 @@ PRE_MAKE_ALL_RULE_HOOK: $(notdir $(TYPECSRC))
 	cd $(PROJROOT) && ./git_revision.sh
 
 POST_MAKE_ALL_RULE_HOOK:
+	python $(PROJROOT)/scripts/heap_size.py $(BUILDDIR)/$(PROJECT).elf
 
 # Generates a ctags file containing the correct definition for the build
 .PHONY: ctags
