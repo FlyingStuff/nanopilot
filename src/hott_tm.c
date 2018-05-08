@@ -60,6 +60,8 @@ static THD_FUNCTION(hott_tm_task, arg)
         gam.batt1_volt = v_bat;
         if (v_bat < 3.3f) {
             gam.alarm = HOTT_TM_GAM_ALARM_MIN_CELL_VOLT;
+        } else {
+            gam.alarm = 0;
         }
         gam.batt2_volt = analog_get_vdc();
         if (msgbus_subscriber_has_update(&sub_baro)) {
