@@ -1,33 +1,33 @@
 [submodule "src/cmp"]
-	path = lib/comm/cmp
+	path = src/low_level_controller/lib/comm/cmp
 	url = https://github.com/camgunz/cmp.git
 [submodule "src/crc"]
-	path = lib/comm/crc
+	path = src/low_level_controller/lib/comm/crc
 	url = https://github.com/nuft/CRC.git
 [submodule "src/serial-datagram"]
-	path = lib/comm/serial-datagram
+	path = src/low_level_controller/lib/comm/serial-datagram
 	url = https://github.com/Stapelzeiger/serial-datagram.git
 [submodule "src/cmp_mem_access"]
-	path = lib/comm/cmp_mem_access
+	path = src/low_level_controller/lib/comm/cmp_mem_access
 	url = https://github.com/Stapelzeiger/cmp_mem_access.git
 [submodule "ChibiOS"]
-	path = lib/mcu/ChibiOS
+	path = src/low_level_controller/lib/mcu/ChibiOS
 	url = https://github.com/Stapelzeiger/ChibiOS.git
 [submodule "src/parameter"]
-	path = lib/parameter
+	path = src/low_level_controller/lib/parameter
 	url = https://github.com/Stapelzeiger/parameter
 [submodule "src/sensors"]
-	path = lib/drivers/sensors
+	path = src/low_level_controller/lib/drivers/sensors
 	url = https://github.com/Stapelzeiger/sensor-drivers.git
 [submodule "src/eigen"]
-	path = lib/math/eigen
+	path = src/low_level_controller/lib/math/eigen
 	url = https://github.com/Stapelzeiger/eigen.git
 [submodule "src/arm-cortex-tools"]
-	path = lib/mcu/arm-cortex-tools
+	path = src/low_level_controller/lib/mcu/arm-cortex-tools
 	url = https://github.com/cvra/arm-cortex-tools.git
 [submodule "src/datagram-messages"]
-	path = lib/comm/datagram-messages
+	path = src/low_level_controller/lib/comm/datagram-messages
 	url = https://github.com/Stapelzeiger/datagram-messages.git
 [submodule "python/zmqmsgbus"]
-	path = tools/zmqmsgbus
+	path = src/low_level_controller/tools/zmqmsgbus
 	url = https://github.com/stapelzeiger/zmqmsgbus.git
