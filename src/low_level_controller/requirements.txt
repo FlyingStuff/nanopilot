@@ -1,7 +1,5 @@
 nose
 pyserial
 msgpack-python
-zmq
 -e ./lib/comm/serial-datagram/python
 -e ./lib/comm/datagram-messages/python
--e ./tools/zmqmsgbus
