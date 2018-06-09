@@ -55,7 +55,7 @@ static THD_FUNCTION(hott_tm_task, arg)
         char c = streamGet(_tm_uart);
 
         const float VBATT_DIV_GAIN = 6.5f; // R1: 1.87M R2: 340K
-        float v_bat = analog_get_voltage(ANALOG_CH_CONN3_RX) * VBATT_DIV_GAIN;
+        float v_bat = analog_get_voltage(ANALOG_CH_CONN3_TX) * VBATT_DIV_GAIN;
         gam.voltage = v_bat;
         gam.batt1_volt = v_bat;
         if (v_bat < 3.3f) {

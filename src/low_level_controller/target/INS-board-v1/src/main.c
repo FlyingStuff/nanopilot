@@ -97,7 +97,7 @@ static void service_parameters_declare(parameter_namespace_t *root)
             sizeof(shell_port_buf), "CONN1");
     parameter_string_declare_with_default(&sumd_in_uart,
             &service_param, "sumd_input", sumd_in_uart_buf,
-            sizeof(sumd_in_uart_buf), "OFF");
+            sizeof(sumd_in_uart_buf), "CONN3");
     parameter_string_declare_with_default(&hott_tm_uart,
             &service_param, "hott_tm", hott_tm_uart_buf,
             sizeof(hott_tm_uart_buf), "CONN2");

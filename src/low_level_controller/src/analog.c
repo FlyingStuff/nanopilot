@@ -124,7 +124,7 @@ static void adcerrorcallback(ADCDriver *adcp, adcerror_t err)
 void analog_configure_conn_3(void)
 {
     // uart conn 3 rx pin (PA3)
-    palSetPadMode(GPIOA, GPIOA_UART2_RX_CONN3, PAL_MODE_INPUT_ANALOG);
+    // palSetPadMode(GPIOA, GPIOA_UART2_RX_CONN3, PAL_MODE_INPUT_ANALOG);
     palSetPadMode(GPIOA, GPIOA_UART2_TX_CONN3, PAL_MODE_INPUT_ANALOG);
 }
 
