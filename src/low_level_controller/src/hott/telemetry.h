@@ -56,7 +56,31 @@ void hott_tm_gam_zero(struct hott_tm_gam_s *msg);
 
 struct hott_tm_gps_s {
     uint8_t alarm;
-    // todo
+    uint16_t heading_deg; // 0=North, 90=East, 180=South, 270=West
+    float speed;
+    int16_t latitude_deg; // >0 North, <0 South
+    float latitude_arcminutes; // arcminutes part of the latitude, always positive
+    int16_t longitude_deg; // >0 East, <0 West
+    float longitude_arcminutes; // arcminutes part of the longitude, always positive
+    uint16_t distance;
+    float altitude;
+    float climb_rate;
+    float climb_rate_3s_avrg;
+    uint8_t nb_gps_satellites;
+    char fix_char;
+    int16_t home_direction_deg;
+    int16_t roll_deg;
+    int16_t nick_deg;
+    int16_t compass_deg;
+    uint8_t time_hours;
+    uint8_t time_minutes;
+    uint8_t time_seconds;
+    uint16_t time_ms;
+    float altitude_above_mean_sea_level;
+    uint8_t vibration_percent;
+    char free_char_1;
+    char free_char_2;
+    char free_char_3;
 };
 
 void hott_tm_gps_zero(struct hott_tm_gps_s *msg);

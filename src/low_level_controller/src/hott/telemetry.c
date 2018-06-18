@@ -1,5 +1,6 @@
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 #include "telemetry.h"
 
 #define BYTE_DELAY_MS 2
@@ -93,8 +94,48 @@ void hott_tm_gam_serialize(struct hott_tm_gam_s *msg, uint8_t *buf)
 
 void hott_tm_gps_serialize(struct hott_tm_gps_s *msg, uint8_t *buf)
 {
-    (void)msg;
-    (void)buf;
+    buf[0] = 0x7C;
+    buf[1] = 0x8A;
+    buf[2] = msg->alarm;
+    buf[3] = 0xA0;
+    buf[4] = 0; // status 1 inverted
+    buf[5] = 0; // status 2 inverted
+    buf[6] = saturate_u8(msg->heading_deg/2);
+    saturate_u16(&buf[7], msg->speed * 3.6f);
+    buf[9] = (msg->latitude_deg < 0);
+    uint16_t lat_min_integer = msg->latitude_arcminutes;
+    uint16_t lat_DDMM = abs(msg->latitude_deg)*100 + lat_min_integer;
+    uint16_t lat_fractional_MMMM = (msg->latitude_arcminutes - lat_min_integer)*10000;
+    saturate_u16(&buf[10], lat_DDMM);
+    saturate_u16(&buf[12], lat_fractional_MMMM); // (four fractional arminute decimals)
+    buf[14] = (msg->longitude_deg < 0);
+    uint16_t lon_min_integer = msg->longitude_arcminutes;
+    uint16_t lon_DDMM = abs(msg->longitude_deg)*100 + lon_min_integer;
+    uint16_t lon_fractional_MMMM = (msg->longitude_arcminutes - lon_min_integer)*10000;
+    saturate_u16(&buf[15], lon_DDMM);
+    saturate_u16(&buf[17], lon_fractional_MMMM); // (four fractional arminute decimals)
+    saturate_u16(&buf[19], msg->distance);
+    saturate_u16(&buf[21], msg->altitude+500);
+    saturate_u16(&buf[23], msg->climb_rate*100 + 30000);
+    buf[25] = saturate_u8(msg->climb_rate_3s_avrg + 120);
+    buf[26] = msg->nb_gps_satellites;
+    buf[27] = (uint8_t)msg->fix_char;
+    buf[28] = (uint8_t)(msg->home_direction_deg/2);
+    buf[29] = (uint8_t)(msg->roll_deg/2);
+    buf[30] = (uint8_t)(msg->nick_deg/2);
+    buf[31] = (uint8_t)(msg->compass_deg/2);
+    buf[32] = msg->time_hours;
+    buf[33] = msg->time_minutes;
+    buf[34] = msg->time_seconds;
+    buf[35] = msg->time_ms/10;
+    saturate_u16(&buf[36], msg->altitude_above_mean_sea_level);
+    buf[38] = msg->vibration_percent;
+    buf[39] = (uint8_t)msg->free_char_1;
+    buf[40] = (uint8_t)msg->free_char_2;
+    buf[41] = (uint8_t)msg->free_char_3;
+    buf[42] = 255; // version
+    buf[43] = 0x7d;
+    buf[44] = checksum(buf, 44);
 }
 
 

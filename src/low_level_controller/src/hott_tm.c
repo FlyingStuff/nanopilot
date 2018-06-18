@@ -31,6 +31,9 @@ static THD_FUNCTION(hott_tm_task, arg)
     struct hott_tm_gam_s gam;
     hott_tm_handler_enable_gam(&tm, &gam);
     hott_tm_gam_zero(&gam);
+    struct hott_tm_gps_s gps;
+    hott_tm_handler_enable_gps(&tm, &gps);
+    hott_tm_gps_zero(&gps);
 
     msgbus_subscriber_t sub_baro;
     msgbus_subscriber_t sub_dynamic_pressure;
@@ -79,7 +82,7 @@ static THD_FUNCTION(hott_tm_task, arg)
         }
         if (msgbus_subscriber_has_update(&sub_dynamic_pressure)) {
             msgbus_subscriber_read(&sub_dynamic_pressure, &dp);
-            gam.speed = dynamic_pressure_to_airspeed(dp.dynamic_pressure-q0);
+            gam.speed = gps.speed = dynamic_pressure_to_airspeed(dp.dynamic_pressure-q0);
             gam.temp2 = dp.temperature;
             log_debug("speed %f", (double)gam.speed);
         }
