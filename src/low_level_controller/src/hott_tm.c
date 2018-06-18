@@ -1,5 +1,6 @@
 #include "hott/telemetry.h"
 #include "types/sensors.h"
+#include "types/vario_msg.h"
 #include "thread_prio.h"
 #include "log.h"
 #include "airdata.h"
@@ -35,21 +36,16 @@ static THD_FUNCTION(hott_tm_task, arg)
     hott_tm_handler_enable_gps(&tm, &gps);
     hott_tm_gps_zero(&gps);
 
-    msgbus_subscriber_t sub_baro;
     msgbus_subscriber_t sub_dynamic_pressure;
-    msgbus_topic_subscribe(&sub_baro, _bus, "/sensors/ms5611", 1000000);
+    msgbus_subscriber_t sub_vario;
     msgbus_topic_subscribe(&sub_dynamic_pressure, _bus, "/sensors/ms4525do", 1000000);
+    msgbus_topic_subscribe(&sub_vario, _bus, "/vario", 1000000);
 
-    msgbus_subscriber_assert_type(&sub_baro, &barometer_sample_type);
     msgbus_subscriber_assert_type(&sub_dynamic_pressure, &dynamic_pressure_sample_type);
+    msgbus_subscriber_assert_type(&sub_vario, &vario_type);
     dynamic_pressure_sample_t dp;
-    barometer_sample_t baro;
+    vario_t vario;
 
-    msgbus_subscriber_wait_for_update(&sub_baro, MSGBUS_TIMEOUT_NEVER);
-    msgbus_subscriber_read(&sub_baro, &baro);
-    float h0 = pressure_to_altitude(baro.static_pressure);
-    float h_prev = h0;
-    uint64_t t_prev = 0;
     msgbus_subscriber_wait_for_update(&sub_dynamic_pressure, MSGBUS_TIMEOUT_NEVER);
     msgbus_subscriber_read(&sub_dynamic_pressure, &dp);
     float q0 = dp.dynamic_pressure;
@@ -67,24 +63,18 @@ static THD_FUNCTION(hott_tm_task, arg)
             gam.alarm = 0;
         }
         gam.batt2_volt = analog_get_vdc();
-        if (msgbus_subscriber_has_update(&sub_baro)) {
-            msgbus_subscriber_read(&sub_baro, &baro);
-            float h = pressure_to_altitude(baro.static_pressure);
-            uint64_t t = baro.timestamp_ns;
-            gam.temp1 = baro.temperature;
-            gam.height = h - h0;
-            gam.pressure = baro.static_pressure;
-            float cl = (h - h_prev) / (t - t_prev) * 1000000000UL;
-            gam.climb_rate = gam.climb_rate*0.9 + cl * 0.1;
-            h_prev = h;
-            t_prev = t;
-            log_debug("temp %f, height %f, climb %f", (double)gam.temp1, (double)gam.height, (double)gam.climb_rate);
-        }
         if (msgbus_subscriber_has_update(&sub_dynamic_pressure)) {
             msgbus_subscriber_read(&sub_dynamic_pressure, &dp);
             gam.speed = gps.speed = dynamic_pressure_to_airspeed(dp.dynamic_pressure-q0);
             gam.temp2 = dp.temperature;
-            log_debug("speed %f", (double)gam.speed);
+            // log_debug("speed %f", (double)gam.speed);
+        }
+        if (msgbus_subscriber_has_update(&sub_vario)) {
+            msgbus_subscriber_read(&sub_vario, &vario);
+            gam.height = vario.height;
+            gam.climb_rate = vario.climb_rate;
+            gps.climb_rate = vario.climb_rate_total_energy_compensated;
+            // log_debug("height %f, climb %f, climb tek %f", (double)gam.height, (double)gam.climb_rate, (double)gps.climb_rate);
         }
 
         hott_tm_handler_receive(&tm, c);

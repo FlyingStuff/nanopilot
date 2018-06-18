@@ -3,6 +3,7 @@
 #include <chprintf.h>
 #include <string.h>
 
+#include "thread_prio.h"
 #include "usbcfg.h"
 #include "log.h"
 #include "led.h"
@@ -22,6 +23,7 @@
 #include "attitude_determination.h"
 #include "sensors/ms4525do.h"
 #include "analog.h"
+#include "vario.h"
 
 #include "main.h"
 
@@ -151,12 +153,37 @@ static void io_setup(void)
 }
 
 
+#define NB_AP_TASKS 10
+static msgbus_scheduler_t ap_task_scheduler;
+static msgbus_scheduler_task_buffer_space_t ap_task_buf[NB_AP_TASKS];
+
+static THD_WORKING_AREA(ap_task_wa, 1024);
+static THD_FUNCTION(ap_task, arg)
+{
+    (void)arg;
+    chRegSetThreadName("ap_task");
+    while (1) {
+        msgbus_scheduler_spin(&ap_task_scheduler, 1000);
+    }
+}
+
+void ap_task_start(void)
+{
+    chThdCreateStatic(ap_task_wa, sizeof(ap_task_wa), THD_PRIO_AP_TASK, ap_task, NULL);
+}
+
+
+
 static void services_init(void)
 {
     service_parameters_declare(&parameters);
     io_parameters_declare(&parameters);
     onboardsensors_declare_parameters(&parameters);
     datagram_message_init();
+
+    vario_init(&bus);
+
+    msgbus_scheduler_init(&ap_task_scheduler, &bus, ap_task_buf, NB_AP_TASKS);
 }
 
 
@@ -180,6 +207,10 @@ static void services_start(const char *logdir)
     stream_start(get_base_seq_stream_device_from_str(buf));
 
     run_attitude_determination();
+
+    vario_register_tasks(&ap_task_scheduler);
+
+    ap_task_start();
 }
 
 
@@ -290,13 +321,13 @@ int main(void)
         // } else if (shelltp != NULL && chThdTerminatedX(shelltp)) {
         //     shelltp = NULL;
         // }
-        log_debug("VCC %f", analog_get_vcc());
-        log_debug("Temp %f", analog_get_cpu_temp());
-        log_debug("V_DC %f", analog_get_vdc());
-        log_debug("CONN2_TX %f", analog_get_voltage(ANALOG_CH_CONN2_TX));
-        log_debug("CONN2_RX %f", analog_get_voltage(ANALOG_CH_CONN2_RX));
-        log_debug("CONN3_TX %f", analog_get_voltage(ANALOG_CH_CONN3_TX));
-        log_debug("CONN3_RX %f", analog_get_voltage(ANALOG_CH_CONN3_RX));
+        // log_debug("VCC %f", analog_get_vcc());
+        // log_debug("Temp %f", analog_get_cpu_temp());
+        // log_debug("V_DC %f", analog_get_vdc());
+        // log_debug("CONN2_TX %f", analog_get_voltage(ANALOG_CH_CONN2_TX));
+        // log_debug("CONN2_RX %f", analog_get_voltage(ANALOG_CH_CONN2_RX));
+        // log_debug("CONN3_TX %f", analog_get_voltage(ANALOG_CH_CONN3_TX));
+        // log_debug("CONN3_RX %f", analog_get_voltage(ANALOG_CH_CONN3_RX));
         chThdSleepMilliseconds(500);
     }
 }

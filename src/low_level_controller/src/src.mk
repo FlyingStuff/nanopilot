@@ -29,3 +29,4 @@ PROJCSRC += $(PROJROOT)/src/rate_limiter.c
 PROJCSRC += $(PROJROOT)/src/timestamp.c
 PROJCSRC += $(PROJROOT)/src/airdata.c
 PROJCSRC += $(PROJROOT)/src/analog.c
+PROJCSRC += $(PROJROOT)/src/vario.c

@@ -146,6 +146,7 @@ static THD_FUNCTION(sdlog, arg)
         {.topic="/sensors/mpu6000"},
         {.topic="/sensors/ms5611"},
         {.topic="/sensors/ms4525do"},
+        {.topic="/vario"},
     };
 #define NB_LOGFILES (sizeof(log_files)/sizeof(struct logfile_s))
 
