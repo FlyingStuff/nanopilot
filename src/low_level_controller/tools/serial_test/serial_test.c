@@ -24,6 +24,8 @@ int set_interface_attribs (int fd, int speed, int parity)
     cfsetospeed (&tty, speed);
     cfsetispeed (&tty, speed);
 
+    tty.c_cflag |= CRTSCTS;
+
     tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     // 8-bit chars
     // disable IGNBRK for mismatched speed tests; otherwise receive break
     // as \000 chars
@@ -57,6 +59,8 @@ int set_interface_attribs (int fd, int speed, int parity)
         return -1;
     }
     kernel_serial_settings.flags |= ASYNC_LOW_LATENCY;
+    printf("baud base %d\n", kernel_serial_settings.baud_base);
+    kernel_serial_settings.custom_divisor = kernel_serial_settings.baud_base / speed;
     if (ioctl(fd, TIOCSSERIAL, &kernel_serial_settings)) {
         printf("error %d from ioctl, %s\n", errno, strerror(errno));
         return -1;
@@ -82,7 +86,7 @@ int main(const int argc, const char **argv)
         return -1;
     }
     printf("open ok\n");
-    set_interface_attribs (fd, B115200, 0);  // set speed to 115,200 bps, 8n1 (no parity)
+    set_interface_attribs (fd, 1500000, 0);  // set speed to 115,200 bps, 8n1 (no parity)
     printf("set interface ok\n");
     // fcntl(fd, F_SETFL, 0); // blocking
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
@@ -96,7 +100,7 @@ int main(const int argc, const char **argv)
         struct timeval  tv1, tv2;
         gettimeofday(&tv1, NULL);
 
-        char x = 'a'+i%30;
+        uint8_t x = 'a'+i%30;
         int ret = write(fd, &x, 1);
         if (ret == -1) {
             printf("write failed %d", errno);
@@ -104,14 +108,15 @@ int main(const int argc, const char **argv)
         } else {
             // printf("write done\n");
         }
-        char buf;
+        uint8_t buf;
         ret = read(fd, &buf, sizeof(buf));
         if (ret == -1) {
             printf("read failed %d", errno);
             continue;
         } else {
-            if (buf != x) {
-                printf("read_wrong_char %c, expected %c\n", buf, x);
+            uint8_t y = ~x;
+            if (buf != y) {
+                printf("read_wrong_char %d, expected %d\n", buf, y);
                 continue;
             }
             // printf("read %c\n", buf);

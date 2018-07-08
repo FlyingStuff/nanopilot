@@ -5,6 +5,9 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <pthread.h>
+#include <sys/mman.h>
+
 #if defined(__linux__)
 #include <sys/ioctl.h>
 #include <linux/serial.h>
@@ -186,6 +189,20 @@ int main(const int argc, const char **argv)
     printf("set interface ok\n");
     // fcntl(fd, F_SETFL, 0); // blocking
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
+
+
+
+    // Lock memory to ensure no swapping is done.
+    if(mlockall(MCL_FUTURE|MCL_CURRENT)){
+            fprintf(stderr,"WARNING: Failed to lock memory\n");
+    }
+    // Set our thread to real time priority
+    struct sched_param sp;
+    sp.sched_priority = 30;
+    if(pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp)){
+            fprintf(stderr,"WARNING: Failed to set thread to real-time priority\n");
+    }
+
 
     struct net_if_s if_list[2] = {
         {.send_fn = write_to_fd, .arg = &fd},

@@ -158,6 +158,7 @@ int main(void) {
     SerialConfig uart_config = { SERIAL_DEFAULT_BITRATE, 0,
                                  USART_CR2_STOP1_BITS, 0 };
     uart_config.speed = 115200;
+    uart_config.speed = 1500000;
 
     palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(7)); // TX
     palSetPadMode(GPIOA, 10, PAL_MODE_ALTERNATE(7) + PAL_STM32_PUPDR_PULLUP); // RX
@@ -172,15 +173,16 @@ int main(void) {
     // usbConnectBus(serusbcfg.usbp);
     chThdSleepMilliseconds(100);
 
-    // while (true) {
-    //     uint8_t buf;
-    //     size_t len = streamRead((BaseSequentialStream*)&SDU1, &buf, 1);
-    //     if (len == 0) {
-    //         chThdSleepMilliseconds(10); // queue is probably reset, avoid busy loop
-    //     } else {
-    //         streamWrite((BaseSequentialStream*)&SDU1, &buf, 1);
-    //     }
-    // }
+    while (true) {
+        uint8_t buf;
+        size_t len = streamRead((BaseSequentialStream*)&SD1, &buf, 1);
+        if (len == 0) {
+            chThdSleepMilliseconds(10); // queue is probably reset, avoid busy loop
+        } else {
+            buf = ~buf;
+            streamWrite((BaseSequentialStream*)&SD1, &buf, 1);
+        }
+    }
 
 
     net_init(my_addr);
