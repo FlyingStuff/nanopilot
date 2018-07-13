@@ -12,7 +12,7 @@
 static I2CDriver *i2c_driver;
 static const char *topic_name;
 
-static THD_WORKING_AREA(ms4525do_publisher_wa, 512);
+static THD_WORKING_AREA(ms4525do_publisher_wa, 800);
 static THD_FUNCTION(ms4525do_publisher, arg)
 {
     (void)arg;
