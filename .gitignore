@@ -4,7 +4,7 @@ tags
 .tags_sorted_by_file
 .dep
 build
-src/git_revision.c
+src/low_level_controller/src/git_revision.c
 
 # latex
 *.log
