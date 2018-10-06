@@ -4,7 +4,7 @@ PROJINC += $(PROJROOT)/lib/mcucom
 PROJINC += $(PROJROOT)/lib/mcucom/port/ChibiOS
 PROJINC += $(PROJROOT)/
 
-PROJCSRC += $(TARGETROOT)/src/main.c
+PROJCPPSRC += $(TARGETROOT)/src/main.cpp
 PROJCSRC += $(TARGETROOT)/src/usbcfg.c
 PROJCSRC += $(PROJROOT)/src/syscalls.c
 PROJCSRC += $(PROJROOT)/lib/comm/serial-datagram/serial_datagram.c

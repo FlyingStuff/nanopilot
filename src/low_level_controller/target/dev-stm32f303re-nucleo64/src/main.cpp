@@ -26,9 +26,11 @@ static comm_interface_t comm_if;
 
 void comm_rcv_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
 {
-    switch (msg_id) {
-    case ROS_INTERFACE_COMM_MSG_ID_PING:
-        comm_send(&comm_if, ROS_INTERFACE_COMM_MSG_ID_PONG, msg, len);
+    switch (static_cast<RosInterfaceCommMsgID>(msg_id)) {
+    case RosInterfaceCommMsgID::PING:
+        comm_send(&comm_if, RosInterfaceCommMsgID::PONG, msg, len);
+        break;
+    default:
         break;
     }
 }
@@ -62,7 +64,7 @@ int main(void) {
     palSetPadMode(GPIOA, 3, PAL_MODE_ALTERNATE(7) + PAL_STM32_PUPDR_PULLUP); // RX
     palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(7) + PAL_STM32_PUPDR_PULLUP); // CTS
     palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(7)); // RTS
-    sdStart(&SD2, &uart_config); // connected to stlink
+    sdStart(&SD2, &uart_config);
 
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);
@@ -79,10 +81,12 @@ int main(void) {
                       NORMALPRIO, comm_rx_thread, NULL);
 
 
-    int i = 0;
+    int i=0;
     while (true) {
-        comm_send(&comm_if, ROS_INTERFACE_COMM_MSG_ID_HEARTBEAT, NULL, 0);
-        // chprintf((BaseSequentialStream *)&SD2, "test, counting %d\n", i++);
+        comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
+        uint64_t timestamp = i;
+        comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
         chThdSleepMilliseconds(1000);
+        i++;
     }
 }
