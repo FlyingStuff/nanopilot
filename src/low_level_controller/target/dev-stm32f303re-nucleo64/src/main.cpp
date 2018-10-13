@@ -83,10 +83,10 @@ int main(void) {
 
     int i=0;
     while (true) {
-        comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
+        // comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
         uint64_t timestamp = i;
         comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
-        chThdSleepMilliseconds(1000);
+        chThdSleepMilliseconds(1);
         i++;
     }
 }

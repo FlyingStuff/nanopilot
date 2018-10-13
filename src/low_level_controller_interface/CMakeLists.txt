@@ -11,7 +11,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
-#find_package(example_interfaces REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 
 
@@ -27,7 +27,7 @@ target_include_directories(llc_ros_interface PUBLIC
     ../low_level_controller/llc_ros_interface/
 )
 
-ament_target_dependencies(llc_ros_interface rclcpp)
+ament_target_dependencies(llc_ros_interface rclcpp std_msgs)
 
 install(TARGETS llc_ros_interface
   DESTINATION lib/${PROJECT_NAME})

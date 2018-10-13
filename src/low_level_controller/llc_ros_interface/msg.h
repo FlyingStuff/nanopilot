@@ -4,6 +4,7 @@
 #include "comm.h"
 
 enum RosInterfaceCommMsgID : comm_msg_id_t {
+    DEBUG=0,
     HEARTBEAT=1,
     PING=2,
     PONG=3,

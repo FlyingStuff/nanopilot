@@ -240,6 +240,8 @@ void comm_receive(comm_interface_t *i)
     if (ret != SERIAL_DATAGRAM_RCV_NO_ERROR) {
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
         printf("receive error\n");
+#else
+        comm_send(i, 0, "rx error", strlen("rx error"));
 #endif
     }
 }
