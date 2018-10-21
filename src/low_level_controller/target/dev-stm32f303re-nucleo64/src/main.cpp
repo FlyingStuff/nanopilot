@@ -2,11 +2,29 @@
 #include "hal.h"
 #include <chprintf.h>
 #include <string.h>
-
+#include <math.h>
 #include <llc_ros_interface/comm.h>
 #include <llc_ros_interface/msg.h>
 
 #include "usbcfg.h"
+
+
+void dbg_enter_irq(void) {
+    palSetLine(LINE_ARD_D4);
+}
+
+void dbg_leave_irq(void) {
+    palClearLine(LINE_ARD_D4);
+}
+
+void dbg_enter_idle(void) {
+    palSetLine(LINE_ARD_D3);
+}
+
+void dbg_leave_idle(void) {
+    palClearLine(LINE_ARD_D3);
+}
+
 
 static THD_WORKING_AREA(waThread1, 128);
 static THD_FUNCTION(Thread1, arg) {
@@ -48,6 +66,10 @@ int main(void) {
     halInit();
     chSysInit();
 
+    palSetLineMode(LINE_ARD_D4, PAL_MODE_OUTPUT_PUSHPULL);
+    palSetLineMode(LINE_ARD_D3, PAL_MODE_OUTPUT_PUSHPULL);
+
+
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO - 1, Thread1, NULL);
 
     SerialConfig uart_config = { .speed=SERIAL_DEFAULT_BITRATE, .cr1=0,
@@ -86,6 +108,12 @@ int main(void) {
         // comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
         uint64_t timestamp = i;
         comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
+
+        static char buf[1000];
+        auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+        serializer.Write(SimpleType{static_cast<uint32_t>(i), sinf(i)});
+        comm_send(&comm_if, RosInterfaceCommMsgID::TEST, buf, serializer.writer().size());
+
         chThdSleepMilliseconds(1);
         i++;
     }

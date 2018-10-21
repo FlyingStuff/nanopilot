@@ -28,3 +28,6 @@
 [submodule "src/datagram-messages"]
 	path = src/low_level_controller/lib/comm/datagram-messages
 	url = https://github.com/Stapelzeiger/datagram-messages.git
+[submodule "src/low_level_controller/lib/libnop"]
+	path = src/low_level_controller/lib/libnop
+	url = https://github.com/google/libnop.git

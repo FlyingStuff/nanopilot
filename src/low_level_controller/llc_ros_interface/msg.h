@@ -9,6 +9,25 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
     PING=2,
     PONG=3,
     TIME=4,
+    TEST=10000,
+};
+
+#if __cplusplus < 201402L
+#error "need C++14"
+#endif
+
+#include <limits>
+#include <cstddef>
+#include <cstdint>
+#include <nop/structure.h>
+#include <nop/serializer.h>
+#include <nop/utility/buffer_reader.h>
+#include <nop/utility/buffer_writer.h>
+
+struct SimpleType {
+    uint32_t foo;
+    float bar;
+    NOP_STRUCTURE(SimpleType, foo, bar);
 };
 
 

@@ -2,6 +2,7 @@ PROJINC += $(TARGETROOT)/src/
 PROJINC += $(PROJROOT)/lib/comm/
 PROJINC += $(PROJROOT)/lib/mcucom
 PROJINC += $(PROJROOT)/lib/mcucom/port/ChibiOS
+PROJINC += $(PROJROOT)/lib/libnop/include
 PROJINC += $(PROJROOT)/
 
 PROJCPPSRC += $(TARGETROOT)/src/main.cpp

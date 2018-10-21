@@ -86,6 +86,14 @@ void rx_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
             time_pub->publish_time(timestamp);
         }
         break;
+    case RosInterfaceCommMsgID::TEST:
+    {
+        auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+        SimpleType val;
+        deserializer.Read(&val);
+        std::cout << val.foo << " " << val.bar << std::endl;
+        break;
+    }
     default:
         std::string msg_str((char*)msg, len);
         printf("unknown rx msg %d, len: %d, %s\n", (int)msg_id, (int)len, msg_str.c_str());
@@ -113,13 +121,18 @@ int main(const int argc, const char **argv)
             printf("sending ping %d\n", i);
             gettimeofday(&ping.tv, NULL);
             comm_send(&interface, RosInterfaceCommMsgID::PING, &ping, sizeof(ping));
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     });
 
     rclcpp::init(argc, argv);
 
     time_pub = std::make_shared<TimePublisher>();
+
+    std::thread ros_spin_thread([&](){
+        rclcpp::spin(time_pub);
+    });
+
     while (1) {
         comm_receive(&interface);
     }

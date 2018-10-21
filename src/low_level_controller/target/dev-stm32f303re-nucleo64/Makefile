@@ -15,7 +15,7 @@ endif
 
 # C++ specific options here (added to USE_OPT).
 ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -fno-rtti -std=c++11
+  USE_CPPOPT = -fno-rtti -std=c++14
 endif
 
 # Enable this if you want the linker to remove unused code and data
@@ -25,7 +25,7 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = 
+  USE_LDOPT = -lm
 endif
 
 # Enable this if you want link time optimizations (LTO)
@@ -193,7 +193,8 @@ AOPT =
 TOPT = -mthumb -DTHUMB
 
 # Define C warning options here
-CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes -Werror
+# todo -Wno-implicit-fallthrough needed for ChibiOS/os/rt/src/chschd.c
+CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes -Werror -Wno-implicit-fallthrough
 
 # Define C++ warning options here
 CPPWARN = -Wall -Wextra -Wundef -Werror

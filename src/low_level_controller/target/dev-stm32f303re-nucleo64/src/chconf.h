@@ -440,18 +440,30 @@
   /* Context switch code here.*/                                            \
 }
 
+#if !defined(_FROM_ASM_)
+#ifdef __cplusplus
+extern "C" {
+#endif
+void dbg_enter_irq(void);
+void dbg_leave_irq(void);
+void dbg_enter_idle(void);
+void dbg_leave_idle(void);
+#ifdef __cplusplus
+}
+#endif
+#endif
 /**
  * @brief   ISR enter hook.
  */
 #define CH_CFG_IRQ_PROLOGUE_HOOK() {                                        \
-  /* IRQ prologue code here.*/                                              \
+  dbg_enter_irq();/* IRQ prologue code here.*/                                              \
 }
 
 /**
  * @brief   ISR exit hook.
  */
 #define CH_CFG_IRQ_EPILOGUE_HOOK() {                                        \
-  /* IRQ epilogue code here.*/                                              \
+  dbg_leave_irq();/* IRQ epilogue code here.*/                                              \
 }
 
 /**
@@ -461,7 +473,7 @@
  * @note    This macro can be used to activate a power saving mode.
  */
 #define CH_CFG_IDLE_ENTER_HOOK() {                                          \
-  /* Idle-enter code here.*/                                                \
+  dbg_enter_idle();/* Idle-enter code here.*/                                                \
 }
 
 /**
@@ -471,7 +483,7 @@
  * @note    This macro can be used to deactivate a power saving mode.
  */
 #define CH_CFG_IDLE_LEAVE_HOOK() {                                          \
-  /* Idle-leave code here.*/                                                \
+  dbg_leave_idle();/* Idle-leave code here.*/                                                \
 }
 
 /**
