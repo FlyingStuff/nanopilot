@@ -1,6 +1,0 @@
-
-vario:
-    float32 height # [m] over ground
-    float32 climb_rate # [m/s]
-    float32 climb_rate_total_energy_compensated # [m/s] equivalent energy gain
-    uint64 timestamp_ns # [ns]

@@ -17,7 +17,7 @@
 	path = src/low_level_controller/lib/parameter
 	url = https://github.com/Stapelzeiger/parameter
 [submodule "src/sensors"]
-	path = src/low_level_controller/lib/drivers/sensors
+	path = src/low_level_controller/lib/sensors
 	url = https://github.com/Stapelzeiger/sensor-drivers.git
 [submodule "src/eigen"]
 	path = src/low_level_controller/lib/math/eigen
@@ -25,9 +25,6 @@
 [submodule "src/arm-cortex-tools"]
 	path = src/low_level_controller/lib/mcu/arm-cortex-tools
 	url = https://github.com/cvra/arm-cortex-tools.git
-[submodule "src/datagram-messages"]
-	path = src/low_level_controller/lib/comm/datagram-messages
-	url = https://github.com/Stapelzeiger/datagram-messages.git
 [submodule "src/low_level_controller/lib/libnop"]
 	path = src/low_level_controller/lib/libnop
 	url = https://github.com/google/libnop.git

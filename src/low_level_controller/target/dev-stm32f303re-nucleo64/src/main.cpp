@@ -3,8 +3,8 @@
 #include <chprintf.h>
 #include <string.h>
 #include <math.h>
-#include <llc_ros_interface/comm.h>
-#include <llc_ros_interface/msg.h>
+#include <ros_interface/comm.h>
+#include <ros_interface/msg.h>
 
 #include "usbcfg.h"
 

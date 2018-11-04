@@ -1,3 +1,0 @@
-pyaml
-jinja2
-sympy

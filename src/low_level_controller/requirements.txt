@@ -1,5 +1,0 @@
-nose
-pyserial
-msgpack-python
--e ./lib/comm/serial-datagram/python
--e ./lib/comm/datagram-messages/python
