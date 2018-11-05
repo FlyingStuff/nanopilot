@@ -15,15 +15,14 @@ find_package(rclcpp REQUIRED)
 
 add_executable(llc_ros_interface
     llc_ros_interface.cpp
-    ../low_level_controller/llc_ros_interface/comm.cpp
-    ../low_level_controller/lib/comm/serial-datagram/serial_datagram.c
-    ../low_level_controller/lib/comm/serial-datagram/serial_datagram_buffer_writer.c
-    ../low_level_controller/lib/comm/crc/crc32.c
+    comm.cpp
+    ../lib/comm/serial-datagram/serial_datagram.c
+    ../lib/comm/serial-datagram/serial_datagram_buffer_writer.c
+    ../lib/comm/crc/crc32.c
 )
 target_include_directories(llc_ros_interface PUBLIC
-    ../low_level_controller/lib/comm/
-    ../low_level_controller/lib/libnop/include/
-    ../low_level_controller/llc_ros_interface/
+    ../lib/comm/
+    ../lib/libnop/include/
 )
 
 ament_target_dependencies(llc_ros_interface rclcpp std_msgs)

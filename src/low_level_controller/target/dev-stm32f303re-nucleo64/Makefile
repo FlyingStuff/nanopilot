@@ -103,6 +103,7 @@ include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 # Other files (optional).
 include $(CHIBIOS)/test/rt/test.mk
 include $(CHIBIOS)/os/hal/lib/streams/streams.mk
+include $(CHIBIOS)/os/various/shell/shell.mk
 
 include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
 
@@ -123,7 +124,9 @@ CSRC = $(STARTUPSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
        $(STREAMSSRC) \
-       $(PROJCSRC)
+       $(PROJCSRC) \
+       $(SHELLSRC)
+
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -150,13 +153,13 @@ TCSRC =
 TCPPSRC =
 
 # List ASM source files here
-ASMSRC =
+ASMSRC = $(PROJASMSRC)
 ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 
 INCDIR = $(CHIBIOS)/os/license \
          $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
-         $(STREAMSINC) $(PROJINC)
+         $(STREAMSINC) $(PROJINC) $(SHELLINC)
 
 #
 # Project, sources and paths
@@ -207,7 +210,7 @@ CPPWARN = -Wall -Wextra -Wundef -Werror
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS =
+UDEFS = -DDEBUG=1
 
 # Define ASM defines here
 UADEFS =

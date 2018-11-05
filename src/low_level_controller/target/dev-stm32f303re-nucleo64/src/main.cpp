@@ -3,10 +3,14 @@
 #include <chprintf.h>
 #include <string.h>
 #include <math.h>
+#include <arm-cortex-tools/mpu.h>
+#include <arm-cortex-tools/fault.h>
 #include <ros_interface/comm.h>
 #include <ros_interface/msg.h>
-
+#include "panic_handler.h"
+#include "run_shell.h"
 #include "usbcfg.h"
+#include "log.h"
 
 
 void dbg_enter_irq(void) {
@@ -26,8 +30,8 @@ void dbg_leave_idle(void) {
 }
 
 
-static THD_WORKING_AREA(waThread1, 128);
-static THD_FUNCTION(Thread1, arg) {
+static THD_WORKING_AREA(blinking_thread_wa, 128);
+static THD_FUNCTION(blinking_thread, arg) {
 
     (void)arg;
     chRegSetThreadName("blinker");
@@ -61,27 +65,20 @@ static THD_FUNCTION(comm_rx_thread, arg) {
     }
 }
 
-
-int main(void) {
-    halInit();
-    chSysInit();
-
+static void init()
+{
     palSetLineMode(LINE_ARD_D4, PAL_MODE_OUTPUT_PUSHPULL);
     palSetLineMode(LINE_ARD_D3, PAL_MODE_OUTPUT_PUSHPULL);
 
-
-    chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO - 1, Thread1, NULL);
-
     SerialConfig uart_config = { .speed=SERIAL_DEFAULT_BITRATE, .cr1=0,
                                  .cr2=USART_CR2_STOP1_BITS, .cr3=USART_CR3_RTSE | USART_CR3_CTSE };
-    // uart_config.speed = 9600;
-    // uart_config.speed = 115200;
-    uart_config.speed = 1500000;
 
+    uart_config.speed = 115200;
     palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(7)); // TX
     palSetPadMode(GPIOA, 10, PAL_MODE_ALTERNATE(7) + PAL_STM32_PUPDR_PULLUP); // RX
     sdStart(&SD1, &uart_config);
     // uart2
+    uart_config.speed = 1500000;
     palSetPadMode(GPIOA, 2, PAL_MODE_ALTERNATE(7)); // TX
     palSetPadMode(GPIOA, 3, PAL_MODE_ALTERNATE(7) + PAL_STM32_PUPDR_PULLUP); // RX
     palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(7) + PAL_STM32_PUPDR_PULLUP); // CTS
@@ -95,13 +92,46 @@ int main(void) {
     usbStart(serusbcfg.usbp, &usbcfg);
     // usbConnectBus(serusbcfg.usbp);
     chThdSleepMilliseconds(100);
+}
 
+static log_handler_t log_handler_stdout;
+static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
+{
+    (void)lvl;
+    streamWrite((BaseSequentialStream*)&SD1, (uint8_t*)msg, len);
+}
+
+static log_handler_t log_handler_comm;
+static void log_handler_comm_cb(log_level_t lvl, const char *msg, size_t len)
+{
+    (void)lvl;
+    comm_send(&comm_if, RosInterfaceCommMsgID::DEBUG_, msg, len);
+}
+
+int main(void) {
+    halInit();
+    chSysInit();
+
+    panic_handler_init(SD1.usart);
+    mpu_init();
+    fault_init();
+
+    init();
 
     comm_init(&comm_if, (BaseSequentialStream*)&SD2, comm_rcv_cb);
+
+    log_init();
+    log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
+    log_handler_register(&log_handler_comm, LOG_LVL_DEBUG, log_handler_comm_cb);
+    log_info("=== boot ===");
+
+
+    chThdCreateStatic(blinking_thread_wa, sizeof(blinking_thread_wa), NORMALPRIO - 1, blinking_thread, NULL);
 
     chThdCreateStatic(comm_rx_thread_wa, sizeof(comm_rx_thread_wa),
                       NORMALPRIO, comm_rx_thread, NULL);
 
+    run_shell((BaseSequentialStream*)&SD1);
 
     int i=0;
     while (true) {

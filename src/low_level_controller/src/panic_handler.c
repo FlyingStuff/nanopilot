@@ -2,43 +2,10 @@
 #include <hal.h>
 #include <crc/crc32.h>
 #include <string.h>
-#include <arm-cortex-tools/mpu.h>
-#include <arm-cortex-tools/fault.h>
 #include <memstreams.h>
 #include <chprintf.h>
 #include "blocking_uart.h"
-#include "error.h"
-
-
-/*
- * Safemode
- */
-
-#define SAFEMODE_MAGIC_VALUE 0xdb3c9869254dc8bc // random value
-static __attribute__((section(".noinit"))) uint64_t safemode_magic_value;
-
-static bool safemode;
-
-static void safemode_read(void)
-{
-    if (safemode_magic_value == SAFEMODE_MAGIC_VALUE) {
-        safemode = true;
-    } else {
-        safemode = false;
-    }
-    safemode_magic_value = 0;
-}
-
-bool safemode_active(void)
-{
-    return safemode;
-}
-
-void reboot_in_safemode(void)
-{
-    safemode_magic_value = SAFEMODE_MAGIC_VALUE;
-    NVIC_SystemReset();
-}
+#include "panic_handler.h"
 
 
 /*
@@ -49,17 +16,12 @@ void reboot_in_safemode(void)
 static __attribute__((section(".noinit"))) char panic_buffer[700];
 static __attribute__((section(".noinit"))) uint32_t panic_buffer_crc;
 MemoryStream panic_bss;
+static USART_TypeDef *_panic_print_usart = NULL;
 
 static bool panic_buffer_crc_matched;
 
 void panic_handler(const char *reason)
 {
-    (void)reason;
-    palSetPad(GPIOA, GPIOA_LED_ERROR);
-    palClearPad(GPIOB, GPIOB_LED_STATUS);
-    palClearPad(GPIOA, GPIOA_LED_HEARTBEAT);
-    palClearPad(GPIOB, GPIOB_LED_SDCARD);
-
     chprintf((BaseSequentialStream *)&panic_bss, "%s", reason);
 
     // add terminating '\0' character
@@ -71,18 +33,23 @@ void panic_handler(const char *reason)
     panic_buffer_crc = crc32(PANIC_CRC_INIT, panic_buffer, sizeof(panic_buffer));
 
 #ifdef DEBUG // debug builds block to be able to connect a debugger
-    BlockingUARTDriver uart;
-    blocking_uart_init(&uart, UART_CONN1.usart, SERIAL_DEFAULT_BITRATE);
+    if (_panic_print_usart) {
+        BlockingUARTDriver uart;
+        blocking_uart_init(&uart, _panic_print_usart, SERIAL_DEFAULT_BITRATE);
+        while (1) {
+            blocking_uart_write(&uart, (uint8_t*)panic_buffer, strlen(panic_buffer));
+        }
+    }
     while (1) {
-        blocking_uart_write(&uart, (uint8_t*)panic_buffer, strlen(panic_buffer));
         __asm__("BKPT");
     }
 
 #else // non-debug builds reboot in safemode
-    reboot_in_safemode();
+    NVIC_SystemReset();
 #endif
 }
 
+// used by arm-cortex-tools/fault.c
 void fault_printf(const char *fmt, ...)
 {
     va_list ap;
@@ -100,8 +67,9 @@ const char *get_panic_message(void)
     }
 }
 
-static void panic_msg_init(void)
+void panic_handler_init(USART_TypeDef *panic_print_usart)
 {
+    _panic_print_usart = panic_print_usart;
     msObjectInit(&panic_bss, (uint8_t *)&panic_buffer[0], sizeof(panic_buffer), 0);
 
     if (crc32(PANIC_CRC_INIT, panic_buffer, sizeof(panic_buffer)) == panic_buffer_crc) {
@@ -111,15 +79,6 @@ static void panic_msg_init(void)
     }
     panic_buffer_crc = ~panic_buffer_crc; // clear crc
 }
-
-void error_init(void)
-{
-    safemode_read();
-    panic_msg_init();
-    mpu_init();
-    fault_init();
-}
-
 
 
 void NMI_Handler(void)

@@ -448,6 +448,7 @@ void dbg_enter_irq(void);
 void dbg_leave_irq(void);
 void dbg_enter_idle(void);
 void dbg_leave_idle(void);
+void panic_handler(const char *reason);
 #ifdef __cplusplus
 }
 #endif
@@ -509,7 +510,7 @@ void dbg_leave_idle(void);
  *          the system is halted.
  */
 #define CH_CFG_SYSTEM_HALT_HOOK(reason) {                                   \
-  /* System halt code here.*/                                               \
+  panic_handler(reason);                                              \
 }
 
 /**
@@ -527,8 +528,9 @@ void dbg_leave_idle(void);
 /* Port-specific settings (override port settings defaulted in chcore.h).    */
 /*===========================================================================*/
 
-// chprintf float enable
 #define CHPRINTF_USE_FLOAT true
+#define SHELL_CMD_MEM_ENABLED false
+#define SHELL_CMD_TEST_ENABLED false
 
 #endif  /* CHCONF_H */
 
