@@ -2,6 +2,7 @@
 #include "hal.h"
 #include <shell.h>
 
+#include "thread_prio.h"
 #include "shell_cmds.h"
 
 static THD_WORKING_AREA(shell_thd_wa, (2500));
@@ -33,5 +34,5 @@ static ShellConfig shell_cfg = {
 
 void run_shell(BaseSequentialStream *serial) {
     shell_cfg.sc_channel = serial;
-    chThdCreateStatic(shell_thd_wa, sizeof(shell_thd_wa), NORMALPRIO + 1, shell_thd, (void *)&shell_cfg);
+    chThdCreateStatic(shell_thd_wa, sizeof(shell_thd_wa), THD_PRIO_SHELL, shell_thd, (void *)&shell_cfg);
 }

@@ -11,6 +11,8 @@
 #include "run_shell.h"
 #include "usbcfg.h"
 #include "log.h"
+#include "actuators.hpp"
+#include "thread_prio.h"
 
 #include "sumd_input.h"
 void dbg_enter_irq(void) {
@@ -37,9 +39,13 @@ static THD_FUNCTION(blinking_thread, arg) {
     chRegSetThreadName("blinker");
     while (true) {
         palSetLine(LINE_LED_GREEN);
-        chThdSleepMilliseconds(200);
+        chThdSleepMilliseconds(100);
         palClearLine(LINE_LED_GREEN);
-        chThdSleepMilliseconds(200);
+        chThdSleepMilliseconds(100);
+        palSetLine(LINE_LED_GREEN);
+        chThdSleepMilliseconds(100);
+        palClearLine(LINE_LED_GREEN);
+        chThdSleepMilliseconds(700);
     }
 }
 
@@ -99,6 +105,8 @@ static void init()
     usbStart(serusbcfg.usbp, &usbcfg);
     // usbConnectBus(serusbcfg.usbp);
     chThdSleepMilliseconds(100);
+
+    initialize_actuators();
 }
 
 static log_handler_t log_handler_stdout;
@@ -136,7 +144,7 @@ int main(void) {
         log_warning("Reboot after panic: %s", panic_msg);
     }
 
-    chThdCreateStatic(blinking_thread_wa, sizeof(blinking_thread_wa), NORMALPRIO - 1, blinking_thread, NULL);
+    chThdCreateStatic(blinking_thread_wa, sizeof(blinking_thread_wa), THD_PRIO_LED, blinking_thread, NULL);
 
     chThdCreateStatic(comm_rx_thread_wa, sizeof(comm_rx_thread_wa),
                       NORMALPRIO, comm_rx_thread, NULL);
@@ -146,11 +154,13 @@ int main(void) {
     sumd_input_start((BaseSequentialStream*)&SD3);
 
     auto sub_rc = msgbus::subscribe(rc_input);
-    int i=0;
+    // int i=0;
     while (true) {
         sub_rc.wait_for_update();
         auto rc = sub_rc.get_value();
         log_debug("rc in %f %f %f", rc.channel[0], rc.channel[1], rc.channel[2]);
+
+        actuators_set_output({1500 + 500*rc.channel[0], 1500, 1500, 1500});
 
         // comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
         // uint64_t timestamp = i;
@@ -162,6 +172,6 @@ int main(void) {
         // comm_send(&comm_if, RosInterfaceCommMsgID::TEST, buf, serializer.writer().size());
 
         // chThdSleepMilliseconds(1);
-        i++;
+        // i++;
     }
 }
