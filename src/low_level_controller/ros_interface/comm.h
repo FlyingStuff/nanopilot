@@ -24,7 +24,7 @@ typedef struct {
     int fd;
     pthread_mutex_t send_lock;
 #else // ChibiOS
-    BaseSequentialStream *fd;
+    SerialDriver *fd;
     mutex_t send_lock;
 #endif
     uint8_t send_msg_buffer[ROS_INTERFACE_MTU+sizeof(comm_msg_id_t)];
@@ -48,7 +48,7 @@ bool comm_init(comm_interface_t *i,
                comm_rcv_cb_t rcv_cb);
 #else // ChibiOS
 void comm_init(comm_interface_t *i,
-               BaseSequentialStream* serial_device,
+               SerialDriver* serial_device,
                comm_rcv_cb_t rcv_cb);
 #endif
 

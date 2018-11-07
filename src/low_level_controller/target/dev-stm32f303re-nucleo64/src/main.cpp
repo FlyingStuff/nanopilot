@@ -116,12 +116,12 @@ static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
     streamWrite((BaseSequentialStream*)&SD1, (uint8_t*)msg, len);
 }
 
-// static log_handler_t log_handler_comm;
-// static void log_handler_comm_cb(log_level_t lvl, const char *msg, size_t len)
-// {
-//     (void)lvl;
-//     comm_send(&comm_if, RosInterfaceCommMsgID::DEBUG_, msg, len);
-// }
+static log_handler_t log_handler_comm;
+static void log_handler_comm_cb(log_level_t lvl, const char *msg, size_t len)
+{
+    (void)lvl;
+    comm_send(&comm_if, RosInterfaceCommMsgID::LOG, msg, len);
+}
 
 int main(void) {
     halInit();
@@ -133,11 +133,11 @@ int main(void) {
 
     init();
 
-    comm_init(&comm_if, (BaseSequentialStream*)&SD2, comm_rcv_cb);
+    comm_init(&comm_if, &SD2, comm_rcv_cb);
 
     log_init();
     log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
-    // log_handler_register(&log_handler_comm, LOG_LVL_DEBUG, log_handler_comm_cb);
+    log_handler_register(&log_handler_comm, LOG_LVL_DEBUG, log_handler_comm_cb);
     log_info("=== boot ===");
     const char *panic_msg = get_panic_message();
     if (panic_msg) {

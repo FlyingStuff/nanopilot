@@ -9,6 +9,7 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
     PING=2,
     PONG=3,
     TIME=4,
+    LOG=5,
     TEST=10000,
 };
 
