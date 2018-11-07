@@ -9,10 +9,15 @@ PROJINC += $(PROJROOT)/
 PROJCPPSRC += $(TARGETROOT)/src/main.cpp
 PROJCSRC += $(TARGETROOT)/src/usbcfg.c
 PROJCSRC += $(TARGETROOT)/src/run_shell.c
-PROJCSRC += $(TARGETROOT)/src/blocking_uart.c
-PROJCSRC += $(TARGETROOT)/src/log.c
-PROJCSRC += $(TARGETROOT)/src/timestamp.c
-PROJCSRC += $(TARGETROOT)/src/timestamp_stm32.c
+
+
+PROJCSRC += $(PROJROOT)/src/blocking_uart.c
+PROJCSRC += $(PROJROOT)/src/log.c
+PROJCSRC += $(PROJROOT)/src/timestamp.c
+PROJCSRC += $(PROJROOT)/src/timestamp_stm32.c
+PROJCSRC += $(PROJROOT)/src/hott/sumd.c
+PROJCSRC += $(PROJROOT)/src/hott/telemetry.c
+PROJCPPSRC += $(PROJROOT)/src/sumd_input.cpp
 
 PROJCSRC += $(PROJROOT)/src/syscalls.c
 PROJCSRC += $(PROJROOT)/src/shell_cmds.c

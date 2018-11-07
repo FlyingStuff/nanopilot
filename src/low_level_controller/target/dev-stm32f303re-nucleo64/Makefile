@@ -15,7 +15,7 @@ endif
 
 # C++ specific options here (added to USE_OPT).
 ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -fno-rtti -std=c++14
+  USE_CPPOPT = -fno-rtti -std=c++14 -fno-exceptions
 endif
 
 # Enable this if you want the linker to remove unused code and data
@@ -60,13 +60,13 @@ endif
 # Stack size to be allocated to the Cortex-M process stack. This stack is
 # the stack used by the main() thread.
 ifeq ($(USE_PROCESS_STACKSIZE),)
-  USE_PROCESS_STACKSIZE = 0x400
+  USE_PROCESS_STACKSIZE = 2048
 endif
 
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
 # stack is used for processing interrupts and exceptions.
 ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
-  USE_EXCEPTIONS_STACKSIZE = 0x400
+  USE_EXCEPTIONS_STACKSIZE = 1024
 endif
 
 # Enables the use of FPU (no, softfp, hard).
@@ -210,7 +210,7 @@ CPPWARN = -Wall -Wextra -Wundef -Werror
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = -DDEBUG=1
+UDEFS = -D__CHIBIOS__ -DDEBUG=1
 
 # Define ASM defines here
 UADEFS =

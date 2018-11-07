@@ -22,7 +22,8 @@ static bool panic_buffer_crc_matched;
 
 void panic_handler(const char *reason)
 {
-    chprintf((BaseSequentialStream *)&panic_bss, "%s", reason);
+    chprintf((BaseSequentialStream *)&panic_bss, "reason: %s\n", reason);
+    chprintf((BaseSequentialStream *)&panic_bss, "current thread ptr: %s", ch.rlist.current->name);
 
     // add terminating '\0' character
     if (panic_bss.eos < sizeof(panic_buffer)) {

@@ -4,7 +4,7 @@
 
 #include "shell_cmds.h"
 
-static THD_WORKING_AREA(shell_thd_wa, (2000));
+static THD_WORKING_AREA(shell_thd_wa, (2500));
 static THD_FUNCTION(shell_thd, arg) {
     chRegSetThreadName("shell");
     while (1) {
