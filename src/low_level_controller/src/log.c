@@ -94,13 +94,14 @@ void log_error(const char *fmt, ...)
 
 
 #define CL_BLUE "\033[1;34m"
+#define CL_CYAN "\033[1;36m"
 #define CL_ORANGE "\033[1;33m"
 #define CL_RED "\033[1;31m"
 #define CL_CLEAR "\033[0m"
 
 static const char *lvls[] = {
     "DEBUG",
-    "INFO",
+    CL_CYAN"INFO"CL_CLEAR,
     CL_ORANGE"WARNING"CL_CLEAR,
     CL_RED"ERROR"CL_CLEAR,
 };

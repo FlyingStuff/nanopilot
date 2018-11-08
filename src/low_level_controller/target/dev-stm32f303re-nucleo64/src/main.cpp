@@ -2,11 +2,8 @@
 #include "hal.h"
 #include <chprintf.h>
 #include <string.h>
-#include <math.h>
 #include <arm-cortex-tools/mpu.h>
 #include <arm-cortex-tools/fault.h>
-#include <ros_interface/comm.h>
-#include <ros_interface/msg.h>
 #include "panic_handler.h"
 #include "run_shell.h"
 #include "usbcfg.h"
@@ -15,6 +12,8 @@
 #include "thread_prio.h"
 #include "parameter_storage.h"
 #include "sumd_input.h"
+#include "timestamp_stm32.h"
+#include "ros_comm.hpp"
 
 
 void dbg_enter_irq(void) {
@@ -51,28 +50,6 @@ static THD_FUNCTION(blinking_thread, arg) {
     }
 }
 
-static comm_interface_t comm_if;
-
-
-void comm_rcv_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
-{
-    switch (static_cast<RosInterfaceCommMsgID>(msg_id)) {
-    case RosInterfaceCommMsgID::PING:
-        comm_send(&comm_if, RosInterfaceCommMsgID::PONG, msg, len);
-        break;
-    default:
-        break;
-    }
-}
-
-static THD_WORKING_AREA(comm_rx_thread_wa, (2000));
-static THD_FUNCTION(comm_rx_thread, arg) {
-    (void)arg;
-    chRegSetThreadName("comm_rx");
-    while (1) {
-        comm_receive(&comm_if);
-    }
-}
 
 static void init()
 {
@@ -107,8 +84,6 @@ static void init()
     usbStart(serusbcfg.usbp, &usbcfg);
     // usbConnectBus(serusbcfg.usbp);
     chThdSleepMilliseconds(100);
-
-    initialize_actuators(&parameters);
 }
 
 log_handler_t log_handler_stdout;
@@ -118,12 +93,6 @@ static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
     streamWrite((BaseSequentialStream*)&SD1, (uint8_t*)msg, len);
 }
 
-static log_handler_t log_handler_comm;
-static void log_handler_comm_cb(log_level_t lvl, const char *msg, size_t len)
-{
-    (void)lvl;
-    comm_send(&comm_if, RosInterfaceCommMsgID::LOG, msg, len);
-}
 
 int main(void) {
     halInit();
@@ -133,49 +102,35 @@ int main(void) {
     mpu_init();
     fault_init();
 
-    parameter_init();
-
     init();
 
-    comm_init(&comm_if, &SD2, comm_rcv_cb);
+    timestamp_stm32_init();
+    parameter_init();
+
 
     log_init();
     log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
-    log_handler_register(&log_handler_comm, LOG_LVL_DEBUG, log_handler_comm_cb);
+
+    ros_comm_init(&SD2);
+
     log_info("=== boot ===");
+
     const char *panic_msg = get_panic_message();
     if (panic_msg) {
-        log_warning("Reboot after panic: %s", panic_msg);
+        log_error("Reboot after panic: %s", panic_msg);
     }
 
     chThdCreateStatic(blinking_thread_wa, sizeof(blinking_thread_wa), THD_PRIO_LED, blinking_thread, NULL);
-
-    chThdCreateStatic(comm_rx_thread_wa, sizeof(comm_rx_thread_wa),
-                      NORMALPRIO, comm_rx_thread, NULL);
-
+    initialize_actuators(&parameters);
     run_shell((BaseSequentialStream*)&SD1);
-
     sumd_input_start((BaseSequentialStream*)&SD3);
 
     auto sub_rc = msgbus::subscribe(rc_input);
-    // int i=0;
     while (true) {
         sub_rc.wait_for_update();
         auto rc = sub_rc.get_value();
         log_debug("rc in %f %f %f", rc.channel[0], rc.channel[1], rc.channel[2]);
 
         actuators_set_output({rc.channel[0], rc.channel[1], rc.channel[2], rc.channel[3]});
-
-        // comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
-        // uint64_t timestamp = i;
-        // comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
-
-        // static char buf[1000];
-        // auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-        // serializer.Write(SimpleType{static_cast<uint32_t>(i), sinf(i)});
-        // comm_send(&comm_if, RosInterfaceCommMsgID::TEST, buf, serializer.writer().size());
-
-        // chThdSleepMilliseconds(1);
-        // i++;
     }
 }

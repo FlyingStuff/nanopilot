@@ -22,6 +22,7 @@ PROJCSRC += $(PROJROOT)/src/hott/sumd.c
 PROJCSRC += $(PROJROOT)/src/hott/telemetry.c
 PROJCPPSRC += $(PROJROOT)/src/sumd_input.cpp
 PROJCPPSRC += $(PROJROOT)/src/rc_pwm_out.cpp
+PROJCPPSRC += $(PROJROOT)/src/ros_comm.cpp
 
 PROJCSRC += $(PROJROOT)/src/syscalls.c
 PROJCSRC += $(PROJROOT)/src/shell_cmds.c
