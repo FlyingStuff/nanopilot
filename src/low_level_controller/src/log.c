@@ -175,6 +175,11 @@ void log_handler_register(log_handler_t *handler,
 
 }
 
+void log_handler_change_log_level(log_handler_t *handler, log_level_t min_log_lvl)
+{
+    handler->min_log_lvl = min_log_lvl;
+}
+
 void log_call_handlers(log_level_t lvl, const char *msg, size_t len)
 {
     log_handler_t *handler = log_handler_list;

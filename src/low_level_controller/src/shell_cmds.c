@@ -3,10 +3,13 @@
 #include <chprintf.h>
 #include <shell.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "parameter/parameter_print.h"
+#include "parameter_storage.h"
 #include "syscalls.h"
 #include "panic_handler.h"
+#include "log_handlers.h"
 
 
 void cmd_mem(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -120,40 +123,39 @@ void cmd_panic_get(BaseSequentialStream *chp, int argc, char *argv[]) {
 void cmd_parameter_list(BaseSequentialStream *stream, int argc, char *argv[]) {
     (void)argc;
     (void)argv;
-    (void)stream;
-    // parameter_print(&parameters, (parameter_printfn_t)chprintf, stream);
+    parameter_print(&parameters, (parameter_printfn_t)chprintf, stream);
 }
 
 void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv[]) {
-    (void)argc;
-    (void)argv;
-    (void)stream;
-    // if (argc < 2) {
-    //     chprintf(stream, "usage: parameter_set name value\n");
-    //     return;
-    // }
-    // parameter_t *p = parameter_find(&parameters, argv[0]);
-    // if (p == NULL) {
-    //     chprintf(stream, "parameter doesn't exist\n");
-    //     return;
-    // }
-    // if (p->type == _PARAM_TYPE_SCALAR) {
-    //     parameter_scalar_set(p, strtof(argv[1], NULL));
-    // } else {
-    //     chprintf(stream, "unsupported type %d\n", p->type);
-    // }
+    if (argc < 2) {
+        chprintf(stream, "usage: parameter_set name value\n");
+        return;
+    }
+    parameter_t *p = parameter_find(&parameters, argv[0]);
+    if (p == NULL) {
+        chprintf(stream, "parameter doesn't exist\n");
+        return;
+    }
+    if (p->type == _PARAM_TYPE_SCALAR) {
+        parameter_scalar_set(p, strtof(argv[1], NULL));
+    } else {
+        chprintf(stream, "unsupported type %d\n", p->type);
+    }
 }
 
-
-const ShellCommand shell_commands[] = {
-  {"mem", cmd_mem},
-  {"threads", cmd_threads},
-  {"cpu", cmd_cpu},
-  {"reboot", cmd_reboot},
-  {"panic", cmd_panic},
-  {"panic_get", cmd_panic_get},
-  {"parameter_list", cmd_parameter_list},
-  {"parameter_set", cmd_parameter_set},
-  {NULL, NULL}
-};
+void cmd_stdout_log_lvl(BaseSequentialStream *stream, int argc, char *argv[]) {
+    if (argc < 1) {
+        chprintf(stream, "missing log_lvl [debug, info, warning, error]\n");
+        return;
+    }
+    if (strcmp(argv[0], "debug") == 0) {
+        log_handler_change_log_level(&log_handler_stdout, LOG_LVL_DEBUG);
+    } else if (strcmp(argv[0], "info") == 0) {
+        log_handler_change_log_level(&log_handler_stdout, LOG_LVL_INFO);
+    } else if (strcmp(argv[0], "warning") == 0) {
+        log_handler_change_log_level(&log_handler_stdout, LOG_LVL_WARNING);
+    } else if (strcmp(argv[0], "error") == 0) {
+        log_handler_change_log_level(&log_handler_stdout, LOG_LVL_ERROR);
+    }
+}
 

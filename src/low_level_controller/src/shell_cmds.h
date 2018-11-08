@@ -16,8 +16,7 @@ void cmd_panic(BaseSequentialStream *chp, int argc, char *argv[]);
 void cmd_panic_get(BaseSequentialStream *chp, int argc, char *argv[]);
 void cmd_parameter_list(BaseSequentialStream *stream, int argc, char *argv[]);
 void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv[]);
-
-extern const ShellCommand shell_commands[];
+void cmd_stdout_log_lvl(BaseSequentialStream *stream, int argc, char *argv[]);
 
 #ifdef __cplusplus
 }

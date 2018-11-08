@@ -13,8 +13,10 @@
 #include "log.h"
 #include "actuators.hpp"
 #include "thread_prio.h"
-
+#include "parameter_storage.h"
 #include "sumd_input.h"
+
+
 void dbg_enter_irq(void) {
     palSetLine(LINE_ARD_D4);
 }
@@ -106,10 +108,10 @@ static void init()
     // usbConnectBus(serusbcfg.usbp);
     chThdSleepMilliseconds(100);
 
-    initialize_actuators();
+    initialize_actuators(&parameters);
 }
 
-static log_handler_t log_handler_stdout;
+log_handler_t log_handler_stdout;
 static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
 {
     (void)lvl;
@@ -130,6 +132,8 @@ int main(void) {
     panic_handler_init(SD1.usart);
     mpu_init();
     fault_init();
+
+    parameter_init();
 
     init();
 
@@ -160,7 +164,7 @@ int main(void) {
         auto rc = sub_rc.get_value();
         log_debug("rc in %f %f %f", rc.channel[0], rc.channel[1], rc.channel[2]);
 
-        actuators_set_output({1500 + 500*rc.channel[0], 1500, 1500, 1500});
+        actuators_set_output({rc.channel[0], rc.channel[1], rc.channel[2], rc.channel[3]});
 
         // comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
         // uint64_t timestamp = i;

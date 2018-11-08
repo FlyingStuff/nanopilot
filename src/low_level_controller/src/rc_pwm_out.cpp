@@ -41,3 +41,31 @@ void PWMOutputBank::disable_channel(uint8_t channel_idx)
     pwmDisableChannel(&m_pwm_driver, channel_idx);
 }
 
+
+
+PWMActuator::PWMActuator()
+{
+    declare_parameters(NULL, NULL);
+}
+
+void PWMActuator::declare_parameters(parameter_namespace_t *parent_ns, const char *name)
+{
+    parameter_namespace_declare(&m_actuator_ns, parent_ns, name);
+    parameter_scalar_declare_with_default(&m_center_pos_us, &m_actuator_ns, "center_pos_us", 1500);
+    parameter_scalar_declare_with_default(&m_gain_us, &m_actuator_ns, "gain_us", 500);
+    parameter_scalar_declare_with_default(&m_max_pos_us, &m_actuator_ns, "max_pos_us", 2000);
+    parameter_scalar_declare_with_default(&m_min_pos_us, &m_actuator_ns, "min_pos_us", 1000);
+}
+
+
+uint16_t PWMActuator::get_pulse_width(float input)
+{
+    float center = parameter_scalar_read(&m_center_pos_us);
+    float gain = parameter_scalar_read(&m_gain_us);
+    float max = parameter_scalar_read(&m_max_pos_us);
+    float min = parameter_scalar_read(&m_min_pos_us);
+    float output = center + input * gain;
+    if (output > max) output = max;
+    if (output < min) output = min;
+    return output;
+}

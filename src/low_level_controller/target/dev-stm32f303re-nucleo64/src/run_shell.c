@@ -22,6 +22,7 @@ static const ShellCommand commands[] = {
     {"panic_get", cmd_panic_get},
     {"parameter_list", cmd_parameter_list},
     {"parameter_set", cmd_parameter_set},
+    {"log_lvl", cmd_stdout_log_lvl},
     {NULL, NULL}
 };
 
