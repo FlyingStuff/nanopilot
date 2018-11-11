@@ -14,7 +14,7 @@ void hott_tm_gam_zero(struct hott_tm_gam_s *msg)
 
 void hott_tm_gps_zero(struct hott_tm_gps_s *msg)
 {
-    memset(msg, 0, sizeof(struct hott_tm_gam_s));
+    memset(msg, 0, sizeof(struct hott_tm_gps_s));
 }
 
 static uint8_t checksum(uint8_t *buf, size_t len)
