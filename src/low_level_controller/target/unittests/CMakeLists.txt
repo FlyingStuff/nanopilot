@@ -40,6 +40,8 @@ add_executable(
     ../../src/tests/timestamp_test.cpp
     ../../src/log.c
     ../../src/tests/log_test.cpp
+    ../../src/pid.c
+    ../../src/tests/pid_test.cpp
     )
 
 

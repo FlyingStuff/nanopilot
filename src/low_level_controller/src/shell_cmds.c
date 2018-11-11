@@ -138,6 +138,8 @@ void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv[]) {
     }
     if (p->type == _PARAM_TYPE_SCALAR) {
         parameter_scalar_set(p, strtof(argv[1], NULL));
+    } else if (p->type == _PARAM_TYPE_INTEGER) {
+        parameter_integer_set(p, atoi(argv[1]));
     } else {
         chprintf(stream, "unsupported type %d\n", p->type);
     }

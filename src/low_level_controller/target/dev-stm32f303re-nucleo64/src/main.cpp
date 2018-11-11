@@ -14,6 +14,7 @@
 #include "sumd_input.h"
 #include "timestamp_stm32.h"
 #include "ros_comm.hpp"
+#include "control_loop.hpp"
 
 
 void dbg_enter_irq(void) {
@@ -107,11 +108,10 @@ int main(void) {
     timestamp_stm32_init();
     parameter_init();
 
-
     log_init();
     log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
 
-    ros_comm_init(&SD2);
+    // ros_comm_init(&SD2);
 
     log_info("=== boot ===");
 
@@ -119,18 +119,18 @@ int main(void) {
     if (panic_msg) {
         log_error("Reboot after panic: %s", panic_msg);
     }
-
     chThdCreateStatic(blinking_thread_wa, sizeof(blinking_thread_wa), THD_PRIO_LED, blinking_thread, NULL);
+
+    control_init();
     initialize_actuators(&parameters);
+
+    // read_parameters_from_eeprom();
+
     run_shell((BaseSequentialStream*)&SD1);
     sumd_input_start((BaseSequentialStream*)&SD3);
+    control_start();
 
-    auto sub_rc = msgbus::subscribe(rc_input);
     while (true) {
-        sub_rc.wait_for_update();
-        auto rc = sub_rc.get_value();
-        log_debug("rc in %f %f %f", rc.channel[0], rc.channel[1], rc.channel[2]);
-
-        actuators_set_output({rc.channel[0], rc.channel[1], rc.channel[2], rc.channel[3]});
+        chThdSleepMilliseconds(1000);
     }
 }

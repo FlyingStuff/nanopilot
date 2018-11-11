@@ -2,6 +2,7 @@
 #define SUMD_INPUT_H
 
 #include <ch.h>
+#include <hal.h>
 #include "timestamp.h"
 #include "msgbus/msgbus.hpp"
 

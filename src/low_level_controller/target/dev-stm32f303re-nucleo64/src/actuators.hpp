@@ -7,7 +7,7 @@
 const int NB_ACTUATORS = 4;
 
 void initialize_actuators(parameter_namespace_t *ns);
-void actuators_set_output(std::array<float, NB_ACTUATORS> out);
+void actuators_set_output(const std::array<float, NB_ACTUATORS> out);
 
 
 #endif /* ACTUATORS_HPP */

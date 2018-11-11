@@ -6,6 +6,7 @@ PROJINC += $(PROJROOT)/lib/libnop/include
 PROJINC += $(PROJROOT)/src
 PROJINC += $(PROJROOT)/
 
+PROJCSRC += $(TARGETROOT)/src/board.c
 PROJCPPSRC += $(TARGETROOT)/src/main.cpp
 PROJCPPSRC += $(TARGETROOT)/src/actuators.cpp
 PROJCSRC += $(TARGETROOT)/src/usbcfg.c
@@ -20,9 +21,12 @@ PROJCSRC += $(PROJROOT)/src/timestamp.c
 PROJCSRC += $(PROJROOT)/src/timestamp_stm32.c
 PROJCSRC += $(PROJROOT)/src/hott/sumd.c
 PROJCSRC += $(PROJROOT)/src/hott/telemetry.c
+PROJCSRC += $(PROJROOT)/src/pid.c
 PROJCPPSRC += $(PROJROOT)/src/sumd_input.cpp
 PROJCPPSRC += $(PROJROOT)/src/rc_pwm_out.cpp
 PROJCPPSRC += $(PROJROOT)/src/ros_comm.cpp
+PROJCPPSRC += $(PROJROOT)/src/pid_with_parameter.cpp
+PROJCPPSRC += $(PROJROOT)/src/control_loop.cpp
 
 PROJCSRC += $(PROJROOT)/src/syscalls.c
 PROJCSRC += $(PROJROOT)/src/shell_cmds.c
