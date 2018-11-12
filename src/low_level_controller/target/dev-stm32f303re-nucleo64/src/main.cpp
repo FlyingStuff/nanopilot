@@ -15,6 +15,7 @@
 #include "timestamp_stm32.h"
 #include "ros_comm.hpp"
 #include "control_loop.hpp"
+#include "hott_tm.hpp"
 
 
 void dbg_enter_irq(void) {
@@ -78,6 +79,13 @@ static void init()
     palSetPadMode(GPIOB, 11, PAL_MODE_ALTERNATE(7) + PAL_STM32_PUPDR_PULLUP); // RX
     sdStart(&SD3, &uart_config);
 
+    // uart4 connected to receiver telemetry
+    uart_config.speed = 19200;
+    // palSetPadMode(GPIOC, 10, PAL_MODE_ALTERNATE(5) + PAL_STM32_OTYPE_OPENDRAIN + PAL_STM32_PUPDR_PULLUP); // TX
+    palSetPadMode(GPIOC, 10, PAL_MODE_ALTERNATE(5)); // TX
+    palSetPadMode(GPIOC, 11, PAL_MODE_ALTERNATE(5) + PAL_STM32_PUPDR_PULLUP); // RX
+    sdStart(&SD4, &uart_config);
+
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);
     // usbDisconnectBus(serusbcfg.usbp);
@@ -129,6 +137,7 @@ int main(void) {
     run_shell((BaseSequentialStream*)&SD1);
     sumd_input_start((BaseSequentialStream*)&SD3);
     control_start();
+    hott_tm_start((BaseSequentialStream*)&SD4);
 
     while (true) {
         chThdSleepMilliseconds(1000);

@@ -86,7 +86,8 @@ struct hott_tm_gps_s {
 void hott_tm_gps_zero(struct hott_tm_gps_s *msg);
 
 
-
+#define HOTT_TM_TEXT_LINE_LEN 21
+#define HOTT_TM_TEXT_NB_LINES 8
 
 typedef struct {
     void (*putchar)(char c);

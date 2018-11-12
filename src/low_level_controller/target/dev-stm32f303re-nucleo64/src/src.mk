@@ -22,6 +22,7 @@ PROJCSRC += $(PROJROOT)/src/timestamp_stm32.c
 PROJCSRC += $(PROJROOT)/src/hott/sumd.c
 PROJCSRC += $(PROJROOT)/src/hott/telemetry.c
 PROJCSRC += $(PROJROOT)/src/pid.c
+PROJCPPSRC += $(PROJROOT)/src/hott_tm.cpp
 PROJCPPSRC += $(PROJROOT)/src/rc_input.cpp
 PROJCPPSRC += $(PROJROOT)/src/sumd_input.cpp
 PROJCPPSRC += $(PROJROOT)/src/rc_pwm_out.cpp
