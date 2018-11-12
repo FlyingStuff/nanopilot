@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 set -e
 
 [ "$#" -eq 1 ] || { echo "user@host argument required" >&2; exit 1; }
