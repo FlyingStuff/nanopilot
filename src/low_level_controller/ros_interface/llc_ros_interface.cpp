@@ -60,6 +60,7 @@ void rx_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
     case RosInterfaceCommMsgID::PING:
         comm_send(&interface, RosInterfaceCommMsgID::PONG, msg, len);
         break;
+
     case RosInterfaceCommMsgID::PONG:
         if (len == sizeof(struct ping_s)) {
             static uint32_t prev_ping_idx = 0;
@@ -76,9 +77,11 @@ void rx_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
             prev_ping_idx = ping.idx;
         }
         break;
+
     case RosInterfaceCommMsgID::HEARTBEAT:
         printf("HEARTBEAT\n");
         break;
+
     case RosInterfaceCommMsgID::TIME:
         if (len == sizeof(uint64_t)) {
             uint64_t timestamp;
@@ -86,6 +89,7 @@ void rx_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
             time_pub->publish_time(timestamp);
         }
         break;
+
     case RosInterfaceCommMsgID::TEST:
     {
         auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
@@ -94,6 +98,16 @@ void rx_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
         std::cout << val.foo << " " << val.bar << std::endl;
         break;
     }
+
+    case RosInterfaceCommMsgID::RC_INPUT:
+    {
+        auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+        rc_input_s val;
+        deserializer.Read(&val);
+        std::cout << "rc input: " << val.channel[0] << " " << val.channel[1] << std::endl;
+        break;
+    }
+
     default:
         std::string msg_str((char*)msg, len);
         printf("unknown rx msg %d, len: %d, %s\n", (int)msg_id, (int)len, msg_str.c_str());

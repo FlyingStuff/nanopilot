@@ -81,7 +81,7 @@ inline bool condvar_wait(condvar_t *cv, float timeout)
     } else {
         struct timespec ts;
         ts.tv_sec = timeout;
-        ts.tv_nsec = (timeout - ts.tv_sec) * 1e9;
+        ts.tv_nsec = (timeout - ts.tv_sec) * 1000000000UL;
         int ret = pthread_cond_timedwait_relative_np(cv, get_mutex(), &ts);
         assert(ret == 0 || ret == ETIMEDOUT);
         if (ret == ETIMEDOUT) {
@@ -102,9 +102,9 @@ inline bool condvar_wait(condvar_t *cv, float timeout)
         struct timespec ts;
         assert(clock_gettime(CLOCK_REALTIME, &ts) == 0);
         uint32_t sec = timeout;
-        ts.tv_nsec += (timeout - sec) * 1e9;
-        ts.tv_sec += sec + ts.tv_nsec / 1e9;
-        ts.tv_nsec = ts.tv_nsec % 1e9;
+        ts.tv_nsec += (timeout - sec) * 1000000000UL;
+        ts.tv_sec += sec + ts.tv_nsec / 1000000000UL;
+        ts.tv_nsec = ts.tv_nsec % 1000000000UL;
         int ret = pthread_cond_timedwait(cv, get_mutex(), &ts);
         assert(ret == 0 || ret == ETIMEDOUT);
         if (ret == ETIMEDOUT) {

@@ -1,7 +1,7 @@
 #include <ch.h>
 #include "parameter_storage.h"
 #include "pid_with_parameter.hpp"
-#include "sumd_input.h"
+#include "rc_input.hpp"
 #include "actuators.hpp"
 #include "thread_prio.h"
 #include "timestamp.h"

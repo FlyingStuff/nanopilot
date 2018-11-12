@@ -23,6 +23,7 @@ add_executable(llc_ros_interface
 target_include_directories(llc_ros_interface PUBLIC
     ../lib/comm/
     ../lib/libnop/include/
+    ../src/
 )
 
 ament_target_dependencies(llc_ros_interface rclcpp std_msgs)

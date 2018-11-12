@@ -10,6 +10,7 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
     PONG=3,
     TIME=4,
     LOG=5,
+    RC_INPUT=10,
     TEST=10000,
 };
 
@@ -31,5 +32,8 @@ struct SimpleType {
     NOP_STRUCTURE(SimpleType, foo, bar);
 };
 
+
+#include "rc_input.hpp"
+NOP_EXTERNAL_STRUCTURE(rc_input_s, nb_channels, no_signal, channel, timestamp);
 
 #endif /* ROS_INTERFACE_COMM_MSG_H */

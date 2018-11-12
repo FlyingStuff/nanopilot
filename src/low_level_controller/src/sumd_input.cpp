@@ -2,11 +2,9 @@
 #include <hal.h>
 #include "thread_prio.h"
 #include "hott/sumd.h"
-#include "sumd_input.h"
 #include "log.h"
-
-msgbus::Topic<struct rc_input_s> rc_input;
-
+#include "rc_input.hpp"
+#include "sumd_input.hpp"
 
 static THD_WORKING_AREA(sumd_input_task_wa, 1024);
 static THD_FUNCTION(sumd_input_task, arg)

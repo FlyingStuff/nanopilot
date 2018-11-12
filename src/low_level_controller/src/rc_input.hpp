@@ -1,8 +1,6 @@
-#ifndef SUMD_INPUT_H
-#define SUMD_INPUT_H
+#ifndef RC_INPUT_HPP
+#define RC_INPUT_HPP
 
-#include <ch.h>
-#include <hal.h>
 #include "timestamp.h"
 #include "msgbus/msgbus.hpp"
 
@@ -17,6 +15,4 @@ struct rc_input_s {
 
 extern msgbus::Topic<struct rc_input_s> rc_input;
 
-void sumd_input_start(BaseSequentialStream *input);
-
-#endif /* SUMD_INPUT_H */
+#endif /* RC_INPUT_HPP */

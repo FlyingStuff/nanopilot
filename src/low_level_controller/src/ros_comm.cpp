@@ -3,6 +3,7 @@
 #include <ros_interface/msg.h>
 #include "thread_prio.h"
 #include "timestamp.h"
+#include "rc_input.hpp"
 #include "log.h"
 
 #include <math.h>
@@ -37,19 +38,25 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     (void)arg;
     chRegSetThreadName("comm_tx");
 
-    int i=0;
+    auto rc_in_sub = msgbus::subscribe(rc_input);
     while (true) {
         comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
+
         uint64_t timestamp = timestamp_get();
         comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
 
         static char buf[1000];
         auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-        serializer.Write(SimpleType{static_cast<uint32_t>(i), sinf(i)});
+        serializer.Write(SimpleType{static_cast<uint32_t>(timestamp), sinf(timestamp)});
         comm_send(&comm_if, RosInterfaceCommMsgID::TEST, buf, serializer.writer().size());
 
+        if (rc_in_sub.has_update()) {
+            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+            serializer.Write(rc_in_sub.get_value());
+            comm_send(&comm_if, RosInterfaceCommMsgID::RC_INPUT, buf, serializer.writer().size());
+        }
+
         chThdSleepMilliseconds(10);
-        i++;
     }
 }
 

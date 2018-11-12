@@ -11,7 +11,7 @@
 #include "actuators.hpp"
 #include "thread_prio.h"
 #include "parameter_storage.h"
-#include "sumd_input.h"
+#include "sumd_input.hpp"
 #include "timestamp_stm32.h"
 #include "ros_comm.hpp"
 #include "control_loop.hpp"
@@ -111,7 +111,7 @@ int main(void) {
     log_init();
     log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
 
-    // ros_comm_init(&SD2);
+    ros_comm_init(&SD2);
 
     log_info("=== boot ===");
 
