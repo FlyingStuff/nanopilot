@@ -25,6 +25,16 @@ void initialize_actuators(parameter_namespace_t *ns)
     }
 }
 
+void actuators_disable_all(void)
+{
+    for(auto& b: pwm_banks) {
+        b.disable_channel(0);
+        b.disable_channel(1);
+        b.disable_channel(2);
+        b.disable_channel(3);
+    }
+}
+
 void actuators_set_output(const std::array<float, NB_ACTUATORS> out)
 {
     if (parameter_changed(&pwm_bank_1_output_period_us_param)) {

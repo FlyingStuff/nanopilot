@@ -7,6 +7,8 @@
 #include "blocking_uart.h"
 #include "panic_handler.h"
 
+void actuators_disable_all(void);
+
 
 /*
  * Panic handling
@@ -22,6 +24,8 @@ static bool panic_buffer_crc_matched;
 
 void panic_handler(const char *reason)
 {
+    actuators_disable_all();
+
     chprintf((BaseSequentialStream *)&panic_bss, "reason: %s\n", reason);
     chprintf((BaseSequentialStream *)&panic_bss, "current thread ptr: %s", ch.rlist.current->name);
 
