@@ -7,6 +7,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include "std_msgs/msg/string.hpp"
 #include <std_msgs/msg/u_int64.hpp>
+#include <autopilot_msgs/msg/rc_input.hpp>
 #include <chrono>
 #include "comm.h"
 #include "msg.h"
@@ -44,6 +45,7 @@ public:
         // parameter.
         custom_qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_LAST;
         m_timestamp_pub = this->create_publisher<std_msgs::msg::UInt64>("timestamp", custom_qos_profile);
+        m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", custom_qos_profile);
 
         auto rx_thd = std::thread(rx_thd_fn, &m_interface);
         rx_thd.detach();
@@ -51,12 +53,6 @@ public:
     }
 
 private:
-    void publish_time(uint64_t timestamp) {
-        auto message = std_msgs::msg::UInt64();
-        message.data = timestamp;
-        // RCLCPP_INFO(this->get_logger(), "Publishing Time");
-        m_timestamp_pub->publish(message);
-    }
 
     void rx_handler(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
     {
@@ -74,9 +70,9 @@ private:
                 memcpy(&ping, msg, sizeof(ping));
                 float ms = (double) (tv_now.tv_usec - ping.tv.tv_usec) / 1000 +
                  (double) (tv_now.tv_sec - ping.tv.tv_sec) * 1000;
-                printf("ping %u: size %u latency %f ms\n", ping.idx, sizeof(struct ping_s),  ms);
+                std::cout << "ping " << ping.idx << ": size " << sizeof(struct ping_s) << " latency " << ms << " ms" << std::endl;
                 if (ping.idx > prev_ping_idx+1) {
-                    printf("%d packets lost\n", ping.idx - (prev_ping_idx+1));
+                    std::cout << ping.idx - (prev_ping_idx+1) << " packets lost" << std::endl;
                 }
                 prev_ping_idx = ping.idx;
             }
@@ -90,7 +86,9 @@ private:
             if (len == sizeof(uint64_t)) {
                 uint64_t timestamp;
                 memcpy(&timestamp, msg, sizeof(timestamp));
-                publish_time(timestamp);
+                auto message = std_msgs::msg::UInt64();
+                message.data = timestamp;
+                m_timestamp_pub->publish(message);
             }
             break;
 
@@ -109,6 +107,12 @@ private:
             rc_input_s val;
             deserializer.Read(&val);
             std::cout << "rc input: " << val.channel[0] << " " << val.channel[1] << std::endl;
+            auto message = autopilot_msgs::msg::RCInput();
+            auto nb_channels = std::min(static_cast<uint32_t>(val.nb_channels), message.MAX_NB_CHANNELS);
+            for (uint32_t i=0; i < nb_channels; i++) {
+                message.channels.push_back(val.channel[i]);
+            }
+            m_rcinput_pub->publish(message);
             break;
         }
 
@@ -137,6 +141,7 @@ private:
     rclcpp::TimerBase::SharedPtr m_ping_timer;
     uint64_t m_ping_idx{0};
     comm_interface_t m_interface;
+    rclcpp::Publisher<autopilot_msgs::msg::RCInput>::SharedPtr m_rcinput_pub;
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr m_timestamp_pub;
 };
 

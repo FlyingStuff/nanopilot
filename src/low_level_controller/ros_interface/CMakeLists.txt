@@ -11,6 +11,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(autopilot_msgs REQUIRED)
 
 
 add_executable(llc_ros_interface
@@ -26,7 +27,7 @@ target_include_directories(llc_ros_interface PUBLIC
     ../src/
 )
 
-ament_target_dependencies(llc_ros_interface rclcpp std_msgs)
+ament_target_dependencies(llc_ros_interface rclcpp std_msgs autopilot_msgs)
 
 install(TARGETS llc_ros_interface
   DESTINATION lib/${PROJECT_NAME})
