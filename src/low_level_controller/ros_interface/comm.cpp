@@ -127,7 +127,7 @@ static int set_interface_attribs (int fd, int speed, int parity)
 bool comm_init(comm_interface_t *i,
                const char *serial_device,
                unsigned baudrate,
-               comm_rcv_cb_t rcv_cb)
+               std::function<void(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)> rcv_cb)
 {
     i->fd = open(serial_device, O_RDWR | O_NOCTTY | O_NONBLOCK | O_SYNC);
     printf("open\n");
