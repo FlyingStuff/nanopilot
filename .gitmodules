@@ -16,9 +16,6 @@
 [submodule "src/parameter"]
 	path = src/low_level_controller/lib/parameter
 	url = https://github.com/Stapelzeiger/parameter
-[submodule "src/sensors"]
-	path = src/low_level_controller/lib/sensors
-	url = https://github.com/Stapelzeiger/sensor-drivers.git
 [submodule "src/eigen"]
 	path = src/low_level_controller/lib/math/eigen
 	url = https://github.com/Stapelzeiger/eigen.git
