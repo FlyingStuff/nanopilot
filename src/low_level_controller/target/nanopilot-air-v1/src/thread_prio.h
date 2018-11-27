@@ -10,5 +10,5 @@
 #define THD_PRIO_RC_SUMD_IN                             101
 #define THD_PRIO_CONTROL_LOOP                           100
 #define THD_PRIO_HOTT_TM                                20
-
+#define THD_PRIO_SPI_DRIVERS                            90
 #endif /* THREAD_PRIO_H */

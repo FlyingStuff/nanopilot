@@ -15,7 +15,7 @@
 #include "ros_comm.hpp"
 #include "control_loop.hpp"
 #include "hott_tm.hpp"
-
+#include "lsm6dsm_publisher.hpp"
 
 void dbg_enter_irq(void) {
     palSetPad(GPIOE, GPIOE_PIN11_TP4);
@@ -116,6 +116,8 @@ int main(void) {
     sumd_input_start((BaseSequentialStream*)&SD5);
     control_start();
     hott_tm_start((BaseSequentialStream*)&SD3);
+
+    lsm6dsm_publisher_start(&SPID2);
 
     while (true) {
         chThdSleepMilliseconds(1000);

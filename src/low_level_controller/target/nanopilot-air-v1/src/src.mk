@@ -21,6 +21,7 @@ PROJCSRC += $(PROJROOT)/src/timestamp_stm32.c
 PROJCSRC += $(PROJROOT)/src/hott/sumd.c
 PROJCSRC += $(PROJROOT)/src/hott/telemetry.c
 PROJCSRC += $(PROJROOT)/src/pid.c
+PROJCSRC += $(PROJROOT)/src/drivers/lsm6dsm.c
 PROJCPPSRC += $(PROJROOT)/src/hott_tm.cpp
 PROJCPPSRC += $(PROJROOT)/src/rc_input.cpp
 PROJCPPSRC += $(PROJROOT)/src/sumd_input.cpp
@@ -28,6 +29,8 @@ PROJCPPSRC += $(PROJROOT)/src/rc_pwm_out.cpp
 PROJCPPSRC += $(PROJROOT)/src/ros_comm.cpp
 PROJCPPSRC += $(PROJROOT)/src/pid_with_parameter.cpp
 PROJCPPSRC += $(PROJROOT)/src/control_loop.cpp
+PROJCPPSRC += $(PROJROOT)/src/lsm6dsm_publisher.cpp
+
 
 PROJCSRC += $(PROJROOT)/src/syscalls.c
 PROJCSRC += $(PROJROOT)/src/shell_cmds.c
