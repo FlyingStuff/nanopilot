@@ -117,7 +117,15 @@ int main(void) {
     control_start();
     hott_tm_start((BaseSequentialStream*)&SD3);
 
-    lsm6dsm_publisher_start(&SPID2);
+
+    SPIConfig lsm6dsm_spi_config={
+        .end_cb = NULL,
+        .ssport = GPIOD,
+        .sspad = GPIOD_PIN10_SENS_LSM_CS,
+        .cr1 =  SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA,
+        .cr2 = 0,
+    };
+    lsm6dsm_publisher_start(&SPID2, &lsm6dsm_spi_config);
 
     while (true) {
         chThdSleepMilliseconds(1000);

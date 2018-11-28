@@ -7,6 +7,6 @@
 
 extern msgbus::Topic<rate_gyro_sample_t> rate_gyro;
 
-void lsm6dsm_publisher_start(SPIDriver *spi);
+void lsm6dsm_publisher_start(SPIDriver *spi, const SPIConfig *config);
 
 #endif /* LSM6DSM_PUBLISHER_HPP */

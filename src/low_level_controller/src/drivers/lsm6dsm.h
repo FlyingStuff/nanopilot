@@ -9,11 +9,12 @@ extern "C" {
 
 typedef struct {
     SPIDriver *driver;
+    SPIConfig driver_config;
 } lsm6dsm_t;
 
 
 /* Initializes the LSM6DSM device datastructure */
-void lsm6dsm_init(lsm6dsm_t *dev, SPIDriver *driver);
+void lsm6dsm_init(lsm6dsm_t *dev, SPIDriver *driver, const SPIConfig *config);
 
 /* Returns true, if device ID is correct */
 bool lsm6dsm_ping(lsm6dsm_t *dev);

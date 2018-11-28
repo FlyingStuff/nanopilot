@@ -38,21 +38,27 @@ CTRL10_C = 0 // default
 #define WHO_AM_I 0x0F
 
 
-void lsm6dsm_init(lsm6dsm_t *dev, SPIDriver *driver)
+void lsm6dsm_init(lsm6dsm_t *dev, SPIDriver *driver, const SPIConfig *config)
 {
     dev->driver = driver;
+    dev->driver_config = *config;
 }
 
 bool lsm6dsm_ping(lsm6dsm_t *dev)
 {
+    spiAcquireBus(dev->driver);
+    spiStart(dev->driver, &dev->driver_config);
     spiSelect(dev->driver);
     uint8_t id_reg_addr = WHO_AM_I + LSM6DSM_READ;
     uint8_t id_reg_val;
     spiSend(dev->driver, 1, &id_reg_addr);
     spiReceive(dev->driver, 1, &id_reg_val);
     spiUnselect(dev->driver);
+    spiReleaseBus(dev->driver);
     return id_reg_val == 0x6A;
 }
+
+
 
 /* LSM6DSM setup for given configuration options */
 void lsm6dsm_setup(lsm6dsm_t *dev);
