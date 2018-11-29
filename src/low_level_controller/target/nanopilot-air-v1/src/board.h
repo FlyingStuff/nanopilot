@@ -590,7 +590,7 @@
                                      PIN_OSPEED_HIGH(GPIOE_PIN6_USB3_PWR_EN) |\
                                      PIN_OSPEED_HIGH(GPIOE_PIN7_RESET_CONTROL_EN) |\
                                      PIN_OSPEED_HIGH(GPIOE_PIN8_HEARTBEAT_LED) |\
-                                     PIN_OSPEED_HIGH(GPIOE_PIN9_ARM_LED) |\
+                                     PIN_OSPEED_LOW(GPIOE_PIN9_ARM_LED) |\
                                      PIN_OSPEED_HIGH(GPIOE_PIN10_ARM_SWITCH) |\
                                      PIN_OSPEED_HIGH(GPIOE_PIN11_TP4) |\
                                      PIN_OSPEED_HIGH(GPIOE_PIN12_TP5) |\
@@ -720,6 +720,7 @@
 extern "C" {
 #endif
   bool arm_switch_is_armed(void);
+  void arm_led_set(bool on);
   void boardInit(void);
 #ifdef __cplusplus
 }

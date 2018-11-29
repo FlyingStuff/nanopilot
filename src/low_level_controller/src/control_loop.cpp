@@ -49,7 +49,6 @@ static THD_FUNCTION(control_thread, arg) {
         }
         chThdSleepMicroseconds(loop_period_us);
 
-        std::array<float, NB_ACTUATORS> output;
         timestamp_t now = timestamp_get();
         struct rc_input_s rc_in = sub_rc.get_value();
         if (!rc_in.no_signal) {
@@ -58,16 +57,15 @@ static THD_FUNCTION(control_thread, arg) {
 
         if (arm_switch_is_armed() && arm_remote_switch_is_armed(rc_in)
             &&  timestamp_duration(last_rc_signal, now) < 1.5f) {
+            std::array<float, NB_ACTUATORS> output;
             output[0] = rc_in.channel[0];
+            actuators_set_output(output);
             output_armed.publish(true);
         } else {
-            for (auto &o: output) {
-                o = 0.0f;
-            }
+            actuators_disable_all();
             output_armed.publish(false);
         }
 
-        actuators_set_output(output);
     }
 }
 

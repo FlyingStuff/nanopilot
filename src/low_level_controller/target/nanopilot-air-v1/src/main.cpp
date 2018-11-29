@@ -16,6 +16,7 @@
 #include "control_loop.hpp"
 #include "hott_tm.hpp"
 #include "lsm6dsm_publisher.hpp"
+#include "arm_led.h"
 
 void dbg_enter_irq(void) {
     palSetPad(GPIOE, GPIOE_PIN11_TP4);
@@ -112,11 +113,11 @@ int main(void) {
 
     // read_parameters_from_eeprom();
 
+    arm_led_task_start();
     run_shell((BaseSequentialStream*)&SD1);
     sumd_input_start((BaseSequentialStream*)&SD5);
     control_start();
     hott_tm_start((BaseSequentialStream*)&SD3);
-
 
     SPIConfig lsm6dsm_spi_config={
         .end_cb = NULL,
