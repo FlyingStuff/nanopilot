@@ -35,7 +35,7 @@ static THD_FUNCTION(control_thread, arg) {
 
     (void)arg;
     chRegSetThreadName("control");
-    uint32_t loop_period_us;
+    uint32_t loop_period_us=0;
 
     auto sub_rc = msgbus::subscribe(rc_input);
     sub_rc.wait_for_update(); // make sure rc_input is valid
