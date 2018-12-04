@@ -4,6 +4,7 @@
 
 static std::array<PWMOutputBank, 4> pwm_banks = { {PWMD1, PWMD8, PWMD4, PWMD3} };
 static std::array<PWMActuator, NB_ACTUATORS> actuators;
+parameter_namespace_t actuators_namespace;
 parameter_t pwm_bank_1_output_period_us_param;
 parameter_t pwm_bank_2_output_period_us_param;
 parameter_t pwm_bank_3_output_period_us_param;
@@ -11,30 +12,31 @@ parameter_t pwm_bank_4_output_period_us_param;
 
 void initialize_actuators(parameter_namespace_t *ns)
 {
-    actuators[15].declare_parameters(ns, "pwm16");
-    actuators[14].declare_parameters(ns, "pwm15");
-    actuators[13].declare_parameters(ns, "pwm14");
-    actuators[12].declare_parameters(ns, "pwm13");
-    actuators[11].declare_parameters(ns, "pwm12");
-    actuators[10].declare_parameters(ns, "pwm11");
-    actuators[9].declare_parameters(ns, "pwm10");
-    actuators[8].declare_parameters(ns, "pwm9");
-    actuators[7].declare_parameters(ns, "pwm8");
-    actuators[6].declare_parameters(ns, "pwm7");
-    actuators[5].declare_parameters(ns, "pwm6");
-    actuators[4].declare_parameters(ns, "pwm5");
-    actuators[3].declare_parameters(ns, "pwm4");
-    actuators[2].declare_parameters(ns, "pwm3");
-    actuators[1].declare_parameters(ns, "pwm2");
-    actuators[0].declare_parameters(ns, "pwm1");
+    parameter_namespace_declare(&actuators_namespace, ns, "actuators");
+    actuators[15].declare_parameters(&actuators_namespace, "pwm16");
+    actuators[14].declare_parameters(&actuators_namespace, "pwm15");
+    actuators[13].declare_parameters(&actuators_namespace, "pwm14");
+    actuators[12].declare_parameters(&actuators_namespace, "pwm13");
+    actuators[11].declare_parameters(&actuators_namespace, "pwm12");
+    actuators[10].declare_parameters(&actuators_namespace, "pwm11");
+    actuators[9].declare_parameters(&actuators_namespace, "pwm10");
+    actuators[8].declare_parameters(&actuators_namespace, "pwm9");
+    actuators[7].declare_parameters(&actuators_namespace, "pwm8");
+    actuators[6].declare_parameters(&actuators_namespace, "pwm7");
+    actuators[5].declare_parameters(&actuators_namespace, "pwm6");
+    actuators[4].declare_parameters(&actuators_namespace, "pwm5");
+    actuators[3].declare_parameters(&actuators_namespace, "pwm4");
+    actuators[2].declare_parameters(&actuators_namespace, "pwm3");
+    actuators[1].declare_parameters(&actuators_namespace, "pwm2");
+    actuators[0].declare_parameters(&actuators_namespace, "pwm1");
     parameter_scalar_declare_with_default(&pwm_bank_4_output_period_us_param,
-        ns, "pwm_13_to_16_output_period_us", 20000);
+        &actuators_namespace, "pwm_13_to_16_output_period_us", 20000);
     parameter_scalar_declare_with_default(&pwm_bank_3_output_period_us_param,
-        ns, "pwm_9_to_12_output_period_us", 20000);
+        &actuators_namespace, "pwm_9_to_12_output_period_us", 20000);
     parameter_scalar_declare_with_default(&pwm_bank_2_output_period_us_param,
-        ns, "pwm_5_to_8_output_period_us", 20000);
+        &actuators_namespace, "pwm_5_to_8_output_period_us", 20000);
     parameter_scalar_declare_with_default(&pwm_bank_1_output_period_us_param,
-        ns, "pwm_1_to_4_output_period_us", 20000);
+        &actuators_namespace, "pwm_1_to_4_output_period_us", 20000);
 
 
     for(auto& b: pwm_banks) {
