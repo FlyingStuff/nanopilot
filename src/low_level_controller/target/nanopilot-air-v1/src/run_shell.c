@@ -23,6 +23,9 @@ static const ShellCommand commands[] = {
     {"parameter_list", cmd_parameter_list},
     {"parameter_set", cmd_parameter_set},
     {"log_lvl", cmd_stdout_log_lvl},
+    {"parameter_load", cmd_parameter_load},
+    {"parameter_save", cmd_parameter_save},
+    {"parameter_erase", cmd_parameter_erase},
     {NULL, NULL}
 };
 

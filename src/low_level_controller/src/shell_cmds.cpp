@@ -1,7 +1,6 @@
 #include <ch.h>
 #include <hal.h>
 #include <chprintf.h>
-#include <shell.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -10,7 +9,9 @@
 #include "syscalls.h"
 #include "panic_handler.h"
 #include "log_handlers.h"
+#include "parameter_storage.h"
 
+#include "shell_cmds.h"
 
 void cmd_mem(BaseSequentialStream *chp, int argc, char *argv[]) {
     (void)argc;
@@ -63,7 +64,7 @@ void cmd_cpu(BaseSequentialStream *chp, int argc, char *argv[]) {
         systime_t t2;
     };
 
-    struct thd_timing_s *thread_times = malloc(sizeof(struct thd_timing_s)*thd_cnt);
+    struct thd_timing_s *thread_times = (struct thd_timing_s *)malloc(sizeof(struct thd_timing_s)*thd_cnt);
     if (thread_times != NULL) {
         int i;
         tp = chRegFirstThread();
@@ -161,3 +162,21 @@ void cmd_stdout_log_lvl(BaseSequentialStream *stream, int argc, char *argv[]) {
     }
 }
 
+void cmd_parameter_load(BaseSequentialStream *stream, int argc, char *argv[]) {
+    (void)stream;
+    (void)argc;
+    (void)argv;
+    parameter_load_from_persistent_store();
+}
+void cmd_parameter_save(BaseSequentialStream *stream, int argc, char *argv[]) {
+    (void)stream;
+    (void)argc;
+    (void)argv;
+    parameter_save_to_persistent_store();
+}
+void cmd_parameter_erase(BaseSequentialStream *stream, int argc, char *argv[]) {
+    (void)stream;
+    (void)argc;
+    (void)argv;
+    parameter_erase_persistent_store();
+}

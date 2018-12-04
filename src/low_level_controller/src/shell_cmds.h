@@ -2,7 +2,6 @@
 #define SHELL_CMDS_H
 
 #include <ch.h>
-#include <shell.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,6 +16,9 @@ void cmd_panic_get(BaseSequentialStream *chp, int argc, char *argv[]);
 void cmd_parameter_list(BaseSequentialStream *stream, int argc, char *argv[]);
 void cmd_parameter_set(BaseSequentialStream *stream, int argc, char *argv[]);
 void cmd_stdout_log_lvl(BaseSequentialStream *stream, int argc, char *argv[]);
+void cmd_parameter_load(BaseSequentialStream *stream, int argc, char *argv[]);
+void cmd_parameter_save(BaseSequentialStream *stream, int argc, char *argv[]);
+void cmd_parameter_erase(BaseSequentialStream *stream, int argc, char *argv[]);
 
 #ifdef __cplusplus
 }
