@@ -31,7 +31,7 @@ PROJCPPSRC += $(PROJROOT)/src/pid_with_parameter.cpp
 PROJCPPSRC += $(PROJROOT)/src/control_loop.cpp
 
 PROJCSRC += $(PROJROOT)/src/syscalls.c
-PROJCSRC += $(PROJROOT)/src/shell_cmds.c
+PROJCPPSRC += $(PROJROOT)/src/shell_cmds.cpp
 PROJCSRC += $(PROJROOT)/src/panic_handler.c
 
 PROJCSRC += $(PROJROOT)/lib/mcu/arm-cortex-tools/fault.c
