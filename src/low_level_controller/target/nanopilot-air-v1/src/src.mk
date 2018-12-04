@@ -14,7 +14,6 @@ PROJCSRC += $(TARGETROOT)/src/run_shell.c
 
 PROJCSRC += $(PROJROOT)/src/blocking_uart.c
 PROJCSRC += $(PROJROOT)/src/parameter_port.c
-PROJCSRC += $(PROJROOT)/src/parameter_storage.c
 PROJCSRC += $(PROJROOT)/src/log.c
 PROJCSRC += $(PROJROOT)/src/timestamp.c
 PROJCSRC += $(PROJROOT)/src/timestamp_stm32.c
@@ -22,6 +21,8 @@ PROJCSRC += $(PROJROOT)/src/hott/sumd.c
 PROJCSRC += $(PROJROOT)/src/hott/telemetry.c
 PROJCSRC += $(PROJROOT)/src/pid.c
 PROJCSRC += $(PROJROOT)/src/drivers/lsm6dsm.c
+PROJCPPSRC += $(PROJROOT)/src/parameter_storage.cpp
+PROJCPPSRC += $(PROJROOT)/src/eeprom.cpp
 PROJCPPSRC += $(PROJROOT)/src/hott_tm.cpp
 PROJCPPSRC += $(PROJROOT)/src/rc_input.cpp
 PROJCPPSRC += $(PROJROOT)/src/sumd_input.cpp
@@ -46,6 +47,10 @@ PROJCSRC += $(PROJROOT)/lib/comm/serial-datagram/serial_datagram_buffer_writer.c
 PROJCSRC += $(PROJROOT)/lib/comm/crc/crc32.c
 
 PROJCSRC += $(PROJROOT)/lib/parameter/parameter.c
+PROJCSRC += $(PROJROOT)/lib/parameter/parameter_msgpack.c
 PROJCSRC += $(PROJROOT)/lib/parameter/parameter_print.c
+
+PROJCSRC += $(PROJROOT)/lib/comm/cmp/cmp.c
+PROJCSRC += $(PROJROOT)/lib/comm/cmp_mem_access/cmp_mem_access.c
 
 PROJCPPSRC += $(PROJROOT)/ros_interface/comm.cpp

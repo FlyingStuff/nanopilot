@@ -72,6 +72,19 @@ static void init()
     // uart4 connected to GPS
     uart_config.speed = 9600;
     sdStart(&SD4, &uart_config);
+
+    // internal I2C
+    uint32_t i2c_presc = 8; // 72/(8+1) = 8Mhz, follow fast mode 400kHz example in ref manual
+    uint32_t i2c_scll = 0x9;
+    uint32_t i2c_sclh = 0x3;
+    uint32_t i2c_sdadel = 0x1;
+    uint32_t i2c_scldel = 0x3;
+    const I2CConfig i2c_cfg = {
+        .timingr = i2c_scll + (i2c_sclh<<8) + (i2c_sdadel<<16) + (i2c_scldel<<20) + (i2c_presc<<28),
+        .cr1 = 0,
+        .cr2 = 0
+    };
+    i2cStart(&I2CD1, &i2c_cfg);
 }
 
 log_handler_t log_handler_stdout;
@@ -93,7 +106,7 @@ int main(void) {
     init();
 
     timestamp_stm32_init();
-    parameter_init();
+    parameter_init(&I2CD1, 0x50);
 
     log_init();
     log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
@@ -111,7 +124,9 @@ int main(void) {
     control_init();
     initialize_actuators(&parameters);
 
-    // read_parameters_from_eeprom();
+    if (parameter_load_from_persistent_store()) {
+        log_info("parameters loaded");
+    }
 
     arm_led_task_start();
     run_shell((BaseSequentialStream*)&SD1);

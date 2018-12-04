@@ -15,13 +15,13 @@ PROJCSRC += $(TARGETROOT)/src/run_shell.c
 
 PROJCSRC += $(PROJROOT)/src/blocking_uart.c
 PROJCSRC += $(PROJROOT)/src/parameter_port.c
-PROJCSRC += $(PROJROOT)/src/parameter_storage.c
 PROJCSRC += $(PROJROOT)/src/log.c
 PROJCSRC += $(PROJROOT)/src/timestamp.c
 PROJCSRC += $(PROJROOT)/src/timestamp_stm32.c
 PROJCSRC += $(PROJROOT)/src/hott/sumd.c
 PROJCSRC += $(PROJROOT)/src/hott/telemetry.c
 PROJCSRC += $(PROJROOT)/src/pid.c
+PROJCPPSRC += $(PROJROOT)/src/parameter_storage.cpp
 PROJCPPSRC += $(PROJROOT)/src/hott_tm.cpp
 PROJCPPSRC += $(PROJROOT)/src/rc_input.cpp
 PROJCPPSRC += $(PROJROOT)/src/sumd_input.cpp
