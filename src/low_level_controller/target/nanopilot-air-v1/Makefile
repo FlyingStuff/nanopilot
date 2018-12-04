@@ -30,7 +30,7 @@ endif
 
 # Enable this if you want link time optimizations (LTO)
 ifeq ($(USE_LTO),)
-  USE_LTO = yes
+  USE_LTO = no
 endif
 
 # If enabled, this option allows to compile the application in THUMB mode.
@@ -209,7 +209,7 @@ CPPWARN = -Wall -Wextra -Wundef -Werror
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = -D__CHIBIOS__ -DDEBUG=1
+UDEFS = -D__CHIBIOS__
 
 # Define ASM defines here
 UADEFS =
@@ -229,3 +229,6 @@ ULIBS =
 
 RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
+
+POST_MAKE_ALL_RULE_HOOK:
+	python $(PROJROOT)/scripts/heap_size.py $(BUILDDIR)/$(PROJECT).elf

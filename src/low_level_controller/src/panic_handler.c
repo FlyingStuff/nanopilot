@@ -49,7 +49,7 @@ void panic_handler(const char *reason)
         __asm__("BKPT");
     }
 
-#else // non-debug builds reboot in safemode
+#else // non-debug builds reboot
     NVIC_SystemReset();
 #endif
 }
