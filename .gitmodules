@@ -16,12 +16,12 @@
 [submodule "src/parameter"]
 	path = src/low_level_controller/lib/parameter
 	url = https://github.com/Stapelzeiger/parameter
-[submodule "src/eigen"]
-	path = src/low_level_controller/lib/math/eigen
-	url = https://github.com/Stapelzeiger/eigen.git
 [submodule "src/arm-cortex-tools"]
 	path = src/low_level_controller/lib/mcu/arm-cortex-tools
 	url = https://github.com/cvra/arm-cortex-tools.git
 [submodule "src/low_level_controller/lib/libnop"]
 	path = src/low_level_controller/lib/libnop
 	url = https://github.com/google/libnop.git
+[submodule "src/low_level_controller/lib/eigen"]
+	path = src/low_level_controller/lib/eigen
+	url = https://github.com/eigenteam/eigen-git-mirror.git
