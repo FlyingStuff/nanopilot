@@ -11,10 +11,12 @@ static THD_FUNCTION(lsm6dsm_publisher, arg)
 {
     (void)arg;
     chRegSetThreadName("lsm6dsm_publisher");
-
+    float gyro[3], acc[3], temperature;
+    lsm6dsm_setup(&lsm6dsm_dev);
     while (true) {
-        log_debug("%d", (int)lsm6dsm_ping(&lsm6dsm_dev));
-        chThdSleepMilliseconds(1000);
+        lsm6dsm_read(&lsm6dsm_dev, gyro, acc, &temperature);
+
+        chThdSleepMilliseconds(1);
     }
 }
 

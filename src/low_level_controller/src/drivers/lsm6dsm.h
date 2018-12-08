@@ -10,6 +10,8 @@ extern "C" {
 typedef struct {
     SPIDriver *driver;
     SPIConfig driver_config;
+    float gyro_FS;
+    uint16_t acc_FS;
 } lsm6dsm_t;
 
 
