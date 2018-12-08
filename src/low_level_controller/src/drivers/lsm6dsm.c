@@ -121,6 +121,10 @@ void lsm6dsm_setup(lsm6dsm_t *dev)
 #include "log.h"
 
 
+#define STATUS_REG_TDA (1<<2)
+#define STATUS_REG_GDA (1<<1)
+#define STATUS_REG_XLDA (1<<0)
+
 
 /* Reads gyro rates {x,y,z} in rad/s, accelerometer {x,y,z} in m/s
  * and temperature in deg Celsius. Returns the set of variables that were updated.
@@ -140,18 +144,28 @@ int lsm6dsm_read(lsm6dsm_t *dev, float *gyro, float *acc, float *temperature){
     spiUnselect(dev->driver);
     spiReleaseBus(dev->driver);
 
-    *temperature = (float)read_word(&buf[2])/256 + 25;
+    uint8_t status_register = buf[0];
 
-    gyro[0] = (float)(dev->gyro_FS * read_word(&buf[2+2]))/(1<<15);
-    gyro[1] = (float)(dev->gyro_FS * read_word(&buf[2+4]))/(1<<15);
-    gyro[2] = (float)(dev->gyro_FS * read_word(&buf[2+6]))/(1<<15);
+    int updated_sensors = 0;
 
-    acc[0] = (float) dev->acc_FS * read_word(&buf[2+8]) * STANDARD_GRAVITY/(1<<15);
-    acc[1] = (float) dev->acc_FS * read_word(&buf[2+10]) * STANDARD_GRAVITY/(1<<15);
-    acc[2] = (float) dev->acc_FS * read_word(&buf[2+12]) * STANDARD_GRAVITY/(1<<15);
+    if (status_register & STATUS_REG_TDA) {
+        updated_sensors |= LSM6DSM_READ_TEMP_WAS_UPDATED;
+        *temperature = (float)read_word(&buf[2])/256 + 25;
+    }
 
+    if (status_register & STATUS_REG_GDA) {
+        updated_sensors |= LSM6DSM_READ_GYRO_WAS_UPDATED;
+        gyro[0] = (float)(dev->gyro_FS * read_word(&buf[2+2]))/(1<<15);
+        gyro[1] = (float)(dev->gyro_FS * read_word(&buf[2+4]))/(1<<15);
+        gyro[2] = (float)(dev->gyro_FS * read_word(&buf[2+6]))/(1<<15);
+    }
 
+    if (status_register & STATUS_REG_XLDA) {
+        updated_sensors |= LSM6DSM_READ_ACC_WAS_UPDATED;
+        acc[0] = (float) dev->acc_FS * read_word(&buf[2+8]) * STANDARD_GRAVITY/(1<<15);
+        acc[1] = (float) dev->acc_FS * read_word(&buf[2+10]) * STANDARD_GRAVITY/(1<<15);
+        acc[2] = (float) dev->acc_FS * read_word(&buf[2+12]) * STANDARD_GRAVITY/(1<<15);
+    }
 
-
-    return 0;
+    return updated_sensors;
 }
