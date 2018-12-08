@@ -53,7 +53,7 @@ static THD_FUNCTION(blinking_thread, arg) {
 }
 
 
-static void init()
+static void init_interfaces()
 {
     SerialConfig uart_config = { .speed=SERIAL_DEFAULT_BITRATE, .cr1=0,
                                  .cr2=USART_CR2_STOP1_BITS, .cr3=USART_CR3_RTSE | USART_CR3_CTSE };
@@ -103,7 +103,7 @@ int main(void) {
     mpu_init();
     fault_init();
 
-    init();
+    init_interfaces();
 
     timestamp_stm32_init();
     parameter_init(&I2CD1, 0x50);
@@ -141,7 +141,11 @@ int main(void) {
         .cr1 =  SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA,
         .cr2 = 0,
     };
-    lsm6dsm_publisher_start(&SPID2, &lsm6dsm_spi_config);
+    Eigen::Matrix3f R_lsm6dsm_to_board;
+    R_lsm6dsm_to_board << 1, 0, 0,
+                          0, 1, 0,
+                          0, 0, 1;
+    lsm6dsm_publisher_start(&SPID2, &lsm6dsm_spi_config, R_lsm6dsm_to_board);
 
     while (true) {
         chThdSleepMilliseconds(1000);

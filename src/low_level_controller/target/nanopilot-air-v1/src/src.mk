@@ -2,6 +2,7 @@ PROJINC += $(TARGETROOT)/src/
 PROJINC += $(PROJROOT)/lib/comm/
 PROJINC += $(PROJROOT)/lib/mcu/
 PROJINC += $(PROJROOT)/lib/
+PROJINC += $(PROJROOT)/lib/eigen/
 PROJINC += $(PROJROOT)/lib/libnop/include
 PROJINC += $(PROJROOT)/src
 PROJINC += $(PROJROOT)/
