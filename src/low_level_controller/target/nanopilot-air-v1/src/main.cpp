@@ -94,6 +94,27 @@ static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
     streamWrite((BaseSequentialStream*)&SD1, (uint8_t*)msg, len);
 }
 
+class PIDRateController: public RateController {
+    virtual void process(float rate_setpoint_rpy[3], float rate_measured_rpy[3], float rate_ctrl_output_rpy[3])
+    {
+        (void)rate_setpoint_rpy;
+        (void)rate_measured_rpy;
+        (void)rate_ctrl_output_rpy;
+    }
+    virtual void set_update_frequency(float freq)
+    {
+        (void)freq;
+    }
+};
+class LinearRCMixer: public RCMixer {
+    virtual void mix(float rate_ctrl_output_rpy[3], const struct rc_input_s &rc_inputs , std::array<float, NB_ACTUATORS> output)
+    {
+        (void)rate_ctrl_output_rpy;
+        (void)rc_inputs;
+        (void)output;
+    }
+};
+
 
 int main(void) {
     halInit();
@@ -131,7 +152,9 @@ int main(void) {
     arm_led_task_start();
     run_shell((BaseSequentialStream*)&SD1);
     sumd_input_start((BaseSequentialStream*)&SD5);
-    control_start();
+    PIDRateController rate_ctrl;
+    LinearRCMixer mixer;
+    control_start(rate_ctrl, mixer);
     hott_tm_start((BaseSequentialStream*)&SD3);
 
     SPIConfig lsm6dsm_spi_config={
