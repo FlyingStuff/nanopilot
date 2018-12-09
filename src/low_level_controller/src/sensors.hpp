@@ -1,9 +1,9 @@
-#ifndef SENSORS_H
-#define SENSORS_H
+#ifndef SENSORS_HPP
+#define SENSORS_HPP
 
 #include <stdint.h>
 #include "timestamp.h"
-
+#include "msgbus/msgbus.hpp"
 
 typedef struct {
     float rate[3];                  // [rad/s]
@@ -30,4 +30,7 @@ typedef struct {
 } magnetometer_sample_t;
 
 
-#endif // SENSORS_H
+extern msgbus::Topic<rate_gyro_sample_t> rate_gyro;
+
+
+#endif // SENSORS_HPP

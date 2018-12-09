@@ -33,6 +33,7 @@ PROJCPPSRC += $(PROJROOT)/src/pid_with_parameter.cpp
 PROJCPPSRC += $(PROJROOT)/src/control_loop.cpp
 PROJCPPSRC += $(PROJROOT)/src/lsm6dsm_publisher.cpp
 PROJCPPSRC += $(PROJROOT)/src/arm_led.cpp
+PROJCPPSRC += $(PROJROOT)/src/sensors.cpp
 
 
 PROJCSRC += $(PROJROOT)/src/syscalls.c

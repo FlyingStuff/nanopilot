@@ -5,6 +5,7 @@
 #include "actuators.hpp"
 #include "thread_prio.h"
 #include "timestamp.h"
+#include "sensors.hpp"
 
 #include "control_loop.hpp"
 
@@ -73,6 +74,8 @@ static THD_FUNCTION(control_thread, arg)
 
     auto sub_rc = msgbus::subscribe(rc_input);
     sub_rc.wait_for_update(); // make sure rc_input is valid
+    auto sub_gyro = msgbus::subscribe(rate_gyro);
+    sub_gyro.wait_for_update(); // make sure gyro is valid
 
     timestamp_t last_rc_signal = 0;
 
@@ -89,9 +92,11 @@ static THD_FUNCTION(control_thread, arg)
         if (!rc_in.no_signal) {
             last_rc_signal = rc_in.timestamp;
         }
+        rate_gyro_sample_t gyro = sub_gyro.get_value();
 
         if (arm_switch_is_armed() && arm_remote_switch_is_armed(rc_in)
-            &&  timestamp_duration(last_rc_signal, now) < 1.5f) {
+            && timestamp_duration(last_rc_signal, now) < 1.5f
+            && timestamp_duration(gyro.timestamp, now) < 0.1f) {
             std::array<float, NB_ACTUATORS> output;
 
             float rate_setpoint_rpy[3];
@@ -99,6 +104,7 @@ static THD_FUNCTION(control_thread, arg)
             float rate_measured_rpy[3];
             float rate_ctrl_output[3];
 
+            // transform rate to body frame
             s_rate_controller->process(rate_setpoint_rpy, rate_measured_rpy, rate_ctrl_output);
             s_rc_mixer->mix(rate_ctrl_output, rc_in, output);
 
