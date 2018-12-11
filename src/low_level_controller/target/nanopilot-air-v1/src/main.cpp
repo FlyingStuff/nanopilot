@@ -52,6 +52,17 @@ static THD_FUNCTION(blinking_thread, arg) {
     }
 }
 
+// internal I2C
+static const uint32_t i2c_presc = 8; // 72/(8+1) = 8Mhz, follow fast mode 400kHz example in ref manual
+static const uint32_t i2c_scll = 0x9;
+static const uint32_t i2c_sclh = 0x3;
+static const uint32_t i2c_sdadel = 0x1;
+static const uint32_t i2c_scldel = 0x3;
+static const I2CConfig i2c_cfg = {
+    .timingr = i2c_scll + (i2c_sclh<<8) + (i2c_sdadel<<16) + (i2c_scldel<<20) + (i2c_presc<<28),
+    .cr1 = 0,
+    .cr2 = 0
+};
 
 static void init_interfaces()
 {
@@ -73,17 +84,6 @@ static void init_interfaces()
     uart_config.speed = 9600;
     sdStart(&SD4, &uart_config);
 
-    // internal I2C
-    uint32_t i2c_presc = 8; // 72/(8+1) = 8Mhz, follow fast mode 400kHz example in ref manual
-    uint32_t i2c_scll = 0x9;
-    uint32_t i2c_sclh = 0x3;
-    uint32_t i2c_sdadel = 0x1;
-    uint32_t i2c_scldel = 0x3;
-    const I2CConfig i2c_cfg = {
-        .timingr = i2c_scll + (i2c_sclh<<8) + (i2c_sdadel<<16) + (i2c_scldel<<20) + (i2c_presc<<28),
-        .cr1 = 0,
-        .cr2 = 0
-    };
     i2cStart(&I2CD1, &i2c_cfg);
 }
 
