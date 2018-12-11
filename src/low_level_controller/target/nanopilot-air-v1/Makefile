@@ -209,7 +209,8 @@ CPPWARN = -Wall -Wextra -Wundef -Werror
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = -D__CHIBIOS__
+UDEFS = -D__CHIBIOS__ -DEIGEN_RUNTIME_NO_MALLOC
+
 
 # Define ASM defines here
 UADEFS =
