@@ -38,6 +38,7 @@ void PWMOutputBank::set_channel_pos_us(uint8_t channel_idx, uint16_t pulse_width
 
 void PWMOutputBank::disable_channel(uint8_t channel_idx)
 {
+    assert(channel_idx < 4);
     pwmDisableChannel(&m_pwm_driver, channel_idx);
 }
 
