@@ -16,6 +16,7 @@ bool EEPROM::write(size_t addr, size_t size, const void *buffer) const
         transmit_buffer[1] = static_cast<uint8_t>(write_addr);
         std::memcpy(&transmit_buffer[2], &static_cast<const uint8_t*>(buffer)[bytes_written], transmit_size);
         if (i2cMasterTransmit(m_i2c, m_addr, transmit_buffer, transmit_size+2, NULL, 0) != MSG_OK) {
+            i2cReleaseBus(m_i2c);
             return false;
         }
         chThdSleepMilliseconds(6);
@@ -37,6 +38,7 @@ bool EEPROM::read(size_t addr, size_t size, void *buffer) const
         size_t read_addr = addr + bytes_read;
         uint8_t addr_buf[2] = {static_cast<uint8_t>(read_addr >> 8), static_cast<uint8_t>(read_addr)};
         if (i2cMasterTransmit(m_i2c, m_addr, addr_buf, 2, &static_cast<uint8_t*>(buffer)[bytes_read], read_size) != MSG_OK) {
+            i2cReleaseBus(m_i2c);
             return false;
         }
         bytes_read += read_size;
