@@ -31,6 +31,7 @@ typedef struct {
 
 
 extern msgbus::Topic<rate_gyro_sample_t> rate_gyro;
+extern msgbus::Topic<accelerometer_sample_t> accelerometer;
 
 
 #endif // SENSORS_HPP
