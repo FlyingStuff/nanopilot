@@ -13,21 +13,28 @@ static THD_FUNCTION(lsm6dsm_publisher, arg)
     (void)arg;
     chRegSetThreadName("lsm6dsm_publisher");
     float temperature;
+    Eigen::Vector3f rate_gyro_sensor, acc_sensor;
+
     lsm6dsm_setup(&_lsm6dsm_dev);
     while (true) {
 
-        rate_gyro_sample_t rate_gyro_sample;
-        accelerometer_sample_t acc_sample;
-        auto update_status = lsm6dsm_read(&_lsm6dsm_dev, rate_gyro_sample.rate, acc_sample.acceleration, &temperature);
+        auto update_status = lsm6dsm_read(&_lsm6dsm_dev, rate_gyro_sensor.data(),  acc_sensor.data(), &temperature);
 
         if (update_status & LSM6DSM_READ_GYRO_WAS_UPDATED){
+            rate_gyro_sample_t rate_gyro_sample;
             rate_gyro_sample.timestamp = timestamp_get();
+            Map<Vector3f> rate_gyro_board(&rate_gyro_sample.rate);
+            rate_gyro_board = _R_sensor_to_board * rate_gyro_sensor;
             rate_gyro.publish(rate_gyro_sample);
 
         }
 
+
         if (update_status & LSM6DSM_READ_ACC_WAS_UPDATED){
+            accelerometer_sample_t acc_sample;
             acc_sample.timestamp = timestamp_get();
+            Map<Vector3f> acc_board(&acc_sample.rate);
+            acc_board = _R_sensor_to_board * acc_sensor;
             accelerometer.publish(acc_sample);
         }
         chThdSleepMilliseconds(1);
