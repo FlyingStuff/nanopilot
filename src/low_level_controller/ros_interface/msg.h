@@ -11,6 +11,10 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
     TIME=4,
     LOG=5,
     RC_INPUT=10,
+    IMU=20,
+    // ACCELEROMETER=21,
+    MAGNETOMETER=22,
+    BAROMETER=23,
     TEST=10000,
 };
 
@@ -35,5 +39,10 @@ struct SimpleType {
 
 #include "rc_input.hpp"
 NOP_EXTERNAL_STRUCTURE(rc_input_s, nb_channels, no_signal, channel, timestamp);
+#include "sensors.hpp"
+NOP_EXTERNAL_STRUCTURE(rate_gyro_sample_t, rate, timestamp);
+NOP_EXTERNAL_STRUCTURE(accelerometer_sample_t, acceleration, timestamp);
+NOP_EXTERNAL_STRUCTURE(barometer_sample_t, pressure, temperature, timestamp);
+NOP_EXTERNAL_STRUCTURE(magnetometer_sample_t, magnetic_field, timestamp);
 
 #endif /* ROS_INTERFACE_COMM_MSG_H */

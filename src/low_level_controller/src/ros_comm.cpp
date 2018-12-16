@@ -4,6 +4,7 @@
 #include "thread_prio.h"
 #include "timestamp.h"
 #include "rc_input.hpp"
+#include "sensors.hpp"
 #include "log.h"
 
 #include <math.h>
@@ -39,6 +40,8 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     chRegSetThreadName("comm_tx");
 
     auto rc_in_sub = msgbus::subscribe(rc_input);
+    auto rate_gyro_sub = msgbus::subscribe(rate_gyro);
+    std::array<msgbus::SubscriberBase*, 2> sub_list = {&rc_in_sub, &rate_gyro_sub};
     while (true) {
         comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
 
@@ -56,7 +59,13 @@ static THD_FUNCTION(comm_tx_thread, arg) {
             comm_send(&comm_if, RosInterfaceCommMsgID::RC_INPUT, buf, serializer.writer().size());
         }
 
-        chThdSleepMilliseconds(10);
+        if (rate_gyro_sub.has_update()) {
+            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+            serializer.Write(rate_gyro_sub.get_value());
+            comm_send(&comm_if, RosInterfaceCommMsgID::IMU, buf, serializer.writer().size());
+        }
+
+        msgbus::wait_for_update_on_any(sub_list.begin(), sub_list.end());
     }
 }
 

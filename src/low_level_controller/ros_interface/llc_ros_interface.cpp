@@ -7,6 +7,11 @@
 #include <rclcpp/rclcpp.hpp>
 #include "std_msgs/msg/string.hpp"
 #include <std_msgs/msg/u_int64.hpp>
+#include <std_msgs/msg/float64.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/fluid_pressure.hpp>
+#include <sensor_msgs/msg/magnetic_field.hpp>
+#include <sensor_msgs/msg/temperature.hpp>
 #include <autopilot_msgs/msg/rc_input.hpp>
 #include <chrono>
 #include "comm.h"
@@ -45,11 +50,14 @@ public:
         // parameter.
         custom_qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_LAST;
         m_timestamp_pub = this->create_publisher<std_msgs::msg::UInt64>("timestamp", custom_qos_profile);
+        m_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", custom_qos_profile);
         m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", custom_qos_profile);
+        m_latency_pub = = this->create_publisher<std_msgs::msg::Float64>("ping_latency", custom_qos_profile);
 
         auto rx_thd = std::thread(rx_thd_fn, &m_interface);
         rx_thd.detach();
-        m_ping_timer = this->create_wall_timer(10ms, [this](){this->send_ping();});
+        m_ping_timer = this->create_wall_timer(1000ms, [this](){this->send_ping();});
+        m_timesync_timer = this->create_wall_timer(100ms, [this](){this->trigger_timesync();});
     }
 
 private:
@@ -78,8 +86,12 @@ private:
             }
             break;
 
+        case RosInterfaceCommMsgID::LOG:
+            std::cout.write((char*)msg, len);
+            break;
+
         case RosInterfaceCommMsgID::HEARTBEAT:
-            printf("HEARTBEAT\n");
+            // printf("HEARTBEAT\n");
             break;
 
         case RosInterfaceCommMsgID::TIME:
@@ -106,13 +118,39 @@ private:
             auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
             rc_input_s val;
             deserializer.Read(&val);
-            std::cout << "rc input: " << val.channel[0] << " " << val.channel[1] << std::endl;
             auto message = autopilot_msgs::msg::RCInput();
             auto nb_channels = std::min(static_cast<uint32_t>(val.nb_channels), message.MAX_NB_CHANNELS);
             for (uint32_t i=0; i < nb_channels; i++) {
                 message.channels.push_back(val.channel[i]);
             }
+            message.signal = !val.no_signal;
             m_rcinput_pub->publish(message);
+            break;
+        }
+
+        case RosInterfaceCommMsgID::IMU:
+        {
+            std::cout << "imu" << std::endl;
+            auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+            rate_gyro_sample_t val;
+            deserializer.Read(&val);
+            auto message = sensor_msgs::msg::Imu();
+            message.header.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME);
+            message.header.frame_id = "imu";
+            message.orientation.x = 0;
+            message.orientation.y = 0;
+            message.orientation.z = 0;
+            message.orientation.w = 1;
+            message.orientation_covariance = {0};
+            message.angular_velocity.x = val.rate[0];
+            message.angular_velocity.y = val.rate[1];
+            message.angular_velocity.z = val.rate[2];
+            message.angular_velocity_covariance = {0};
+            message.linear_acceleration.x = 0;
+            message.linear_acceleration.y = 0;
+            message.linear_acceleration.z = 0;
+            message.linear_acceleration_covariance = {0};
+            m_imu_pub->publish(message);
             break;
         }
 
@@ -138,11 +176,19 @@ private:
         comm_send(&m_interface, RosInterfaceCommMsgID::PING, &ping, sizeof(ping));
     }
 
+
+    void trigger_timesync(void) {
+    }
+
     rclcpp::TimerBase::SharedPtr m_ping_timer;
+    rclcpp::TimerBase::SharedPtr m_timesync_timer;
     uint64_t m_ping_idx{0};
+    uint64_t m_ping_rcv_idx{0};
     comm_interface_t m_interface;
     rclcpp::Publisher<autopilot_msgs::msg::RCInput>::SharedPtr m_rcinput_pub;
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr m_timestamp_pub;
+    rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr m_latency_pub;
+    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr m_imu_pub;
 };
 
 
