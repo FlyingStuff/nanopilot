@@ -52,7 +52,7 @@ public:
         m_timestamp_pub = this->create_publisher<std_msgs::msg::UInt64>("timestamp", custom_qos_profile);
         m_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", custom_qos_profile);
         m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", custom_qos_profile);
-        m_latency_pub = = this->create_publisher<std_msgs::msg::Float64>("ping_latency", custom_qos_profile);
+        m_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency", custom_qos_profile);
 
         auto rx_thd = std::thread(rx_thd_fn, &m_interface);
         rx_thd.detach();
@@ -130,7 +130,6 @@ private:
 
         case RosInterfaceCommMsgID::IMU:
         {
-            std::cout << "imu" << std::endl;
             auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
             rate_gyro_sample_t val;
             deserializer.Read(&val);
