@@ -11,7 +11,7 @@ static THD_FUNCTION(arm_led_thread, arg) {
 
     (void)arg;
     chRegSetThreadName("arm led");
-    auto armed_sub = msgbus::subscribe(output_armed);
+    auto armed_sub = msgbus::subscribe(output_armed_topic);
 
     while (true) {
         if (arm_switch_is_armed()) {

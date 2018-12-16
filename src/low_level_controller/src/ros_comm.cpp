@@ -5,6 +5,7 @@
 #include "timestamp.h"
 #include "rc_input.hpp"
 #include "sensors.hpp"
+#include "control_loop.hpp"
 #include "log.h"
 
 #include <math.h>
@@ -40,8 +41,19 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     chRegSetThreadName("comm_tx");
 
     auto rc_in_sub = msgbus::subscribe(rc_input);
+    auto output_sub = msgbus::subscribe(actuator_output_topic);
+    auto rate_setpoint_rpy_sub = msgbus::subscribe(rate_setpoint_rpy_topic);
+    auto rate_measured_rpy_sub = msgbus::subscribe(rate_measured_rpy_topic);
+    auto rate_ctrl_output_rpy_sub = msgbus::subscribe(rate_ctrl_output_rpy_topic);
     auto rate_gyro_sub = msgbus::subscribe(rate_gyro);
-    std::array<msgbus::SubscriberBase*, 2> sub_list = {&rc_in_sub, &rate_gyro_sub};
+    std::array<msgbus::SubscriberBase*, 6> sub_list = {
+        &rc_in_sub,
+        &rate_gyro_sub,
+        &output_sub,
+        &rate_setpoint_rpy_sub,
+        &rate_measured_rpy_sub,
+        &rate_ctrl_output_rpy_sub,
+    };
     while (true) {
         comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
 
@@ -63,6 +75,30 @@ static THD_FUNCTION(comm_tx_thread, arg) {
             auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
             serializer.Write(rate_gyro_sub.get_value());
             comm_send(&comm_if, RosInterfaceCommMsgID::IMU, buf, serializer.writer().size());
+        }
+
+        if (output_sub.has_update()) {
+            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+            serializer.Write(output_sub.get_value());
+            comm_send(&comm_if, RosInterfaceCommMsgID::ACTUATOR_OUTPUT, buf, serializer.writer().size());
+        }
+
+        if (rate_setpoint_rpy_sub.has_update()) {
+            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+            serializer.Write(rate_setpoint_rpy_sub.get_value());
+            comm_send(&comm_if, RosInterfaceCommMsgID::RATE_CTRL_SETPOINT_RPY, buf, serializer.writer().size());
+        }
+
+        if (rate_measured_rpy_sub.has_update()) {
+            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+            serializer.Write(rate_measured_rpy_sub.get_value());
+            comm_send(&comm_if, RosInterfaceCommMsgID::RATE_CTRL_MEASURED_RPY, buf, serializer.writer().size());
+        }
+
+        if (rate_ctrl_output_rpy_sub.has_update()) {
+            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+            serializer.Write(rate_ctrl_output_rpy_sub.get_value());
+            comm_send(&comm_if, RosInterfaceCommMsgID::RATE_CTRL_OUTPUT_RPY, buf, serializer.writer().size());
         }
 
         msgbus::wait_for_update_on_any(sub_list.begin(), sub_list.end());

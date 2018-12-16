@@ -128,6 +128,19 @@ private:
             break;
         }
 
+        case RosInterfaceCommMsgID::ACTUATOR_OUTPUT:
+        {
+            auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+            std::vector<float> val;
+            deserializer.Read(&val);
+            std::cout << "out ";
+            for (auto o: val) {
+                std::cout << o << " ";
+            }
+            std::cout << std::endl;
+            break;
+        }
+
         case RosInterfaceCommMsgID::IMU:
         {
             auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);

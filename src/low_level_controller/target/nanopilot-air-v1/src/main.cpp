@@ -113,6 +113,9 @@ class LinearRCMixer: public RCMixer {
         (void)rc_inputs;
         (void)output;
         output[0] = rc_inputs.channel[0];
+        output[1] = rc_inputs.channel[0];
+        output[2] = rc_inputs.channel[0];
+        output[3] = rc_inputs.channel[0];
     }
 };
 

@@ -9,7 +9,11 @@
 
 #include "control_loop.hpp"
 
-msgbus::Topic<bool> output_armed;
+msgbus::Topic<bool> output_armed_topic;
+msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;
+msgbus::Topic<std::array<float, 3>> rate_setpoint_rpy_topic;
+msgbus::Topic<std::array<float, 3>> rate_measured_rpy_topic;
+msgbus::Topic<std::array<float, 3>> rate_ctrl_output_rpy_topic;
 static RateController *s_rate_controller;
 static RCMixer *s_rc_mixer;
 
@@ -99,20 +103,24 @@ static THD_FUNCTION(control_thread, arg)
             && timestamp_duration(gyro.timestamp, now) < 0.1f) {
             std::array<float, NB_ACTUATORS> output;
 
-            float rate_setpoint_rpy[3];
-            get_rc_rate_inputs(rc_in, rate_setpoint_rpy);
-            float rate_measured_rpy[3];
-            float rate_ctrl_output[3];
+            std::array<float, 3> rate_setpoint_rpy;
+            get_rc_rate_inputs(rc_in, rate_setpoint_rpy.data());
+            std::array<float, 3> rate_measured_rpy;
+            std::array<float, 3> rate_ctrl_output;
 
             // transform rate to body frame
-            s_rate_controller->process(rate_setpoint_rpy, rate_measured_rpy, rate_ctrl_output);
-            s_rc_mixer->mix(rate_ctrl_output, rc_in, output);
+            s_rate_controller->process(rate_setpoint_rpy.data(), rate_measured_rpy.data(), rate_ctrl_output.data());
+            s_rc_mixer->mix(rate_ctrl_output.data(), rc_in, output);
 
             actuators_set_output(output);
-            output_armed.publish(true);
+            output_armed_topic.publish(true);
+            rate_setpoint_rpy_topic.publish(rate_setpoint_rpy);
+            rate_measured_rpy_topic.publish(rate_measured_rpy);
+            rate_ctrl_output_rpy_topic.publish(rate_ctrl_output);
+            actuator_output_topic.publish(output);
         } else {
             actuators_disable_all();
-            output_armed.publish(false);
+            output_armed_topic.publish(false);
         }
 
     }
@@ -131,7 +139,7 @@ void control_init()
     parameter_scalar_declare_with_default(&roll_rate_gain_param, &rc_ns, "roll_rate_gain", 2*3.14f);
     parameter_scalar_declare_with_default(&pitch_rate_gain_param, &rc_ns, "pitch_rate_gain", 2*3.14f);
     parameter_scalar_declare_with_default(&yaw_rate_gain_param, &rc_ns, "yaw_rate_gain", 2*3.14f);
-    output_armed.publish(false);
+    output_armed_topic.publish(false);
 }
 
 void control_start(RateController &rate_ctrl, RCMixer &rc_mixer)
