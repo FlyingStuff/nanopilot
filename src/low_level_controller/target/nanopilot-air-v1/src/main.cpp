@@ -95,7 +95,7 @@ static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
 }
 
 class PIDRateController: public RateController {
-    virtual void process(float rate_setpoint_rpy[3], float rate_measured_rpy[3], float rate_ctrl_output_rpy[3])
+    virtual void process(const float rate_setpoint_rpy[3], const float rate_measured_rpy[3], float rate_ctrl_output_rpy[3])
     {
         (void)rate_setpoint_rpy;
         (void)rate_measured_rpy;
@@ -107,11 +107,12 @@ class PIDRateController: public RateController {
     }
 };
 class LinearRCMixer: public RCMixer {
-    virtual void mix(float rate_ctrl_output_rpy[3], const struct rc_input_s &rc_inputs , std::array<float, NB_ACTUATORS> output)
+    virtual void mix(const float rate_ctrl_output_rpy[3], const struct rc_input_s &rc_inputs , std::array<float, NB_ACTUATORS> &output)
     {
         (void)rate_ctrl_output_rpy;
         (void)rc_inputs;
         (void)output;
+        output[0] = rc_inputs.channel[0];
     }
 };
 
