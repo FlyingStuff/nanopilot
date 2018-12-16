@@ -23,7 +23,7 @@ static THD_FUNCTION(lsm6dsm_publisher, arg)
         if (update_status & LSM6DSM_READ_GYRO_WAS_UPDATED){
             rate_gyro_sample_t rate_gyro_sample;
             rate_gyro_sample.timestamp = timestamp_get();
-            Map<Vector3f> rate_gyro_board(&rate_gyro_sample.rate);
+            Eigen::Map<Eigen::Vector3f> rate_gyro_board(rate_gyro_sample.rate);
             rate_gyro_board = _R_sensor_to_board * rate_gyro_sensor;
             rate_gyro.publish(rate_gyro_sample);
 
@@ -33,7 +33,7 @@ static THD_FUNCTION(lsm6dsm_publisher, arg)
         if (update_status & LSM6DSM_READ_ACC_WAS_UPDATED){
             accelerometer_sample_t acc_sample;
             acc_sample.timestamp = timestamp_get();
-            Map<Vector3f> acc_board(&acc_sample.rate);
+            Eigen::Map<Eigen::Vector3f> acc_board(acc_sample.acceleration);
             acc_board = _R_sensor_to_board * acc_sensor;
             accelerometer.publish(acc_sample);
         }
