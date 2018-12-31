@@ -4,6 +4,7 @@
 #include "msgbus/msgbus.hpp"
 #include "rc_input.hpp"
 #include "actuators.hpp"
+#include <Eigen/Dense>
 
 extern msgbus::Topic<bool> output_armed_topic;
 extern msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;

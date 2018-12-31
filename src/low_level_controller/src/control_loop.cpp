@@ -28,6 +28,7 @@ static parameter_t yaw_input_channel;
 static parameter_t roll_rate_gain_param;
 static parameter_t pitch_rate_gain_param;
 static parameter_t yaw_rate_gain_param;
+static parameter_t R_board_to_body_param;
 
 
 static bool arm_remote_switch_is_armed(const struct rc_input_s &rc_inputs)
@@ -83,11 +84,16 @@ static THD_FUNCTION(control_thread, arg)
 
     timestamp_t last_rc_signal = 0;
 
+    Eigen::Matrix<float, 3, 3, Eigen::RowMajor> R_board_to_body;
+
     while (true) {
         if (parameter_changed(&control_loop_freq)) {
-            float loop_frequency = parameter_scalar_read(&control_loop_freq);
+            float loop_frequency = parameter_scalar_get(&control_loop_freq);
             loop_period_us = 1e6/loop_frequency;
             s_rate_controller->set_update_frequency(loop_frequency);
+        }
+        if (parameter_changed(&R_board_to_body_param)) {
+            parameter_vector_get(&R_board_to_body_param, R_board_to_body.data());
         }
         chThdSleepMicroseconds(loop_period_us);
 
@@ -102,14 +108,19 @@ static THD_FUNCTION(control_thread, arg)
             && timestamp_duration(last_rc_signal, now) < 1.5f
             && timestamp_duration(gyro.timestamp, now) < 0.1f) {
             std::array<float, NB_ACTUATORS> output;
-
             std::array<float, 3> rate_setpoint_rpy;
             get_rc_rate_inputs(rc_in, rate_setpoint_rpy.data());
             std::array<float, 3> rate_measured_rpy;
             std::array<float, 3> rate_ctrl_output;
 
             // transform rate to body frame
-            s_rate_controller->process(rate_setpoint_rpy.data(), rate_measured_rpy.data(), rate_ctrl_output.data());
+            Eigen::Map<Eigen::Vector3f> rate_measured_board(gyro.rate);
+            Eigen::Map<Eigen::Vector3f> rate_measured_rpy_vect(rate_measured_rpy.data());
+            rate_measured_rpy_vect = R_board_to_body * rate_measured_board;
+
+            s_rate_controller->process(rate_setpoint_rpy.data(),
+                                        rate_measured_rpy.data(),
+                                        rate_ctrl_output.data());
             s_rc_mixer->mix(rate_ctrl_output.data(), rc_in, output);
 
             actuators_set_output(output);
@@ -126,6 +137,8 @@ static THD_FUNCTION(control_thread, arg)
     }
 }
 
+
+
 void control_init()
 {
     parameter_namespace_declare(&control_ns, &parameters, "control");
@@ -139,6 +152,11 @@ void control_init()
     parameter_scalar_declare_with_default(&roll_rate_gain_param, &rc_ns, "roll_rate_gain", 2*3.14f);
     parameter_scalar_declare_with_default(&pitch_rate_gain_param, &rc_ns, "pitch_rate_gain", 2*3.14f);
     parameter_scalar_declare_with_default(&yaw_rate_gain_param, &rc_ns, "yaw_rate_gain", 2*3.14f);
+
+    static float R_board_to_body[9] = {1, 0, 0,
+                                        0, 1, 0,
+                                        0, 0, 1};
+    parameter_vector_declare_with_default(&R_board_to_body_param, &control_ns, "R_body_to_board", R_board_to_body, 9);
     output_armed_topic.publish(false);
 }
 
