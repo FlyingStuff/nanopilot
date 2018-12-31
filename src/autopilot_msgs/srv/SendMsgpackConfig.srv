@@ -1,0 +1,4 @@
+byte[] msgpack_config
+---
+bool success
+string error_message

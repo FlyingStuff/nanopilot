@@ -1,0 +1,67 @@
+import rclpy
+from autopilot_msgs.srv import SendMsgpackConfig
+import msgpack
+import yaml
+import sys
+from pprint import pprint
+import time
+
+
+def dict_diff(d1, d2):
+    diff = {}
+    for key2, val2 in d2.items():
+        if key2 not in d1:
+            diff[key2] = val2
+        else:
+            if isinstance(val2, dict):
+                sub_diff = dict_diff(d1[key2], val2)
+                if sub_diff:
+                    diff[key2] = sub_diff
+            elif val2 != d1[key2]:
+                diff[key2] = val2
+    return diff
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = rclpy.create_node('config_client')
+    cli = node.create_client(SendMsgpackConfig, 'send_config')
+
+    filename = sys.argv[1]
+    prev_parameters = {}
+    while True:
+        parameters = yaml.load(open(filename))
+        parameters_diff = dict_diff(prev_parameters, parameters)
+
+        if not parameters_diff:
+            time.sleep(0.1)
+            continue
+
+        pprint(parameters_diff)
+        prev_parameters = parameters
+
+        msg = msgpack.packb(parameters_diff, use_single_float=True)
+        req = SendMsgpackConfig.Request()
+        req.msgpack_config = [bytes((b, )) for b in msg]
+
+        while not cli.wait_for_service(timeout_sec=1.0):
+            node.get_logger().info('service not available, waiting again...')
+
+        future = cli.call_async(req)
+        rclpy.spin_until_future_complete(node, future)
+
+        if future.result() is not None:
+            ret = future.result()
+            if ret.success:
+                node.get_logger().info('config sent')
+            else:
+                node.get_logger().error('error: ' + ret.error_message)
+        else:
+            node.get_logger().error('Service call failed %r' % (future.exception(),))
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

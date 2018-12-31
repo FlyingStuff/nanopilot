@@ -13,6 +13,7 @@
 #include <sensor_msgs/msg/magnetic_field.hpp>
 #include <sensor_msgs/msg/temperature.hpp>
 #include <autopilot_msgs/msg/rc_input.hpp>
+#include "autopilot_msgs/srv/send_msgpack_config.hpp"
 #include <chrono>
 #include "comm.h"
 #include "msg.h"
@@ -58,6 +59,14 @@ public:
         rx_thd.detach();
         m_ping_timer = this->create_wall_timer(1000ms, [this](){this->send_ping();});
         m_timesync_timer = this->create_wall_timer(100ms, [this](){this->trigger_timesync();});
+
+        m_param_set_srv = this->create_service<autopilot_msgs::srv::SendMsgpackConfig>("send_config",
+            [this](const std::shared_ptr<rmw_request_id_t> request_header,
+                const std::shared_ptr<autopilot_msgs::srv::SendMsgpackConfig::Request> request,
+                const std::shared_ptr<autopilot_msgs::srv::SendMsgpackConfig::Response> response){
+                    this->handle_parameter_set_service(request_header, request, response);
+                });
+
     }
 
 private:
@@ -189,11 +198,24 @@ private:
     }
 
 
+    void handle_parameter_set_service(
+      const std::shared_ptr<rmw_request_id_t> request_header,
+      const std::shared_ptr<autopilot_msgs::srv::SendMsgpackConfig::Request> request,
+      const std::shared_ptr<autopilot_msgs::srv::SendMsgpackConfig::Response> response)
+    {
+      (void)request_header;
+      RCLCPP_INFO(this->get_logger(),"parameters received")
+      comm_send(&m_interface, RosInterfaceCommMsgID::SET_PARAMETERS, request->msgpack_config.data(), request->msgpack_config.size());
+      response->success = true;
+    }
+
+
     void trigger_timesync(void) {
     }
 
     rclcpp::TimerBase::SharedPtr m_ping_timer;
     rclcpp::TimerBase::SharedPtr m_timesync_timer;
+    rclcpp::Service<autopilot_msgs::srv::SendMsgpackConfig>::SharedPtr m_param_set_srv;
     uint64_t m_ping_idx{0};
     uint64_t m_ping_rcv_idx{0};
     comm_interface_t m_interface;

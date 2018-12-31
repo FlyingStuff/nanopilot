@@ -5,6 +5,8 @@
 #include "timestamp.h"
 #include "rc_input.hpp"
 #include "sensors.hpp"
+#include "parameter_storage.h"
+#include <parameter/parameter_msgpack.h>
 #include "control_loop.hpp"
 #include "log.h"
 
@@ -21,6 +23,15 @@ static void comm_rcv_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
     case RosInterfaceCommMsgID::PING:
         comm_send(&comm_if, RosInterfaceCommMsgID::PONG, msg, len);
         break;
+    case RosInterfaceCommMsgID::SET_PARAMETERS: {
+        int ret = parameter_msgpack_read(&parameters, msg, len, [](void *arg, const char *id, const char *err){
+            (void)arg;
+            log_error("parameter read error %s: %s", id, err);
+        }, NULL);
+        uint8_t ok = (ret == 0) ? 1: 0;
+        comm_send(&comm_if, RosInterfaceCommMsgID::SET_PARAMETERS_RES, &ok, 1);
+        break;
+    }
     default:
         break;
     }

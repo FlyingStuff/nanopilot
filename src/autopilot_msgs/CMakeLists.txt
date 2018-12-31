@@ -18,6 +18,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(autopilot_msgs
   "msg/RCInput.msg"
   "msg/ActuatorPositions.msg"
+  "srv/SendMsgpackConfig.srv"
   DEPENDENCIES builtin_interfaces
 )
 
