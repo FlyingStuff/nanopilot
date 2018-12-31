@@ -1,5 +1,10 @@
-#ifndef PID_H_
-#define PID_H_
+#ifndef PID_H
+#define PID_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /** Instance of a PID controller.
  *
@@ -43,4 +48,9 @@ void pid_set_frequency(pid_ctrl_t *pid, float frequency);
 /** Gets the PID frequency for gain compensation. */
 float pid_get_frequency(const pid_ctrl_t *pid);
 
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* PID_H */

@@ -17,6 +17,7 @@
 #include "hott_tm.hpp"
 #include "lsm6dsm_publisher.hpp"
 #include "arm_led.h"
+#include "pid_with_parameter.hpp"
 
 void dbg_enter_irq(void) {
     palSetPad(GPIOE, GPIOE_PIN11_TP4);
@@ -95,15 +96,35 @@ static void log_handler_stdout_cb(log_level_t lvl, const char *msg, size_t len)
 }
 
 class PIDRateController: public RateController {
+    PIDController pid_roll_controller;
+    PIDController pid_pitch_controller;
+    PIDController pid_yaw_controller;
+
+public:
+    PIDRateController(){
+        pid_roll_controller.declare_parameters(&control_ns, "pid_roll_controller");
+        pid_pitch_controller.declare_parameters(&control_ns, "pid_pitch_controller");
+        pid_yaw_controller.declare_parameters(&control_ns, "pid_yaw_controller");
+
+    }
     virtual void process(const float rate_setpoint_rpy[3], const float rate_measured_rpy[3], float rate_ctrl_output_rpy[3])
     {
-        (void)rate_setpoint_rpy;
-        (void)rate_measured_rpy;
-        (void)rate_ctrl_output_rpy;
+        float error_rate_rpy[3];
+        int i;
+        for (i = 0; i < 3; i++){
+            error_rate_rpy[i] = rate_setpoint_rpy[i] - rate_measured_rpy[i];
+        }
+        rate_ctrl_output_rpy[0] = pid_roll_controller.process(error_rate_rpy[0]);
+        rate_ctrl_output_rpy[1] = pid_pitch_controller.process(error_rate_rpy[1]);
+        rate_ctrl_output_rpy[2] = pid_yaw_controller.process(error_rate_rpy[2]);
+
     }
     virtual void set_update_frequency(float freq)
     {
-        (void)freq;
+        pid_roll_controller.set_update_frequency(freq);
+        pid_pitch_controller.set_update_frequency(freq);
+        pid_yaw_controller.set_update_frequency(freq);
+
     }
 };
 class LinearRCMixer: public RCMixer {

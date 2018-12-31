@@ -17,7 +17,7 @@ msgbus::Topic<std::array<float, 3>> rate_ctrl_output_rpy_topic;
 static RateController *s_rate_controller;
 static RCMixer *s_rc_mixer;
 
-static parameter_namespace_t control_ns;
+parameter_namespace_t control_ns;
 static parameter_t control_loop_freq;
 static parameter_namespace_t rc_ns;
 static parameter_t arm_remote_switch_channel;

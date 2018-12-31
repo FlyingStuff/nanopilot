@@ -11,6 +11,8 @@ extern msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;
 extern msgbus::Topic<std::array<float, 3>> rate_setpoint_rpy_topic;
 extern msgbus::Topic<std::array<float, 3>> rate_measured_rpy_topic;
 extern msgbus::Topic<std::array<float, 3>> rate_ctrl_output_rpy_topic;
+extern parameter_namespace_t control_ns;
+
 
 class RateController {
 public:
