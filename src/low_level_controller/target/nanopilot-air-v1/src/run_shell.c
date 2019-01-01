@@ -26,6 +26,7 @@ static const ShellCommand commands[] = {
     {"parameter_load", cmd_parameter_load},
     {"parameter_save", cmd_parameter_save},
     {"parameter_erase", cmd_parameter_erase},
+    {"calibrate_esc", cmd_calibrate_esc},
     {NULL, NULL}
 };
 

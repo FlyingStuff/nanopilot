@@ -10,6 +10,8 @@
 #include "panic_handler.h"
 #include "log_handlers.h"
 #include "parameter_storage.h"
+#include "actuators.hpp"
+#include <limits>
 
 #include "shell_cmds.h"
 
@@ -179,4 +181,35 @@ void cmd_parameter_erase(BaseSequentialStream *stream, int argc, char *argv[]) {
     (void)argc;
     (void)argv;
     parameter_erase_persistent_store();
+}
+
+void cmd_calibrate_esc(BaseSequentialStream *stream, int argc, char *argv[])
+{
+    (void)stream;
+    (void)argc;
+    (void)argv;
+    actuators_disable_all();
+    chprintf(stream, "signal off\n");
+    for (int i=5; i > 0; i--) {
+        chprintf(stream, "full output in %d s\n", i);
+        chThdSleepMilliseconds(1000);
+    }
+    chprintf(stream, "full output\n");
+    std::array<float, NB_ACTUATORS> output;
+    for (float &o: output) {
+        o = std::numeric_limits<float>::max();
+    }
+    actuators_set_output(output);
+
+    chThdSleepMilliseconds(8000);
+
+    chprintf(stream, "zero output\n");
+    for (float &o: output) {
+        o = 0;
+    }
+    actuators_set_output(output);
+
+    chThdSleepMilliseconds(8000);
+    chprintf(stream, "signal off\n");
+    actuators_disable_all();
 }

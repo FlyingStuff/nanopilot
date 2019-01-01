@@ -68,9 +68,10 @@ static void get_rc_rate_inputs(const struct rc_input_s &rc_inputs, float rate_se
     rate_setpoint_rpy[0] = - roll_gain * get_rc_channel_value(rc_inputs, roll_ch);
     rate_setpoint_rpy[1] = - pitch_gain * get_rc_channel_value(rc_inputs, pitch_ch);
     rate_setpoint_rpy[2] = - yaw_gain * get_rc_channel_value(rc_inputs, yaw_ch);
+
 }
 
-static THD_WORKING_AREA(control_thread_wa, 1024);
+static THD_WORKING_AREA(control_thread_wa, 2000);
 static THD_FUNCTION(control_thread, arg)
 {
     (void)arg;
@@ -85,7 +86,6 @@ static THD_FUNCTION(control_thread, arg)
     timestamp_t last_rc_signal = 0;
 
     Eigen::Matrix<float, 3, 3, Eigen::RowMajor> R_board_to_body;
-
     while (true) {
         if (parameter_changed(&control_loop_freq)) {
             float loop_frequency = parameter_scalar_get(&control_loop_freq);
@@ -95,6 +95,7 @@ static THD_FUNCTION(control_thread, arg)
         if (parameter_changed(&R_board_to_body_param)) {
             parameter_vector_get(&R_board_to_body_param, R_board_to_body.data());
         }
+
         chThdSleepMicroseconds(loop_period_us);
 
         timestamp_t now = timestamp_get();
@@ -104,9 +105,21 @@ static THD_FUNCTION(control_thread, arg)
         }
         rate_gyro_sample_t gyro = sub_gyro.get_value();
 
-        if (arm_switch_is_armed() && arm_remote_switch_is_armed(rc_in)
+        static bool was_armed = true;
+        if (!arm_switch_is_armed()) {
+            if (was_armed) {
+                actuators_disable_all();
+                was_armed = false;
+            }
+            output_armed_topic.publish(false);
+            continue;
+        } else {
+            was_armed = true;
+        }
+        if (arm_remote_switch_is_armed(rc_in)
             && timestamp_duration(last_rc_signal, now) < 1.5f
             && timestamp_duration(gyro.timestamp, now) < 0.1f) {
+
             std::array<float, NB_ACTUATORS> output;
             std::array<float, 3> rate_setpoint_rpy;
             get_rc_rate_inputs(rc_in, rate_setpoint_rpy.data());
@@ -124,13 +137,19 @@ static THD_FUNCTION(control_thread, arg)
             s_rc_mixer->mix(rate_ctrl_output.data(), rc_in, output);
 
             actuators_set_output(output);
+
             output_armed_topic.publish(true);
             rate_setpoint_rpy_topic.publish(rate_setpoint_rpy);
             rate_measured_rpy_topic.publish(rate_measured_rpy);
             rate_ctrl_output_rpy_topic.publish(rate_ctrl_output);
             actuator_output_topic.publish(output);
         } else {
-            actuators_disable_all();
+            std::array<float, NB_ACTUATORS> output;
+            for (float &o: output) {
+                o = 0;
+            }
+            actuators_set_output(output);
+            actuator_output_topic.publish(output);
             output_armed_topic.publish(false);
         }
 
@@ -146,9 +165,9 @@ void control_init()
     parameter_namespace_declare(&rc_ns, &parameters, "rc");
     parameter_integer_declare_with_default(&arm_remote_switch_channel, &rc_ns, "arm_channel", 5);
     parameter_scalar_declare_with_default(&arm_remote_switch_threshold, &rc_ns, "arm_threshold", -0.1);
-    parameter_integer_declare_with_default(&roll_input_channel, &rc_ns, "roll_channel", 1);
-    parameter_integer_declare_with_default(&pitch_input_channel, &rc_ns, "pitch_channel", 2);
-    parameter_integer_declare_with_default(&yaw_input_channel, &rc_ns, "yaw_channel", 3);
+    parameter_integer_declare_with_default(&roll_input_channel, &rc_ns, "roll_channel", 2);
+    parameter_integer_declare_with_default(&pitch_input_channel, &rc_ns, "pitch_channel", 3);
+    parameter_integer_declare_with_default(&yaw_input_channel, &rc_ns, "yaw_channel", 4);
     parameter_scalar_declare_with_default(&roll_rate_gain_param, &rc_ns, "roll_rate_gain", 2*3.14f);
     parameter_scalar_declare_with_default(&pitch_rate_gain_param, &rc_ns, "pitch_rate_gain", 2*3.14f);
     parameter_scalar_declare_with_default(&yaw_rate_gain_param, &rc_ns, "yaw_rate_gain", 2*3.14f);

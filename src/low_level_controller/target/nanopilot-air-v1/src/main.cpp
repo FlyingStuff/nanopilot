@@ -101,10 +101,11 @@ class PIDRateController: public RateController {
     PIDController pid_yaw_controller;
 
 public:
-    PIDRateController(){
-        pid_roll_controller.declare_parameters(&control_ns, "pid_roll_controller");
-        pid_pitch_controller.declare_parameters(&control_ns, "pid_pitch_controller");
-        pid_yaw_controller.declare_parameters(&control_ns, "pid_yaw_controller");
+    PIDRateController(parameter_namespace_t *ns)
+    {
+        pid_roll_controller.declare_parameters(ns, "pid_roll_controller");
+        pid_pitch_controller.declare_parameters(ns, "pid_pitch_controller");
+        pid_yaw_controller.declare_parameters(ns, "pid_yaw_controller");
 
     }
     virtual void process(const float rate_setpoint_rpy[3], const float rate_measured_rpy[3], float rate_ctrl_output_rpy[3])
@@ -130,13 +131,18 @@ public:
 class LinearRCMixer: public RCMixer {
     virtual void mix(const float rate_ctrl_output_rpy[3], const struct rc_input_s &rc_inputs , std::array<float, NB_ACTUATORS> &output)
     {
-        (void)rate_ctrl_output_rpy;
-        (void)rc_inputs;
-        (void)output;
-        output[0] = rc_inputs.channel[0];
-        output[1] = rc_inputs.channel[0];
-        output[2] = rc_inputs.channel[0];
-        output[3] = rc_inputs.channel[0];
+        float throttle = (rc_inputs.channel[0] + 1)/2;
+
+        float roll = rate_ctrl_output_rpy[0];
+        float pitch = rate_ctrl_output_rpy[1];
+        float yaw = rate_ctrl_output_rpy[2];
+
+        output[0] = throttle - pitch + roll + yaw; // back left
+        output[1] = throttle - pitch - roll - yaw; // back right
+        output[2] = throttle + pitch + roll - yaw; // front left
+        output[3] = throttle + pitch - roll + yaw; // front right
+
+
     }
 };
 
@@ -170,16 +176,22 @@ int main(void) {
     control_init();
     initialize_actuators(&parameters);
 
+
+    PIDRateController rate_ctrl(&control_ns);
+    LinearRCMixer mixer;
+
     if (parameter_load_from_persistent_store()) {
         log_info("parameters loaded");
     }
 
+
     arm_led_task_start();
+
     run_shell((BaseSequentialStream*)&SD1);
     sumd_input_start((BaseSequentialStream*)&SD5);
-    PIDRateController rate_ctrl;
-    LinearRCMixer mixer;
+
     control_start(rate_ctrl, mixer);
+
     hott_tm_start((BaseSequentialStream*)&SD3);
 
     SPIConfig lsm6dsm_spi_config={
