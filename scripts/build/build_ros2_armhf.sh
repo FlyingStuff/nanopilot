@@ -19,9 +19,14 @@ export CROSS_COMPILE=arm-linux-gnueabihf-
 cp ${ROOT_DIR}/scripts/build/armhf_toolchainfile.cmake toolchainfile.cmake
 # cp ../aarch64_toolchainfile.cmake toolchainfile.cmake
 
-
-wget https://raw.githubusercontent.com/ros2/ros2/release-latest/ros2.repos
+rm -f ros2.repos
+wget https://raw.githubusercontent.com/ros2/ros2/release-crystal-20181214/ros2.repos
 vcs-import src < ros2.repos
+
+# hack to make tinyxml2 pass the build: https://github.com/ros2/tinyxml2_vendor/pull/5
+cd src/ros2/tinyxml2_vendor
+git checkout 0.4.0
+cd -
 
 touch \
   src/ros-perception/laser_geometry/COLCON_IGNORE \
@@ -44,7 +49,10 @@ touch \
   src/ros2/rosidl_python/COLCON_IGNORE \
   src/ros2/rmw_opensplice/COLCON_IGNORE \
   src/ros2/rosidl_typesupport_connext/COLCON_IGNORE \
-  src/ros2/rcl_interfaces/test_msgs/COLCON_IGNORE
+  src/ros2/rcl_interfaces/test_msgs/COLCON_IGNORE \
+  src/ros2/examples/COLCON_IGNORE \
+  src/ros2/message_filters/COLCON_IGNORE \
+  src/ros-visualization/COLCON_IGNORE
 
 colcon build \
   --symlink-install \

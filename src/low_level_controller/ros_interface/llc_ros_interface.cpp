@@ -204,7 +204,7 @@ private:
       const std::shared_ptr<autopilot_msgs::srv::SendMsgpackConfig::Response> response)
     {
       (void)request_header;
-      RCLCPP_INFO(this->get_logger(),"parameters received")
+      RCLCPP_INFO(this->get_logger(),"parameters received");
       comm_send(&m_interface, RosInterfaceCommMsgID::SET_PARAMETERS, request->msgpack_config.data(), request->msgpack_config.size());
       response->success = true;
     }
