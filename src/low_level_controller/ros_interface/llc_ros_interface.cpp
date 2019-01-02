@@ -12,6 +12,7 @@
 #include <sensor_msgs/msg/fluid_pressure.hpp>
 #include <sensor_msgs/msg/magnetic_field.hpp>
 #include <sensor_msgs/msg/temperature.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
 #include <autopilot_msgs/msg/rc_input.hpp>
 #include "autopilot_msgs/srv/send_msgpack_config.hpp"
 #include <chrono>
@@ -54,6 +55,9 @@ public:
         m_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", custom_qos_profile);
         m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", custom_qos_profile);
         m_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency", custom_qos_profile);
+        m_rate_ctrl_setpoint_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl_setpoint", custom_qos_profile);
+        m_rate_ctrl_measured_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl_measured", custom_qos_profile);
+        m_rate_ctrl_output_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl_output", custom_qos_profile);
 
         auto rx_thd = std::thread(rx_thd_fn, &m_interface);
         rx_thd.detach();
@@ -175,6 +179,45 @@ private:
             break;
         }
 
+        case RosInterfaceCommMsgID::RATE_CTRL_SETPOINT_RPY:
+        {
+            auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+            std::array<float, 3> val;
+            deserializer.Read(&val);
+            auto message = geometry_msgs::msg::Vector3();
+            message.x = val[0];
+            message.y = val[1];
+            message.z = val[2];
+            m_rate_ctrl_setpoint_pub->publish(message);
+            break;
+        }
+
+        case RosInterfaceCommMsgID::RATE_CTRL_MEASURED_RPY:
+        {
+            auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+            std::array<float, 3> val;
+            deserializer.Read(&val);
+            auto message = geometry_msgs::msg::Vector3();
+            message.x = val[0];
+            message.y = val[1];
+            message.z = val[2];
+            m_rate_ctrl_measured_pub->publish(message);
+            break;
+        }
+
+        case RosInterfaceCommMsgID::RATE_CTRL_OUTPUT_RPY:
+        {
+            auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+            std::array<float, 3> val;
+            deserializer.Read(&val);
+            auto message = geometry_msgs::msg::Vector3();
+            message.x = val[0];
+            message.y = val[1];
+            message.z = val[2];
+            m_rate_ctrl_output_pub->publish(message);
+            break;
+        }
+
         default:
             std::string msg_str((char*)msg, len);
             printf("unknown rx msg %d, len: %d, %s\n", (int)msg_id, (int)len, msg_str.c_str());
@@ -223,6 +266,9 @@ private:
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr m_timestamp_pub;
     rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr m_latency_pub;
     rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr m_imu_pub;
+    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_setpoint_pub;
+    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_measured_pub;
+    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_output_pub;
 };
 
 
