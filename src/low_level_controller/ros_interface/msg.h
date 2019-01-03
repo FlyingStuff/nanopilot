@@ -25,7 +25,6 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
     SAVE_PARAMETERS_RES=53,
     GET_PARAMETER=54,
     GET_PARAMETER_RES=55,
-    TEST=10000,
 };
 
 #if __cplusplus < 201402L
@@ -39,13 +38,6 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
 #include <nop/serializer.h>
 #include <nop/utility/buffer_reader.h>
 #include <nop/utility/buffer_writer.h>
-
-struct SimpleType {
-    uint32_t foo;
-    float bar;
-    NOP_STRUCTURE(SimpleType, foo, bar);
-};
-
 
 #include "rc_input.hpp"
 NOP_EXTERNAL_STRUCTURE(rc_input_s, nb_channels, no_signal, channel, timestamp);

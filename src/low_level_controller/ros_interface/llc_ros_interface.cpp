@@ -117,15 +117,6 @@ private:
             }
             break;
 
-        case RosInterfaceCommMsgID::TEST:
-        {
-            auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
-            SimpleType val;
-            deserializer.Read(&val);
-            // std::cout << val.foo << " " << val.bar << std::endl;
-            break;
-        }
-
         case RosInterfaceCommMsgID::RC_INPUT:
         {
             auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);

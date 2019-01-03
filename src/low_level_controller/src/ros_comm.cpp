@@ -73,9 +73,6 @@ static THD_FUNCTION(comm_tx_thread, arg) {
         comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
 
         static char buf[1000];
-        auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-        serializer.Write(SimpleType{static_cast<uint32_t>(timestamp), sinf(timestamp)});
-        comm_send(&comm_if, RosInterfaceCommMsgID::TEST, buf, serializer.writer().size());
 
         if (rc_in_sub.has_update()) {
             auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
