@@ -110,6 +110,7 @@ static THD_FUNCTION(comm_tx_thread, arg) {
             comm_send(&comm_if, RosInterfaceCommMsgID::RATE_CTRL_OUTPUT_RPY, buf, serializer.writer().size());
         }
 
+        chThdSleepMilliseconds(1); // todo this is a temporary fix to avoid using 100% CPU
         msgbus::wait_for_update_on_any(sub_list.begin(), sub_list.end());
     }
 }
