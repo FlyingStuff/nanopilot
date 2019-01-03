@@ -202,8 +202,8 @@ int main(void) {
         .cr2 = 0,
     };
     Eigen::Matrix3f R_lsm6dsm_to_board;
-    R_lsm6dsm_to_board << 1, 0, 0,
-                          0, 1, 0,
+    R_lsm6dsm_to_board << -1, 0, 0,
+                          0, -1, 0,
                           0, 0, 1;
     lsm6dsm_publisher_start(&SPID2, &lsm6dsm_spi_config, R_lsm6dsm_to_board);
 
