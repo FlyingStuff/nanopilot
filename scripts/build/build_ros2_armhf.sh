@@ -28,6 +28,12 @@ cd src/ros2/tinyxml2_vendor
 git checkout 0.4.0
 cd -
 
+# fix bus error https://github.com/ros2/rcl/pull/365
+cd src/ros2/rcl
+git reset --hard
+curl https://patch-diff.githubusercontent.com/raw/ros2/rcl/pull/365.diff | git apply
+cd -
+
 touch \
   src/ros-perception/laser_geometry/COLCON_IGNORE \
   src/ros/resource_retriever/COLCON_IGNORE \
