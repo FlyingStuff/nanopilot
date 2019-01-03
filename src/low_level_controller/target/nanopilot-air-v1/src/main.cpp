@@ -137,10 +137,10 @@ class LinearRCMixer: public RCMixer {
         float pitch = rate_ctrl_output_rpy[1];
         float yaw = rate_ctrl_output_rpy[2];
 
-        output[0] = throttle - pitch + roll + yaw; // back left
-        output[1] = throttle - pitch - roll - yaw; // back right
-        output[2] = throttle + pitch + roll - yaw; // front left
-        output[3] = throttle + pitch - roll + yaw; // front right
+        output[0] = throttle + pitch - roll - yaw; // back left
+        output[1] = throttle + pitch + roll + yaw; // back right
+        output[2] = throttle - pitch - roll + yaw; // front left
+        output[3] = throttle - pitch + roll - yaw; // front right
 
 
     }
