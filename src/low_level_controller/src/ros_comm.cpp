@@ -28,6 +28,7 @@ static void comm_rcv_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
             (void)arg;
             log_error("parameter read error %s: %s", id, err);
         }, NULL);
+        parameter_save_to_persistent_store(); // todo check return
         uint8_t ok = (ret == 0) ? 1: 0;
         comm_send(&comm_if, RosInterfaceCommMsgID::SET_PARAMETERS_RES, &ok, 1);
         break;
