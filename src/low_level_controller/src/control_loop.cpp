@@ -175,7 +175,7 @@ void control_init()
     static float R_board_to_body[9] = {1, 0, 0,
                                         0, 1, 0,
                                         0, 0, 1};
-    parameter_vector_declare_with_default(&R_board_to_body_param, &control_ns, "R_body_to_board", R_board_to_body, 9);
+    parameter_vector_declare_with_default(&R_board_to_body_param, &control_ns, "R_board_to_body", R_board_to_body, 9);
     output_armed_topic.publish(false);
 }
 
