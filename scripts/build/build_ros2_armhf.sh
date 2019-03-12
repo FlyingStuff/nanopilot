@@ -61,7 +61,6 @@ touch \
   src/ros-visualization/COLCON_IGNORE
 
 colcon build \
-  --symlink-install \
   --cmake-force-configure \
   --cmake-args \
     --no-warn-unused-cli \
