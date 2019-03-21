@@ -30,6 +30,7 @@ PROJCPPSRC += $(PROJROOT)/src/sumd_input.cpp
 PROJCPPSRC += $(PROJROOT)/src/rc_pwm_out.cpp
 PROJCPPSRC += $(PROJROOT)/src/ros_comm.cpp
 PROJCPPSRC += $(PROJROOT)/src/pid_with_parameter.cpp
+PROJCPPSRC += $(PROJROOT)/src/low_pass_filter.cpp
 PROJCPPSRC += $(PROJROOT)/src/control_loop.cpp
 PROJCPPSRC += $(PROJROOT)/src/lsm6dsm_publisher.cpp
 PROJCPPSRC += $(PROJROOT)/src/arm_led.cpp
