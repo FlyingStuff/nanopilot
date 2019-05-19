@@ -10,5 +10,7 @@ ROOT_DIR=`pwd`/..
 mkdir -p ${ROOT_DIR}/sysroot
 touch ${ROOT_DIR}/sysroot/COLCON_IGNORE
 
-rsync -avz ${HOST}:/usr/ ${ROOT_DIR}/sysroot/usr
-rsync -avz ${HOST}:/lib/ ${ROOT_DIR}/sysroot/lib
+rsync -az --copy-unsafe-links ${HOST}:/usr/ ${ROOT_DIR}/sysroot/usr || true
+rsync -az --copy-unsafe-links ${HOST}:/lib/ ${ROOT_DIR}/sysroot/lib || true
+rsync -az --copy-unsafe-links ${HOST}:/opt/ ${ROOT_DIR}/sysroot/opt || true
+
