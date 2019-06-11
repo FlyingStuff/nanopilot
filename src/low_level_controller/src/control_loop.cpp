@@ -10,18 +10,22 @@
 #include "control_loop.hpp"
 
 msgbus::Topic<bool> output_armed_topic;
+msgbus::Topic<bool> ap_in_control_topic;
+msgbus::Topic<struct ap_ctrl_s> ap_ctrl;
 msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;
 msgbus::Topic<std::array<float, 3>> rate_setpoint_rpy_topic;
 msgbus::Topic<std::array<float, 3>> rate_measured_rpy_topic;
 msgbus::Topic<std::array<float, 3>> rate_ctrl_output_rpy_topic;
 static RateController *s_rate_controller;
-static RCMixer *s_rc_mixer;
+static OutputMixer *s_output_mixer;
 
 parameter_namespace_t control_ns;
 static parameter_t control_loop_freq;
 static parameter_namespace_t rc_ns;
 static parameter_t arm_remote_switch_channel;
 static parameter_t arm_remote_switch_threshold;
+static parameter_t ap_remote_switch_channel;
+static parameter_t ap_remote_switch_threshold;
 static parameter_t roll_input_channel;
 static parameter_t pitch_input_channel;
 static parameter_t yaw_input_channel;
@@ -38,6 +42,21 @@ static bool arm_remote_switch_is_armed(const struct rc_input_s &rc_inputs)
     if (ch_idx >= 0 && ch_idx < rc_inputs.nb_channels) {
         float val = rc_inputs.channel[ch_idx];
         if (val > parameter_scalar_read(&arm_remote_switch_threshold)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    return false;
+}
+
+static bool ap_control_switch_is_on(const struct rc_input_s &rc_inputs)
+{
+    int ch = parameter_integer_read(&ap_remote_switch_channel);
+    int ch_idx = ch-1;
+    if (ch_idx >= 0 && ch_idx < rc_inputs.nb_channels) {
+        float val = rc_inputs.channel[ch_idx];
+        if (val > parameter_scalar_read(&ap_remote_switch_threshold)) {
             return true;
         } else {
             return false;
@@ -82,6 +101,7 @@ static THD_FUNCTION(control_thread, arg)
     sub_rc.wait_for_update(); // make sure rc_input is valid
     auto sub_gyro = msgbus::subscribe(rate_gyro);
     sub_gyro.wait_for_update(); // make sure gyro is valid
+    auto sub_ap_ctrl = msgbus::subscribe(ap_ctrl);
 
     timestamp_t last_rc_signal = 0;
 
@@ -118,13 +138,24 @@ static THD_FUNCTION(control_thread, arg)
         }
         if (arm_remote_switch_is_armed(rc_in)
             && timestamp_duration(last_rc_signal, now) < 1.5f
-            && timestamp_duration(gyro.timestamp, now) < 0.1f) {
+            && timestamp_duration(gyro.timestamp, now) < 0.01f) {
 
-            std::array<float, NB_ACTUATORS> output;
+            std::array<float, NB_ACTUATORS> output = {0,};
             std::array<float, 3> rate_setpoint_rpy;
-            get_rc_rate_inputs(rc_in, rate_setpoint_rpy.data());
             std::array<float, 3> rate_measured_rpy;
             std::array<float, 3> rate_ctrl_output;
+            get_rc_rate_inputs(rc_in, rate_setpoint_rpy.data());
+
+            bool ap_in_control = false;
+            bool ap_ctrl_en = ap_control_switch_is_on(rc_in);
+            struct ap_ctrl_s ap_ctrl_msg;
+            if (ap_ctrl_en && sub_ap_ctrl.has_value()) {
+                ap_ctrl_msg = sub_ap_ctrl.get_value();
+                if (fabsf(timestamp_duration(ap_ctrl_msg.timestamp, now)) < 0.01f) {
+                    rate_setpoint_rpy = ap_ctrl_msg.rate_setpoint_rpy;
+                    ap_in_control = true;
+                }
+            }
 
             // transform rate to body frame
             Eigen::Map<Eigen::Vector3f> rate_measured_board(gyro.rate);
@@ -134,7 +165,7 @@ static THD_FUNCTION(control_thread, arg)
             s_rate_controller->process(rate_setpoint_rpy.data(),
                                         rate_measured_rpy.data(),
                                         rate_ctrl_output.data());
-            s_rc_mixer->mix(rate_ctrl_output.data(), rc_in, output);
+            s_output_mixer->mix(rate_ctrl_output.data(), rc_in, ap_ctrl_msg, ap_in_control, output);
 
             actuators_set_output(output);
 
@@ -143,6 +174,7 @@ static THD_FUNCTION(control_thread, arg)
             rate_measured_rpy_topic.publish(rate_measured_rpy);
             rate_ctrl_output_rpy_topic.publish(rate_ctrl_output);
             actuator_output_topic.publish(output);
+            ap_in_control_topic.publish(ap_in_control);
         } else {
             std::array<float, NB_ACTUATORS> output;
             for (float &o: output) {
@@ -164,7 +196,9 @@ void control_init()
     parameter_scalar_declare_with_default(&control_loop_freq, &control_ns, "loop_frequency", 100);
     parameter_namespace_declare(&rc_ns, &parameters, "rc");
     parameter_integer_declare_with_default(&arm_remote_switch_channel, &rc_ns, "arm_channel", 5);
-    parameter_scalar_declare_with_default(&arm_remote_switch_threshold, &rc_ns, "arm_threshold", -0.1);
+    parameter_scalar_declare_with_default(&arm_remote_switch_threshold, &rc_ns, "arm_threshold", 0.1);
+    parameter_integer_declare_with_default(&ap_remote_switch_channel, &rc_ns, "ap_switch_channel", -1);
+    parameter_scalar_declare_with_default(&ap_remote_switch_threshold, &rc_ns, "ap_switch_threshold", 0.1);
     parameter_integer_declare_with_default(&roll_input_channel, &rc_ns, "roll_channel", 2);
     parameter_integer_declare_with_default(&pitch_input_channel, &rc_ns, "pitch_channel", 3);
     parameter_integer_declare_with_default(&yaw_input_channel, &rc_ns, "yaw_channel", 4);
@@ -179,9 +213,9 @@ void control_init()
     output_armed_topic.publish(false);
 }
 
-void control_start(RateController &rate_ctrl, RCMixer &rc_mixer)
+void control_start(RateController &rate_ctrl, OutputMixer &output_mixer)
 {
     s_rate_controller = &rate_ctrl;
-    s_rc_mixer = &rc_mixer;
+    s_output_mixer = &output_mixer;
     chThdCreateStatic(control_thread_wa, sizeof(control_thread_wa), THD_PRIO_CONTROL_LOOP, control_thread, NULL);
 }

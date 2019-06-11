@@ -7,6 +7,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include "std_msgs/msg/string.hpp"
 #include <std_msgs/msg/u_int64.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/fluid_pressure.hpp>
@@ -14,10 +15,13 @@
 #include <sensor_msgs/msg/temperature.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <autopilot_msgs/msg/rc_input.hpp>
+#include "autopilot_msgs/msg/control.hpp"
+#include "autopilot_msgs/msg/actuator_positions_stamped.hpp"
 #include "autopilot_msgs/srv/send_msgpack_config.hpp"
 #include <chrono>
 #include "comm.h"
 #include "msg.h"
+using std::placeholders::_1;
 
 #include <sys/time.h>
 
@@ -39,9 +43,9 @@ public:
             exit(-1);
         }
 
-        // rmw_qos_profile_t custom_qos_profile = rmw_qos_profile_default;
+        rmw_qos_profile_t custom_qos_profile = rmw_qos_profile_default;
         // // Depth represents how many messages to store in history when the history policy is KEEP_LAST.
-        // custom_qos_profile.depth = 1;
+        custom_qos_profile.depth = 100;
         // // The reliability policy can be reliable, meaning that the underlying transport layer will try
         // // ensure that every message gets received in order, or best effort, meaning that the transport
         // // makes no guarantees about the order or reliability of delivery.
@@ -50,14 +54,20 @@ public:
         // // KEEP_ALL saves all messages until they are taken.
         // // KEEP_LAST enforces a limit on the number of messages that are saved, specified by the "depth"
         // // parameter.
-        // custom_qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_LAST;
-        m_timestamp_pub = this->create_publisher<std_msgs::msg::UInt64>("timestamp");
-        m_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu");
-        m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input");
-        m_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency");
-        m_rate_ctrl_setpoint_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl_setpoint");
-        m_rate_ctrl_measured_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl_measured");
-        m_rate_ctrl_output_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl_output");
+        custom_qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_LAST;
+
+        m_timestamp_pub = this->create_publisher<std_msgs::msg::UInt64>("timestamp", custom_qos_profile);
+        m_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", custom_qos_profile);
+        m_mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>("magnetometer", custom_qos_profile);
+        m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", custom_qos_profile);
+        m_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency", custom_qos_profile);
+        m_rate_ctrl_setpoint_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl_setpoint", custom_qos_profile);
+        m_rate_ctrl_measured_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl_measured", custom_qos_profile);
+        m_rate_ctrl_output_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl_output", custom_qos_profile);
+        m_output_armed_pub = this->create_publisher<std_msgs::msg::Bool>("output_armed", custom_qos_profile);
+        m_ap_in_control_pub = this->create_publisher<std_msgs::msg::Bool>("ap_in_control", custom_qos_profile);
+
+        m_ap_ctrl_sub = this->create_subscription<autopilot_msgs::msg::Control>("control", std::bind(&LowLevelControllerInterface::control_cb, this, _1));
 
         auto rx_thd = std::thread(rx_thd_fn, &m_interface);
         rx_thd.detach();
@@ -230,11 +240,51 @@ private:
             break;
         }
 
+        case RosInterfaceCommMsgID::OUTPUT_IS_ARMED:
+        {
+            auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+            bool val;
+            deserializer.Read(&val);
+            auto message = std_msgs::msg::Bool();
+            message.data = val;
+            m_output_armed_pub->publish(message);
+            break;
+        }
+
+        case RosInterfaceCommMsgID::AP_IN_CONTROL:
+        {
+            auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+            bool val;
+            deserializer.Read(&val);
+            auto message = std_msgs::msg::Bool();
+            message.data = val;
+            m_ap_in_control_pub->publish(message);
+            break;
+        }
+
         default:
             std::string msg_str((char*)msg, len);
             printf("unknown rx msg %d, len: %d, %s\n", (int)msg_id, (int)len, msg_str.c_str());
             break;
         }
+    }
+
+    void control_cb(const autopilot_msgs::msg::Control::SharedPtr msg)
+    {
+        struct ap_ctrl_s ctrl;
+        ctrl.timestamp = rclcpp::Time(msg->stamp).nanoseconds();
+        ctrl.rate_setpoint_rpy[0] = msg->rate_control_setpoint.x;
+        ctrl.rate_setpoint_rpy[1] = msg->rate_control_setpoint.y;
+        ctrl.rate_setpoint_rpy[2] = msg->rate_control_setpoint.z;
+        static_assert(autopilot_msgs::msg::ActuatorPositions::MAX_NB_ACTUATORS == MAX_NB_ACTUATORS);
+        for (unsigned i=0; i < msg->actuators.actuators.size(); i++) {
+            ctrl.direct_output[i] = msg->actuators.actuators[i];
+        }
+        ctrl.disable_rate_ctrl = false;
+        static uint8_t buffer[100];
+        auto serializer = nop::Serializer<nop::BufferWriter>(buffer, sizeof(buffer));
+        serializer.Write(ctrl);
+        comm_send(&m_interface, RosInterfaceCommMsgID::AP_CONTROL, buffer, serializer.writer().size());
     }
 
 
@@ -281,6 +331,10 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_setpoint_pub;
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_measured_pub;
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_output_pub;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr m_output_armed_pub;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr m_ap_in_control_pub;
+
+    rclcpp::Subscription<autopilot_msgs::msg::Control>::SharedPtr m_ap_ctrl_sub;
 };
 
 

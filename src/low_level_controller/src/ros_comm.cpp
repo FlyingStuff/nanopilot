@@ -33,6 +33,14 @@ static void comm_rcv_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
         comm_send(&comm_if, RosInterfaceCommMsgID::SET_PARAMETERS_RES, &ok, 1);
         break;
     }
+    case RosInterfaceCommMsgID::AP_CONTROL: {
+        auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+        struct ap_ctrl_s ctrl_msg;
+        if (deserializer.Read(&ctrl_msg)) {
+            ap_ctrl.publish(ctrl_msg);
+        }
+        break;
+    }
     default:
         break;
     }
@@ -60,8 +68,10 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     auto rate_gyro_sub = msgbus::subscribe(rate_gyro);
     auto accelerometer_sub = msgbus::subscribe(accelerometer);
     auto magnetometer_sub = msgbus::subscribe(magnetometer);
+    auto output_armed_sub = msgbus::subscribe(output_armed_topic);
+    auto ap_in_control_sub = msgbus::subscribe(ap_in_control_topic);
 
-    std::array<msgbus::SubscriberBase*, 7> sub_list = {
+    std::array<msgbus::SubscriberBase*, 9> sub_list = {
         &rc_in_sub,
         &rate_gyro_sub,
         // accelerometer_sub not checked for update
@@ -70,6 +80,8 @@ static THD_FUNCTION(comm_tx_thread, arg) {
         &rate_measured_rpy_sub,
         &rate_ctrl_output_rpy_sub,
         &magnetometer_sub,
+        &output_armed_sub,
+        &ap_in_control_sub,
     };
     while (true) {
         comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
@@ -120,6 +132,18 @@ static THD_FUNCTION(comm_tx_thread, arg) {
             auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
             serializer.Write(rate_ctrl_output_rpy_sub.get_value());
             comm_send(&comm_if, RosInterfaceCommMsgID::RATE_CTRL_OUTPUT_RPY, buf, serializer.writer().size());
+        }
+
+        if (output_armed_sub.has_update()) {
+            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+            serializer.Write(output_armed_sub.get_value());
+            comm_send(&comm_if, RosInterfaceCommMsgID::OUTPUT_IS_ARMED, buf, serializer.writer().size());
+        }
+
+        if (ap_in_control_sub.has_update()) {
+            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+            serializer.Write(ap_in_control_sub.get_value());
+            comm_send(&comm_if, RosInterfaceCommMsgID::AP_IN_CONTROL, buf, serializer.writer().size());
         }
 
         chThdSleepMilliseconds(1); // todo this is a temporary fix to avoid using 100% CPU

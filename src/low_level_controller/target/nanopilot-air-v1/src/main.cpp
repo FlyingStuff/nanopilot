@@ -144,49 +144,45 @@ public:
         yaw_lp.set_update_frequency(freq);
     }
 };
-class LinearRCMixer: public RCMixer {
-    virtual void mix(const float rate_ctrl_output_rpy[3], const struct rc_input_s &rc_inputs , std::array<float, NB_ACTUATORS> &output)
+class LinearOutputMixer: public OutputMixer {
+    virtual void mix(const float rate_ctrl_output_rpy[3], const struct rc_input_s &rc_inputs, const struct ap_ctrl_s &ap_ctrl, bool ap_control_en, std::array<float, NB_ACTUATORS> &output)
     {
         std::array<float, NB_ACTUATORS> coeff;
-
-        // bias
-        parameter_vector_read(&m_output_bias, coeff.data());
-        for (int i = 0; i < NB_ACTUATORS; i++) {
-            output[i] = coeff[i];
-        }
-
-        // roll, pitch, yaw
-        for (int axis=0; axis < 3; axis++) {
-            parameter_vector_read(&m_rpy_ctrl_mix[axis], coeff.data());
+        if (ap_control_en) {
+            static_assert(NB_ACTUATORS <= MAX_NB_ACTUATORS);
             for (int i = 0; i < NB_ACTUATORS; i++) {
-                output[i] += coeff[i] * rate_ctrl_output_rpy[axis];
+                output[i] += ap_ctrl.direct_output[i];
+            }
+        } else {
+            // bias
+            parameter_vector_read(&m_output_bias, coeff.data());
+            for (int i = 0; i < NB_ACTUATORS; i++) {
+                output[i] += coeff[i];
+            }
+
+            // rc_in
+            assert(rc_inputs.nb_channels <= RC_INPUT_MAX_NB_CHANNELS);
+            for (int in_idx = 0; in_idx < rc_inputs.nb_channels; in_idx++) {
+                parameter_vector_read(&m_rc_mix[in_idx], coeff.data());
+                for (int i = 0; i < NB_ACTUATORS; i++) {
+                    output[i] += coeff[i] * rc_inputs.channel[in_idx];
+                }
             }
         }
 
-        // rc_in
-        assert(rc_inputs.nb_channels <= RC_INPUT_MAX_NB_CHANNELS);
-        for (int in_idx = 0; in_idx < rc_inputs.nb_channels; in_idx++) {
-            parameter_vector_read(&m_rc_mix[in_idx], coeff.data());
-            for (int i = 0; i < NB_ACTUATORS; i++) {
-                output[i] += coeff[i] * rc_inputs.channel[in_idx];
+        if (!(ap_control_en && ap_ctrl.disable_rate_ctrl)) {
+            // roll, pitch, yaw
+            for (int axis=0; axis < 3; axis++) {
+                parameter_vector_read(&m_rpy_ctrl_mix[axis], coeff.data());
+                for (int i = 0; i < NB_ACTUATORS; i++) {
+                    output[i] += coeff[i] * rate_ctrl_output_rpy[axis];
+                }
             }
         }
-
-        // float throttle = (rc_inputs.channel[0] + 1)/2;
-
-        // float roll = rate_ctrl_output_rpy[0];
-        // float pitch = rate_ctrl_output_rpy[1];
-        // float yaw = rate_ctrl_output_rpy[2];
-
-        // output[0] = throttle + pitch - roll - yaw; // back left
-        // output[1] = throttle + pitch + roll + yaw; // back right
-        // output[2] = throttle - pitch - roll + yaw; // front left
-        // output[3] = throttle - pitch + roll - yaw; // front right
-
     }
 
 public:
-    explicit LinearRCMixer()
+    explicit LinearOutputMixer()
     {
         declare_parameters(NULL);
     }
@@ -254,7 +250,7 @@ int main(void) {
     initialize_actuators(&parameters);
 
     static PIDRateController rate_ctrl;
-    static LinearRCMixer mixer;
+    static LinearOutputMixer mixer;
     rate_ctrl.declare_parameters(&control_ns);
     mixer.declare_parameters(&control_ns);
 

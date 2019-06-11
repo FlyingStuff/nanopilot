@@ -27,9 +27,11 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
     ACTUATOR_OUTPUT=11,
     RATE_CTRL_SETPOINT_RPY=12,
     RATE_CTRL_MEASURED_RPY=13,
+    AP_CONTROL=14,
+    OUTPUT_IS_ARMED=15,
+    AP_IN_CONTROL=16,
     RATE_CTRL_OUTPUT_RPY=14,
     IMU=20,
-    // ACCELEROMETER=21,
     MAGNETOMETER=22,
     BAROMETER=23,
     SET_PARAMETERS=50,
@@ -43,6 +45,16 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
 
 #include "rc_input.hpp"
 NOP_EXTERNAL_STRUCTURE(rc_input_s, nb_channels, no_signal, channel, timestamp);
+
+const int MAX_NB_ACTUATORS=16;
+struct ap_ctrl_s {
+    std::array<float, 3> rate_setpoint_rpy;
+    std::array<float, MAX_NB_ACTUATORS> direct_output;
+    bool disable_rate_ctrl;
+    timestamp_t timestamp;
+};
+NOP_EXTERNAL_STRUCTURE(ap_ctrl_s, rate_setpoint_rpy, direct_output, disable_rate_ctrl, timestamp);
+
 #include "sensors.hpp"
 NOP_EXTERNAL_STRUCTURE(quaternion_s, w, x, y, z);
 NOP_EXTERNAL_STRUCTURE(rate_gyro_sample_t, rate, timestamp, accumulated_angle);
