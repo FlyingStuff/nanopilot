@@ -16,6 +16,7 @@
 #include "control_loop.hpp"
 #include "hott_tm.hpp"
 #include "lsm6dsm_publisher.hpp"
+#include "lis3mdl_publisher.hpp"
 #include "arm_led.h"
 #include "pid_with_parameter.hpp"
 #include "low_pass_filter.hpp"
@@ -283,6 +284,13 @@ int main(void) {
                           0, -1, 0,
                           0, 0, 1;
     lsm6dsm_publisher_start(&SPID2, &lsm6dsm_spi_config, R_lsm6dsm_to_board);
+
+    Eigen::Matrix3f R_lis3mdl_to_board; // todo
+    R_lis3mdl_to_board << 1, 0, 0,
+                          0, 1, 0,
+                          0, 0, 1;
+    lis3mdl_publisher_start(&I2CD1, 0x1E, R_lis3mdl_to_board);
+
 
     while (true) {
         chThdSleepMilliseconds(1000);

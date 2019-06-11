@@ -1,6 +1,19 @@
 #ifndef ROS_INTERFACE_COMM_MSG_H
 #define ROS_INTERFACE_COMM_MSG_H
 
+
+#if __cplusplus < 201402L
+#error "need C++14"
+#endif
+
+#include <limits>
+#include <cstddef>
+#include <cstdint>
+#include <nop/structure.h>
+#include <nop/serializer.h>
+#include <nop/utility/buffer_reader.h>
+#include <nop/utility/buffer_writer.h>
+
 #include "comm.h"
 
 enum RosInterfaceCommMsgID : comm_msg_id_t {
@@ -27,22 +40,12 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
     GET_PARAMETER_RES=55,
 };
 
-#if __cplusplus < 201402L
-#error "need C++14"
-#endif
-
-#include <limits>
-#include <cstddef>
-#include <cstdint>
-#include <nop/structure.h>
-#include <nop/serializer.h>
-#include <nop/utility/buffer_reader.h>
-#include <nop/utility/buffer_writer.h>
 
 #include "rc_input.hpp"
 NOP_EXTERNAL_STRUCTURE(rc_input_s, nb_channels, no_signal, channel, timestamp);
 #include "sensors.hpp"
-NOP_EXTERNAL_STRUCTURE(rate_gyro_sample_t, rate, timestamp);
+NOP_EXTERNAL_STRUCTURE(quaternion_s, w, x, y, z);
+NOP_EXTERNAL_STRUCTURE(rate_gyro_sample_t, rate, timestamp, accumulated_angle);
 NOP_EXTERNAL_STRUCTURE(accelerometer_sample_t, acceleration, timestamp);
 NOP_EXTERNAL_STRUCTURE(barometer_sample_t, pressure, temperature, timestamp);
 NOP_EXTERNAL_STRUCTURE(magnetometer_sample_t, magnetic_field, timestamp);

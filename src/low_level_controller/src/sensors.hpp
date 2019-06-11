@@ -5,8 +5,16 @@
 #include "timestamp.h"
 #include "msgbus/msgbus.hpp"
 
+struct quaternion_s{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
 typedef struct {
     float rate[3];                  // [rad/s]
+    struct quaternion_s accumulated_angle;
     timestamp_t timestamp;
 } rate_gyro_sample_t;
 
@@ -32,6 +40,7 @@ typedef struct {
 
 extern msgbus::Topic<rate_gyro_sample_t> rate_gyro;
 extern msgbus::Topic<accelerometer_sample_t> accelerometer;
+extern msgbus::Topic<magnetometer_sample_t> magnetometer;
 
 
 #endif // SENSORS_HPP

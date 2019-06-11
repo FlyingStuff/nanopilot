@@ -11,4 +11,7 @@
 #define THD_PRIO_CONTROL_LOOP                           100
 #define THD_PRIO_HOTT_TM                                20
 #define THD_PRIO_SPI_DRIVERS                            90
+#define THD_PRIO_I2C_DRIVERS                            89
+
+
 #endif /* THREAD_PRIO_H */

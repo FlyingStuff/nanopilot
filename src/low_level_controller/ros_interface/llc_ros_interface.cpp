@@ -91,9 +91,11 @@ private:
                 memcpy(&ping, msg, sizeof(ping));
                 float ms = (double) (tv_now.tv_usec - ping.tv.tv_usec) / 1000 +
                  (double) (tv_now.tv_sec - ping.tv.tv_sec) * 1000;
-                std::cout << "ping " << ping.idx << ": size " << sizeof(struct ping_s) << " latency " << ms << " ms" << std::endl;
+                // std::cout << "ping " << ping.idx << ": size " << sizeof(struct ping_s) << " latency " << ms << " ms" << std::endl;
+                RCLCPP_INFO(this->get_logger(), "ping %d: size %d, latency %f ms", ping.idx, sizeof(struct ping_s), ms);
                 if (ping.idx > prev_ping_idx+1) {
-                    std::cout << ping.idx - (prev_ping_idx+1) << " packets lost" << std::endl;
+                    // std::cout << ping.idx - (prev_ping_idx+1) << " packets lost" << std::endl;
+                    RCLCPP_WARN(this->get_logger(), "ping %d: %d packets lost", ping.idx, ping.idx - (prev_ping_idx+1));
                 }
                 prev_ping_idx = ping.idx;
             }
@@ -123,6 +125,7 @@ private:
             rc_input_s val;
             deserializer.Read(&val);
             auto message = autopilot_msgs::msg::RCInput();
+            message.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME);
             auto nb_channels = std::min(static_cast<uint32_t>(val.nb_channels), message.MAX_NB_CHANNELS);
             for (uint32_t i=0; i < nb_channels; i++) {
                 message.channels.push_back(val.channel[i]);
@@ -148,25 +151,43 @@ private:
         case RosInterfaceCommMsgID::IMU:
         {
             auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
-            rate_gyro_sample_t val;
-            deserializer.Read(&val);
+            rate_gyro_sample_t gyro;
+            deserializer.Read(&gyro);
+            accelerometer_sample_t acc;
+            deserializer.Read(&acc);
             auto message = sensor_msgs::msg::Imu();
-            message.header.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME);
+            message.header.stamp = rclcpp::Time(gyro.timestamp, RCL_SYSTEM_TIME);
             message.header.frame_id = "imu";
-            message.orientation.x = 0;
-            message.orientation.y = 0;
-            message.orientation.z = 0;
-            message.orientation.w = 1;
+            message.orientation.x = gyro.accumulated_angle.x;
+            message.orientation.y = gyro.accumulated_angle.y;
+            message.orientation.z = gyro.accumulated_angle.z;
+            message.orientation.w = gyro.accumulated_angle.w;
             message.orientation_covariance = {0};
-            message.angular_velocity.x = val.rate[0];
-            message.angular_velocity.y = val.rate[1];
-            message.angular_velocity.z = val.rate[2];
+            message.angular_velocity.x = gyro.rate[0];
+            message.angular_velocity.y = gyro.rate[1];
+            message.angular_velocity.z = gyro.rate[2];
             message.angular_velocity_covariance = {0};
-            message.linear_acceleration.x = 0;
-            message.linear_acceleration.y = 0;
-            message.linear_acceleration.z = 0;
+            message.linear_acceleration.x = acc.acceleration[0];
+            message.linear_acceleration.y = acc.acceleration[1];
+            message.linear_acceleration.z = acc.acceleration[2];
             message.linear_acceleration_covariance = {0};
             m_imu_pub->publish(message);
+            break;
+        }
+
+        case RosInterfaceCommMsgID::MAGNETOMETER:
+        {
+            auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+            magnetometer_sample_t mag;
+            deserializer.Read(&mag);
+            auto message = sensor_msgs::msg::MagneticField();
+            message.header.stamp = rclcpp::Time(mag.timestamp, RCL_SYSTEM_TIME);
+            message.header.frame_id = "imu";
+            message.magnetic_field.x = mag.magnetic_field[0];
+            message.magnetic_field.y = mag.magnetic_field[1];
+            message.magnetic_field.z = mag.magnetic_field[2];
+            message.magnetic_field_covariance = {0};
+            m_mag_pub->publish(message);
             break;
         }
 
@@ -226,7 +247,6 @@ private:
     void send_ping(void) {
         struct ping_s ping;
         ping.idx = m_ping_idx++;
-        printf("sending ping %d\n", ping.idx);
         gettimeofday(&ping.tv, NULL);
         comm_send(&m_interface, RosInterfaceCommMsgID::PING, &ping, sizeof(ping));
     }
@@ -257,6 +277,7 @@ private:
     rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr m_timestamp_pub;
     rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr m_latency_pub;
     rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr m_imu_pub;
+    rclcpp::Publisher<sensor_msgs::msg::MagneticField>::SharedPtr m_mag_pub;
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_setpoint_pub;
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_measured_pub;
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_output_pub;

@@ -58,13 +58,18 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     auto rate_measured_rpy_sub = msgbus::subscribe(rate_measured_rpy_topic);
     auto rate_ctrl_output_rpy_sub = msgbus::subscribe(rate_ctrl_output_rpy_topic);
     auto rate_gyro_sub = msgbus::subscribe(rate_gyro);
-    std::array<msgbus::SubscriberBase*, 6> sub_list = {
+    auto accelerometer_sub = msgbus::subscribe(accelerometer);
+    auto magnetometer_sub = msgbus::subscribe(magnetometer);
+
+    std::array<msgbus::SubscriberBase*, 7> sub_list = {
         &rc_in_sub,
         &rate_gyro_sub,
+        // accelerometer_sub not checked for update
         &output_sub,
         &rate_setpoint_rpy_sub,
         &rate_measured_rpy_sub,
         &rate_ctrl_output_rpy_sub,
+        &magnetometer_sub,
     };
     while (true) {
         comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
@@ -83,7 +88,14 @@ static THD_FUNCTION(comm_tx_thread, arg) {
         if (rate_gyro_sub.has_update()) {
             auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
             serializer.Write(rate_gyro_sub.get_value());
+            serializer.Write(accelerometer_sub.get_value());
             comm_send(&comm_if, RosInterfaceCommMsgID::IMU, buf, serializer.writer().size());
+        }
+
+        if (magnetometer_sub.has_update()) {
+            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
+            serializer.Write(magnetometer_sub.get_value());
+            comm_send(&comm_if, RosInterfaceCommMsgID::MAGNETOMETER, buf, serializer.writer().size());
         }
 
         if (output_sub.has_update()) {

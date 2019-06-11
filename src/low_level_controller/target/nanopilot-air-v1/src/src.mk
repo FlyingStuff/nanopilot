@@ -22,6 +22,7 @@ PROJCSRC += $(PROJROOT)/src/hott/sumd.c
 PROJCSRC += $(PROJROOT)/src/hott/telemetry.c
 PROJCSRC += $(PROJROOT)/src/pid.c
 PROJCSRC += $(PROJROOT)/src/drivers/lsm6dsm.c
+PROJCSRC += $(PROJROOT)/src/drivers/lis3mdl.c
 PROJCPPSRC += $(PROJROOT)/src/parameter_storage.cpp
 PROJCPPSRC += $(PROJROOT)/src/eeprom.cpp
 PROJCPPSRC += $(PROJROOT)/src/hott_tm.cpp
@@ -33,6 +34,7 @@ PROJCPPSRC += $(PROJROOT)/src/pid_with_parameter.cpp
 PROJCPPSRC += $(PROJROOT)/src/low_pass_filter.cpp
 PROJCPPSRC += $(PROJROOT)/src/control_loop.cpp
 PROJCPPSRC += $(PROJROOT)/src/lsm6dsm_publisher.cpp
+PROJCPPSRC += $(PROJROOT)/src/lis3mdl_publisher.cpp
 PROJCPPSRC += $(PROJROOT)/src/arm_led.cpp
 PROJCPPSRC += $(PROJROOT)/src/sensors.cpp
 
