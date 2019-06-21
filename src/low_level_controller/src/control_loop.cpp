@@ -11,6 +11,7 @@
 
 msgbus::Topic<bool> output_armed_topic;
 msgbus::Topic<bool> ap_in_control_topic;
+msgbus::Topic<bool> ap_control_timeout;
 msgbus::Topic<struct ap_ctrl_s> ap_ctrl;
 msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;
 msgbus::Topic<std::array<float, 3>> rate_setpoint_rpy_topic;
@@ -140,22 +141,30 @@ static THD_FUNCTION(control_thread, arg)
             && timestamp_duration(last_rc_signal, now) < 1.5f
             && timestamp_duration(gyro.timestamp, now) < 0.01f) {
 
-            std::array<float, NB_ACTUATORS> output = {0,};
+            std::array<float, NB_ACTUATORS> output;
             std::array<float, 3> rate_setpoint_rpy;
             std::array<float, 3> rate_measured_rpy;
             std::array<float, 3> rate_ctrl_output;
             get_rc_rate_inputs(rc_in, rate_setpoint_rpy.data());
 
             bool ap_in_control = false;
+            bool ap_timeout = false;
             bool ap_ctrl_en = ap_control_switch_is_on(rc_in);
             struct ap_ctrl_s ap_ctrl_msg;
-            if (ap_ctrl_en && sub_ap_ctrl.has_value()) {
-                ap_ctrl_msg = sub_ap_ctrl.get_value();
-                if (fabsf(timestamp_duration(ap_ctrl_msg.timestamp, now)) < 0.01f) {
-                    rate_setpoint_rpy = ap_ctrl_msg.rate_setpoint_rpy;
-                    ap_in_control = true;
+            if (ap_ctrl_en) {
+                if (sub_ap_ctrl.has_value()) {
+                    ap_ctrl_msg = sub_ap_ctrl.get_value();
+                    if (fabsf(timestamp_duration(ap_ctrl_msg.timestamp, now)) < 0.1f) {
+                        rate_setpoint_rpy = ap_ctrl_msg.rate_setpoint_rpy;
+                        ap_in_control = true;
+                    } else {
+                        ap_timeout = true;
+                    }
+                } else {
+                    ap_timeout = true;
                 }
             }
+            ap_control_timeout.publish(ap_timeout);
 
             // transform rate to body frame
             Eigen::Map<Eigen::Vector3f> rate_measured_board(gyro.rate);
@@ -176,6 +185,7 @@ static THD_FUNCTION(control_thread, arg)
             actuator_output_topic.publish(output);
             ap_in_control_topic.publish(ap_in_control);
         } else {
+            s_rate_controller->reset();
             std::array<float, NB_ACTUATORS> output;
             for (float &o: output) {
                 o = 0;

@@ -1,11 +1,9 @@
 #include "hott/telemetry.h"
 #include "thread_prio.h"
 #include "log.h"
+#include "control_loop.hpp"
 
 #include "hott_tm.hpp"
-
-msgbus::Topic<struct hott_tm_gam_s> TelemetryGAM;
-msgbus::Topic<struct hott_tm_gps_s> TelemetryGPS;
 
 static BaseSequentialStream *_tm_uart = NULL;
 
@@ -27,22 +25,22 @@ static THD_FUNCTION(hott_tm_task, arg)
     chRegSetThreadName("hott tm");
     hott_tm_handler_t tm;
     hott_tm_handler_init(&tm, uart_putc, delay_ms);
-    auto gam_sub = msgbus::subscribe(TelemetryGAM);
+
     struct hott_tm_gam_s gam;
     hott_tm_handler_enable_gam(&tm, &gam);
     hott_tm_gam_zero(&gam);
-    auto gps_sub = msgbus::subscribe(TelemetryGPS);
     struct hott_tm_gps_s gps;
     hott_tm_handler_enable_gps(&tm, &gps);
     hott_tm_gps_zero(&gps);
 
+    auto ctrl_timeout_sub = msgbus::subscribe(ap_control_timeout);
+
     while (true) {
         char c = streamGet(_tm_uart);
-        if (gam_sub.has_update()) {
-            gam = gam_sub.get_value();
-        }
-        if (gps_sub.has_update()) {
-            gps = gps_sub.get_value();
+
+        gam.alarm = 0;
+        if (ctrl_timeout_sub.has_value() && ctrl_timeout_sub.get_value()) {
+            gam.alarm = HOTT_TM_GAM_ALARM_READ_TELEM;
         }
         hott_tm_handler_receive(&tm, c);
     }

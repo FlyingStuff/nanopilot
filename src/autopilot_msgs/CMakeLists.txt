@@ -21,7 +21,8 @@ rosidl_generate_interfaces(autopilot_msgs
   "msg/RCInput.msg"
   "msg/ActuatorPositions.msg"
   "msg/ActuatorPositionsStamped.msg"
-  "msg/Control.msg"
+  "msg/AttitudeTrajectorySetpoint.msg"
+  "msg/RateControlSetpoint.msg"
   "srv/SendMsgpackConfig.srv"
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs
 )

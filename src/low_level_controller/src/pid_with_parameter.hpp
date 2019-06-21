@@ -8,6 +8,7 @@ public:
     void set_update_frequency(float freq);
     void declare_parameters(parameter_namespace_t *parent_ns, const char *name);
     float process(float error);
+    void reset();
 
 private:
     parameter_namespace_t m_namespace;

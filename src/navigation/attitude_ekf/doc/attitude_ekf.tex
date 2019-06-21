@@ -1,0 +1,258 @@
+\documentclass[a4paper]{paper}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage[left=2.5cm,top=3cm,right=2.5cm,bottom=3cm,bindingoffset=0.cm]{geometry}
+\usepackage{bm} % used for bold math symbols
+\usepackage{parskip} % vertical space instead of indented paragraphs
+\usepackage{hyperref}
+\usepackage{graphicx}
+
+\usepackage{biblatex}
+\usepackage{filecontents}
+
+
+\begin{filecontents}{references.bib}
+@article{MarkleyAttitudeErrorRepr,
+    author = {Markley, F. Landis},
+    publisher = {Journal of Guidance, Control, and Dynamics, Vol. 26, No. 2 (2003), pp. 311-317.},
+    year = {2003},
+    title = {Attitude Error Representations for Kalman Filtering},
+    url = {http://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/20020060647.pdf}
+},
+\end{filecontents}
+
+\addbibresource{references.bib}
+
+
+\author{
+Patrick Spieler \\
+\texttt{stapelzeiger@gmail.com}
+}
+
+\title{Attitude EKF Documentation}
+
+
+\begin{document}
+\maketitle
+\hrule
+\bigskip
+
+% \begin{abstract}
+
+% This documents the model used for the Extended Kalman Filter estimating attitude.
+
+% \end{abstract}
+
+% \tableofcontents
+
+% \pagebreak
+
+
+\section{Attitude Representation}
+
+The attitude is represented as an attitude error with respect to a reference attitude. This is called Multiplicative EKF (MEKF). See \cite{MarkleyAttitudeErrorRepr}, (The quaternion multiplication and rotation matrix from quaternion are inverted with respect to the standard convention used here).
+
+
+\begin{equation}
+    q_b^I = q_{ref} \circ \delta q(\bm{a})
+    \label{eq:delta_q}
+\end{equation}
+
+
+The attitude error $\delta q(\bm{a})$ is tracked by the EKF. It is defined such that it's expected value is a zero rotation. This allows the choice of a parametrization with only three variables without issues with singularity.
+
+The chosen attitude error parametrization $\bm{a}$ follows \cite{MarkleyAttitudeErrorRepr}. It is defined to be twice the Gibbs vector (choosing a factor of two makes the covariance of $\bm{a}$ an angle covariance):
+
+\begin{equation}
+    \bm{a} = 2\bm{g} = 2 \frac{\delta q_v}{\delta q_0}
+\end{equation}
+
+\begin{equation}
+    \delta q(\bm{a}) =
+    \left\{
+      \begin{array}{rcl}
+        \delta q_{0} & = & \frac{2}{\sqrt{4+\lVert\bm{a}\rVert^2}} \\
+        \delta q_{v} & = & \frac{\bm{a}}{\sqrt{4+\lVert\bm{a}\rVert^2}} \\
+      \end{array}
+    \right.
+\label{eq:delta_q_from_a}
+\end{equation}
+
+Taking the time derivative of (\ref{eq:delta_q}):
+\begin{equation}
+\begin{split}
+    \frac{d}{dt} q = \dot q
+    &= \frac{d}{dt} (q_{ref} \circ \delta q)\\
+    \dot q &= \dot{q_{ref}} \circ \delta q + q_{ref} \circ \dot{\delta q} \\
+    \dot{\delta q} &= q_{ref}^{-1} \circ \dot q - q_{ref}^{-1} \circ \dot{q_{ref}} \circ \delta q \\  % (using quat-time-der)
+    \dot{\delta q} &= \frac{1}{2} q_{ref}^{-1} \circ  q_{ref} \circ \delta q \circ \omega
+        - \frac{1}{2} q_{ref}^{-1} \circ q_{ref} \circ \omega_{ref} \circ \delta q \\
+    \dot{\delta q} &= \frac{1}{2} \delta q \circ \omega - \frac{1}{2} \omega_{ref} \circ \delta q \\
+\end{split}
+\label{eq:delta_q_dot}
+\end{equation}
+
+Taking the time derivative of $\bm{a}$
+\begin{equation}
+    \frac{d}{dt} \bm{a}(\delta q) = \frac{\partial \bm{a}}{\partial \delta q} \dot{\delta q}
+    = \frac{2}{\delta q_0} \dot{\delta q_v} - \frac{2 \dot{\delta q_0}}{{\delta q_0}^2} \delta q_v
+\end{equation}
+
+Substituting $\delta q$ and $\dot{\delta q}$ using (\ref{eq:delta_q_from_a}) and (\ref{eq:delta_q_dot}):
+
+\begin{equation}
+    \begin{split}
+    \dot{\bm{a}} &=
+        \sqrt{4+\lVert\bm{a}\rVert^2}
+        \left\{ \frac{1}{2}\delta q \circ \bar \omega - \frac{1}{2} \bar \omega_{ref}\circ \delta q \right\}_v
+        -  \frac{1}{2} \sqrt{4+\lVert\bm{a}\rVert^2} \left\{ \frac{1}{2}\delta q \circ \bar \omega - \frac{1}{2} \bar \omega_{ref}\circ \delta q \right\}_0 \bm{a} \\
+    &= \left\{
+            \frac{1}{2}
+            \left[ \begin{array}{c} 2 \\ \bm{a} \end{array} \right]
+            \circ \bar \omega
+            - \frac{1}{2}
+            \bar \omega_{ref} \circ
+            \left[ \begin{array}{c} 2 \\ \bm{a} \end{array} \right]
+        \right\}_v
+        - \frac{1}{2} \left\{
+            \frac{1}{2}
+            \left[ \begin{array}{c} 2 \\ \bm{a} \end{array} \right]
+            \circ \bar \omega
+            - \frac{1}{2}
+            \bar \omega_{ref} \circ
+            \left[ \begin{array}{c} 2 \\ \bm{a} \end{array} \right]
+        \right\}_0 \bm{a} \\
+\end{split}
+\end{equation}
+
+Expanding the quaternion multiplication using the vector operations we have:
+
+\begin{equation}
+    \begin{split}
+    \dot{\bm{a}} &=
+        \frac{1}{2} (2 \bm{\omega} + \bm{a} \times \bm{\omega})
+        - \frac{1}{2} (2 \bm{\omega}_{ref} + \bm{\omega}_{ref} \times \bm{a})
+        - \frac{1}{2} \left(
+            \frac{1}{2} \bm{a} \cdot \bm{\omega}
+            - \frac{1}{2} \bm{\omega}_{ref} \cdot \bm{a}
+        \right) \bm{a} \\
+    &= \bm{\omega} - \bm{\omega}_{ref}
+        - \frac{1}{2} (\bm{\omega} - \bm{\omega}_{ref}) \times \bm{a}
+        - \bm{\omega}_{ref} \times \bm{a}
+        - \frac{1}{4} ((\bm{\omega} - \bm{\omega}_{ref}) \cdot \bm{a}) \bm{a}
+\end{split}
+\label{eq:adot}
+\end{equation}
+
+
+
+
+\section{Gyroscope}
+
+The output of the gyroscopes is modeled as the real body angular rate with additive time varying bias and white noise:
+
+\begin{equation}
+    \bm{\omega}_g(t) = \bm{\omega}(t) + \bm{b}(t) + \bm{n}_g(t)
+\end{equation}
+
+The bias is modeled as a random walk.
+\begin{equation}
+    \dot{\bm{b}}(t) = \bm{n}_b(t)
+\end{equation}
+
+\section{Direction Vector Measurement}
+
+\subsection{Gravitational Acceleration}
+
+\subsection{Magnetic Field}
+
+\section{Quaternion Measurement}
+
+Attitude measurement $\tilde{q}_b^I$:
+\begin{equation}
+    \delta q(\bm{a}=\bm{z}) = q_{ref}^{-1} \circ \tilde{q}_b^I
+    \label{eq:q_measurement_def}
+\end{equation}
+Then:
+\begin{equation}
+    \bm{z} = h(\bm{a}) = \bm{a}
+    \label{eq:q_measurement_fn}
+\end{equation}
+
+\begin{equation}
+    H_a = I_{3\times3}
+    \label{eq:q_measurement_H}
+\end{equation}
+
+The measurement noise $R_a$ is the covariance of the error angle.
+
+\section{EKF covariance propagation}
+
+For a filter tracking attitude error and gyro bias, the state $\bm{x}$ is:
+
+\begin{equation}
+    \bm{x} = \left[
+        \begin{matrix}
+            \bm{a}\\[0.3em]
+            \bm{b}\\
+        \end{matrix}
+        \right]
+\end{equation}
+
+The expectation of the time derivative is:
+
+\begin{equation}
+    E (\bm{\dot x}) = \left[
+        \begin{matrix}
+            0_{3\times1}\\[0.3em]
+            0_{3\times1}\\
+        \end{matrix}
+        \right]
+\end{equation}
+
+The update Jacobians are:
+
+\begin{equation}
+    F = E \left\{
+        \left[
+        \begin{matrix}
+            \frac{\partial \dot{\bm{a}}}{\partial \bm{a}} & \frac{\partial \dot{\bm{a}}}{\partial \bm{b}}\\[0.3em]
+            \frac{\partial \dot{\bm{b}}}{\partial \bm{a}} & \frac{\partial \dot{\bm{b}}}{\partial \bm{b}}\\
+        \end{matrix}
+        \right]
+    \right\}
+    = \left[
+        \begin{matrix}
+            -{[\bm{\omega}_{ref}]}_\times & -I_{3\times3}\\[0.3em]
+            0_{3\times3} & 0_{3\times3}\\
+        \end{matrix}
+        \right]
+\end{equation}
+
+\begin{equation}
+    G = E \left\{
+        \left[
+        \begin{matrix}
+            \frac{\partial \dot{\bm{a}}}{\partial \bm{n}_g} & \frac{\partial \dot{\bm{a}}}{\partial \bm{n}_b}\\[0.3em]
+            \frac{\partial \dot{\bm{b}}}{\partial \bm{n}_g} & \frac{\partial \dot{\bm{b}}}{\partial \bm{n}_b}\\
+        \end{matrix}
+        \right]
+    \right\}
+    = \left[
+        \begin{matrix}
+            -I_{3\times3} & 0_{3\times3}\\[0.3em]
+            0_{3\times3} & I_{3\times3}\\
+        \end{matrix}
+        \right]
+\end{equation}
+
+
+
+
+\clearpage
+\nocite{*}
+\printbibliography[prefixnumbers={RD}]
+\clearpage
+
+\end{document}

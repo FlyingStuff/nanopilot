@@ -48,12 +48,13 @@ NOP_EXTERNAL_STRUCTURE(rc_input_s, nb_channels, no_signal, channel, timestamp);
 
 const int MAX_NB_ACTUATORS=16;
 struct ap_ctrl_s {
-    std::array<float, 3> rate_setpoint_rpy;
-    std::array<float, MAX_NB_ACTUATORS> direct_output;
-    bool disable_rate_ctrl;
-    timestamp_t timestamp;
+    std::array<float, 3> rate_setpoint_rpy{0, 0, 0};
+    std::array<float, MAX_NB_ACTUATORS> direct_output{0};
+    std::array<float, 3> feed_forward_torque_rpy{0, 0, 0};
+    std::array<float, 3> force_xyz{0, 0, 0};
+    timestamp_t timestamp{0};
 };
-NOP_EXTERNAL_STRUCTURE(ap_ctrl_s, rate_setpoint_rpy, direct_output, disable_rate_ctrl, timestamp);
+NOP_EXTERNAL_STRUCTURE(ap_ctrl_s, rate_setpoint_rpy, direct_output, feed_forward_torque_rpy, force_xyz, timestamp);
 
 #include "sensors.hpp"
 NOP_EXTERNAL_STRUCTURE(quaternion_s, w, x, y, z);

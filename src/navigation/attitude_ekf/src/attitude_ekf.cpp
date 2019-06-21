@@ -1,9 +1,16 @@
+#define EIGEN_DONT_VECTORIZE
+#define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+// todo: these two lines are needed because of the Node being created with make shared
+// http://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
+
 #include "rclcpp/rclcpp.hpp"
 #include <sensor_msgs/msg/imu.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 using std::placeholders::_1;
 #include <iostream>
+#include <string>
+// #include <tf2_ros/transform_listener.h>
 
 #include <Eigen/Dense>
 #include "ekf.hpp"
@@ -18,35 +25,51 @@ Eigen::Matrix3d cross_product_matrix(Eigen::Vector3d v)
 }
 
 
+double deg_to_rad(double deg)
+{
+    return deg*M_PI/180;
+}
+
+double sq(double x)
+{
+    return x*x;
+}
 
 class AttitudeEKF : public rclcpp::Node
 {
 public:
     AttitudeEKF()
-    : Node("AttitudeEKF")
+    : Node("AttitudeEKF"),
+    body_frame("body"),
+    inertial_frame("NED")
     {
         imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
             "imu", std::bind(&AttitudeEKF::imu_cb, this, _1));
+        pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            "/vrpn_client_node/quad/pose", std::bind(&AttitudeEKF::pose_cb, this, _1));
+
 
         pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose");
 
-        P0 = P0.setZero();
+        x.setZero();
+        P0.setZero();
         P0.diagonal() <<
-            1, 1, 1,
-            1, 1, 1,
-            1;
-        Q = Q.setZero();
+            sq(deg_to_rad(180)), sq(deg_to_rad(180)), sq(deg_to_rad(180)), // angle covariance in body [(rad)^2]
+            sq(deg_to_rad(2)), sq(deg_to_rad(2)), sq(deg_to_rad(2)); // gyro bias covariance [(rad/s)^2]
+        Q.setZero();
         double gyro_noise = 0.001; // gyro noise density [rad/s/sqrt(Hz)]
         double gyro_random_walk = 0.0001; // gyro bias random walk [rad/s^2/sqrt(Hz)]
         Q.diagonal() <<
-            gyro_noise*gyro_noise, gyro_noise*gyro_noise, gyro_noise*gyro_noise,
-            gyro_random_walk*gyro_random_walk, gyro_random_walk*gyro_random_walk, gyro_random_walk*gyro_random_walk, 
-            0.0001;
+            sq(gyro_noise), sq(gyro_noise), sq(gyro_noise),
+            sq(gyro_random_walk), sq(gyro_random_walk), sq(gyro_random_walk);
         std::cout << Q << std::endl;
-        R_ACC = R_ACC.setZero();
+        R_ACC.setZero();
         R_ACC.diagonal() <<
-            0.01, 0.01, 0.01;
-        R_MAG = R_MAG.setZero();
+            sq(0.1), sq(0.1), sq(0.1); // covariance of a unit vector
+        R_QUAT.setZero();
+        R_QUAT.diagonal() <<
+            sq(deg_to_rad(10)), sq(deg_to_rad(10)), sq(deg_to_rad(10)); // angle covariance in body [(rad)^2]
+        R_MAG.setZero();
         this->reset();
     }
 
@@ -60,7 +83,7 @@ public:
 
 private:
 
-    void time_update(Eigen::Quaternion<double> current_b_to_prev_b, double delta_t)
+    void time_update(Eigen::Quaternion<double> &current_b_to_prev_b, double delta_t)
     {
 
         Eigen::Vector3d omega_gyro = 2*current_b_to_prev_b.vec()/current_b_to_prev_b.w()/delta_t;
@@ -101,7 +124,7 @@ private:
         this->attitude_reference_B_to_I.normalize();
     }
 
-    void acc_measurement_update(Eigen::Vector3d acc)
+    void acc_measurement_update(Eigen::Vector3d &acc)
     {
         Eigen::Vector3d acc_dir = acc.normalized();
         Eigen::Vector3d acc_dir_inertial_expected(0, 0, -1); // accelerating up in NED
@@ -135,15 +158,44 @@ private:
         attitude_error_to_reference_transfer();
     }
 
+    void quaternion_measurement_update(Eigen::Quaterniond &measured_B_to_I)
+    {
+        Eigen::Matrix<double, QUATERNION_MEASURE_DIM, STATE_DIM> H;
+        H.setZero();
+        H.block<3,3>(0, 0).setIdentity();
+
+        Eigen::Matrix<double, QUATERNION_MEASURE_DIM, 1> y;
+        Eigen::Matrix<double, QUATERNION_MEASURE_DIM, QUATERNION_MEASURE_DIM> S;
+        Eigen::Matrix<double, STATE_DIM, QUATERNION_MEASURE_DIM> K;
+
+        auto q_error = attitude_reference_B_to_I.conjugate() * measured_B_to_I;
+        Eigen::Vector3d a_measured = 2/q_error.w()*q_error.vec();
+
+        y = a_measured; // a_expected is zero
+        S = H * P * H.transpose() + R_QUAT;
+        K = P * H.transpose() * S.inverse(); // todo use pseudo inverse to be safe
+
+        auto &I = Eigen::Matrix<double, STATE_DIM, STATE_DIM>::Identity();
+        P = (I - K * H) * P;
+        x = x + K * y;
+        attitude_error_to_reference_transfer();
+    }
+
     void imu_cb(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
+        // todo use tf2
+        Eigen::Quaterniond imu_to_body(Eigen::AngleAxisd(0.5*M_PI, Eigen::Vector3d::UnitZ())
+                                        * Eigen::AngleAxisd(M_PI,  Eigen::Vector3d::UnitY()));
+
         if (prev_imu_msg) {
             rclcpp::Duration dt = rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_imu_msg->header.stamp);
             // RCLCPP_INFO(this->get_logger(), "*****************");
             // RCLCPP_INFO(this->get_logger(), "imu delta t %f", dt.seconds());
             // RCLCPP_INFO(this->get_logger(), "imu omega: '%f %f %f'", msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
-            Eigen::Quaternion<double> current_b_to_I(msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z);
-            Eigen::Quaternion<double> prev_b_to_I(prev_imu_msg->orientation.w, prev_imu_msg->orientation.x, prev_imu_msg->orientation.y, prev_imu_msg->orientation.z);
+            Eigen::Quaternion<double> current_imu_to_I(msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z);
+            Eigen::Quaternion<double> prev_imu_to_I(prev_imu_msg->orientation.w, prev_imu_msg->orientation.x, prev_imu_msg->orientation.y, prev_imu_msg->orientation.z);
+            Eigen::Quaternion<double> current_b_to_I = current_imu_to_I*imu_to_body.conjugate();
+            Eigen::Quaternion<double> prev_b_to_I = prev_imu_to_I*imu_to_body.conjugate();
             auto current_b_to_prev_b = prev_b_to_I.conjugate()*current_b_to_I; // transform from current body to previous body frame
             // RCLCPP_INFO(this->get_logger(), "imu dq '%f %f %f %f'", current_b_to_prev_b.w(), current_b_to_prev_b.x(), current_b_to_prev_b.y(), current_b_to_prev_b.z());
             // RCLCPP_INFO(this->get_logger(), "imu omega(dq,dt) '%f %f %f'", current_b_to_prev_b.x()*2/dt.seconds(), current_b_to_prev_b.y()*2/dt.seconds(), current_b_to_prev_b.z()*2/dt.seconds());
@@ -157,7 +209,8 @@ private:
             //     this->attitude_reference_B_to_I.z());
 
             Eigen::Vector3d acc(msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
-            acc_measurement_update(acc);
+            auto acc_body = imu_to_body*acc;
+            acc_measurement_update(acc_body);
 
             // RCLCPP_INFO(this->get_logger(), "ref att '%f %f %f %f'",
             //     this->attitude_reference_B_to_I.w(),
@@ -165,9 +218,8 @@ private:
             //     this->attitude_reference_B_to_I.y(),
             //     this->attitude_reference_B_to_I.z());
 
-
             auto pose_msg = geometry_msgs::msg::PoseStamped();
-            pose_msg.header.frame_id = "NED";
+            pose_msg.header.frame_id = inertial_frame;
             pose_msg.header.stamp = rclcpp::Time(msg->header.stamp);
             pose_msg.pose.orientation.w = attitude_reference_B_to_I.w();
             pose_msg.pose.orientation.x = attitude_reference_B_to_I.x();
@@ -178,9 +230,22 @@ private:
         prev_imu_msg = msg;
     }
 
-    static const int STATE_DIM=7; // attitude err [3], gyro bias [3], mag inclination [1]
+    void pose_cb(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+    {
+        auto measured_B_to_I = Eigen::Quaterniond(msg->pose.orientation.w,
+            msg->pose.orientation.x,
+            msg->pose.orientation.y,
+            msg->pose.orientation.z);
+        quaternion_measurement_update(measured_B_to_I);
+    }
+
+    std::string body_frame;
+    std::string inertial_frame;
+
+    static const int STATE_DIM=6; // attitude err [3], gyro bias [3]
     static const int MAG_MEASURE_DIM=3;
     static const int ACC_MEASURE_DIM=3;
+    static const int QUATERNION_MEASURE_DIM=3;
 
     // States
     Eigen::Quaternion<double> attitude_reference_B_to_I; // body to inerital transform
@@ -190,13 +255,18 @@ private:
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> P0;
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> Q;
     Eigen::Matrix<double, ACC_MEASURE_DIM, ACC_MEASURE_DIM> R_ACC;
+    Eigen::Matrix<double, QUATERNION_MEASURE_DIM, QUATERNION_MEASURE_DIM> R_QUAT;
     Eigen::Matrix<double, MAG_MEASURE_DIM, MAG_MEASURE_DIM> R_MAG;
 
     // ROS Subscribers
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub;
     sensor_msgs::msg::Imu::SharedPtr prev_imu_msg;
     // ROS Publishers
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub;
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 int main(int argc, char * argv[])

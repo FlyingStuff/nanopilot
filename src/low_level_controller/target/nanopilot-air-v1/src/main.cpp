@@ -143,6 +143,12 @@ public:
         pitch_lp.set_update_frequency(freq);
         yaw_lp.set_update_frequency(freq);
     }
+    virtual void reset()
+    {
+        pid_roll_controller.reset();
+        pid_pitch_controller.reset();
+        pid_yaw_controller.reset();
+    }
 };
 class LinearOutputMixer: public OutputMixer {
     virtual void mix(const float rate_ctrl_output_rpy[3], const struct rc_input_s &rc_inputs, const struct ap_ctrl_s &ap_ctrl, bool ap_control_en, std::array<float, NB_ACTUATORS> &output)
@@ -151,13 +157,20 @@ class LinearOutputMixer: public OutputMixer {
         if (ap_control_en) {
             static_assert(NB_ACTUATORS <= MAX_NB_ACTUATORS);
             for (int i = 0; i < NB_ACTUATORS; i++) {
-                output[i] += ap_ctrl.direct_output[i];
+                output[i] = ap_ctrl.direct_output[i];
+            }
+            // force
+            for (int axis=0; axis < 3; axis++) {
+                parameter_vector_read(&m_force_ctrl_mix[axis], coeff.data());
+                for (int i = 0; i < NB_ACTUATORS; i++) {
+                    output[i] += coeff[i] * ap_ctrl.force_xyz[axis];
+                }
             }
         } else {
             // bias
             parameter_vector_read(&m_output_bias, coeff.data());
             for (int i = 0; i < NB_ACTUATORS; i++) {
-                output[i] += coeff[i];
+                output[i] = coeff[i];
             }
 
             // rc_in
@@ -170,12 +183,18 @@ class LinearOutputMixer: public OutputMixer {
             }
         }
 
-        if (!(ap_control_en && ap_ctrl.disable_rate_ctrl)) {
-            // roll, pitch, yaw
+        // roll, pitch, yaw torque
+        for (int axis=0; axis < 3; axis++) {
+            parameter_vector_read(&m_rpy_ctrl_mix[axis], coeff.data());
+            for (int i = 0; i < NB_ACTUATORS; i++) {
+                output[i] += coeff[i] * rate_ctrl_output_rpy[axis];
+            }
+        }
+        if (ap_control_en) {
             for (int axis=0; axis < 3; axis++) {
                 parameter_vector_read(&m_rpy_ctrl_mix[axis], coeff.data());
                 for (int i = 0; i < NB_ACTUATORS; i++) {
-                    output[i] += coeff[i] * rate_ctrl_output_rpy[axis];
+                    output[i] += coeff[i] * ap_ctrl.feed_forward_torque_rpy[axis];
                 }
             }
         }
@@ -195,6 +214,10 @@ public:
         parameter_vector_declare_with_default(&m_rpy_ctrl_mix[1], &m_namespace, "pitch", m_rpy_ctrl_mix_buf[1], NB_ACTUATORS);
         parameter_vector_declare_with_default(&m_rpy_ctrl_mix[2], &m_namespace, "yaw", m_rpy_ctrl_mix_buf[2], NB_ACTUATORS);
 
+        parameter_vector_declare_with_default(&m_force_ctrl_mix[0], &m_namespace, "fx", m_force_ctrl_mix_buf[0], NB_ACTUATORS);
+        parameter_vector_declare_with_default(&m_force_ctrl_mix[1], &m_namespace, "fy", m_force_ctrl_mix_buf[1], NB_ACTUATORS);
+        parameter_vector_declare_with_default(&m_force_ctrl_mix[2], &m_namespace, "fz", m_force_ctrl_mix_buf[2], NB_ACTUATORS);
+
         parameter_vector_declare_with_default(&m_output_bias, &m_namespace, "bias", m_output_bias_buf, NB_ACTUATORS);
 
         parameter_vector_declare_with_default(&m_rc_mix[0], &m_namespace, "rc_in1", m_rc_mix_buf[0], NB_ACTUATORS);
@@ -213,6 +236,8 @@ private:
     parameter_namespace_t m_namespace;
     float m_rpy_ctrl_mix_buf[3][NB_ACTUATORS] = {{0}};
     parameter_t m_rpy_ctrl_mix[3];
+    float m_force_ctrl_mix_buf[3][NB_ACTUATORS] = {{0}};
+    parameter_t m_force_ctrl_mix[3];
     float m_rc_mix_buf[RC_INPUT_MAX_NB_CHANNELS][NB_ACTUATORS] = {{0}};
     parameter_t m_rc_mix[RC_INPUT_MAX_NB_CHANNELS];
     float m_output_bias_buf[NB_ACTUATORS] = {0};

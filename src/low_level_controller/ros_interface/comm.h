@@ -8,6 +8,7 @@
 #include <pthread.h>
 #else // ChibiOS
 #include <ch.h>
+#include <hal.h>
 #endif
 
 #include <serial-datagram/serial_datagram.h>

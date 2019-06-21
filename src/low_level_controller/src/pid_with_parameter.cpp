@@ -37,3 +37,8 @@ float PIDController::process(float error)
 
     return pid_process(&m_pid, error);
 }
+
+void PIDController::reset()
+{
+    pid_reset_integral(&m_pid);
+}
