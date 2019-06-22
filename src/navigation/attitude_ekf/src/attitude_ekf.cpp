@@ -232,10 +232,17 @@ private:
 
     void pose_cb(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
-        auto measured_B_to_I = Eigen::Quaterniond(msg->pose.orientation.w,
+        auto measured_tracker_to_Mocap = Eigen::Quaterniond(msg->pose.orientation.w,
             msg->pose.orientation.x,
             msg->pose.orientation.y,
             msg->pose.orientation.z);
+
+        // Optitrack is Z-up, todo use TF2 for this
+        auto Mocap_to_I = Eigen::Quaterniond(cos(M_PI/2), sin(M_PI/2), 0, 0);
+        auto tracker_to_B = Eigen::Quaterniond(cos(M_PI/2), sin(M_PI/2), 0, 0);
+        auto measured_tracker_to_I = Mocap_to_I*measured_tracker_to_Mocap;
+        auto measured_B_to_I = measured_tracker_to_I*tracker_to_B.conjugate();
+
         quaternion_measurement_update(measured_B_to_I);
     }
 
