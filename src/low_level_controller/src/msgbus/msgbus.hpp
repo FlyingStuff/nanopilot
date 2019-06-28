@@ -166,7 +166,7 @@ inline bool condvar_wait(condvar_t *cv, float timeout)
     if (timeout < 0) {
         timeout_sys = TIME_INFINITE;
     } else {
-        timeout_sys = US2ST(timeout*1e6);
+        timeout_sys = TIME_US2I(timeout*1e6);
     }
     msg_t ret = chCondWaitTimeout(cv, timeout_sys);
     if (ret == MSG_TIMEOUT) {

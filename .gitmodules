@@ -12,7 +12,7 @@
 	url = https://github.com/Stapelzeiger/cmp_mem_access.git
 [submodule "ChibiOS"]
 	path = src/low_level_controller/lib/mcu/ChibiOS
-	url = https://github.com/Stapelzeiger/ChibiOS.git
+	url = https://github.com/ChibiOS/ChibiOS.git
 [submodule "src/parameter"]
 	path = src/low_level_controller/lib/parameter
 	url = https://github.com/Stapelzeiger/parameter

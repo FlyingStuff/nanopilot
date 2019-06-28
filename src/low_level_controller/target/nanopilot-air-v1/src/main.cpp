@@ -294,6 +294,7 @@ int main(void) {
     hott_tm_start((BaseSequentialStream*)&SD3);
 
     SPIConfig lsm6dsm_spi_config={
+        .circular = false,
         .end_cb = NULL,
         .ssport = GPIOD,
         .sspad = GPIOD_PIN10_SENS_LSM_CS,
