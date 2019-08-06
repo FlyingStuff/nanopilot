@@ -20,10 +20,10 @@ public:
     : Node("AttitudeCtrl")
     {
         att_setpt_sub = this->create_subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>(
-            "attitude_setpoint", std::bind(&AttitudeCtrl::att_setpt_cb, this, _1));
+            "attitude_setpoint", 1, std::bind(&AttitudeCtrl::att_setpt_cb, this, _1));
         pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "pose", std::bind(&AttitudeCtrl::pose_cb, this, _1));
-        ctrl_pub = this->create_publisher<autopilot_msgs::msg::RateControlSetpoint>("control");
+            "pose", 1, std::bind(&AttitudeCtrl::pose_cb, this, _1));
+        ctrl_pub = this->create_publisher<autopilot_msgs::msg::RateControlSetpoint>("control", 10);
 
         control_timer = create_wall_timer(
             20ms, std::bind(&AttitudeCtrl::control_update, this));
