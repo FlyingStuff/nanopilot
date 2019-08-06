@@ -37,7 +37,8 @@ ln -s `pwd`/../sysroot/lib/$TARGET_TRIPLE/libz.so.1 /usr/lib/$TARGET_TRIPLE/libz
 ln -s `pwd`/../sysroot/lib/$TARGET_TRIPLE/libpcre.so.3 /usr/lib/$TARGET_TRIPLE/libpcre.so
 
 rm -f ros2.repos
-wget https://raw.githubusercontent.com/ros2/ros2/release-crystal-20190408/ros2.repos
+# wget https://raw.githubusercontent.com/ros2/ros2/release-crystal-20190408/ros2.repos
+wget https://raw.githubusercontent.com/ros2/ros2/release-dashing-20190614/ros2.repos
 vcs-import src < ros2.repos
 
 touch \
@@ -50,4 +51,5 @@ colcon build --merge-install \
   --cmake-args \
     -DCMAKE_VERBOSE_MAKEFILE=ON \
     -DCMAKE_TOOLCHAIN_FILE=`pwd`/toolchainfile.cmake \
-    -DSECURITY=ON
+    -DSECURITY=ON \
+    -DBUILD_TESTING=OFF
