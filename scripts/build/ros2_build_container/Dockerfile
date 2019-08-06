@@ -19,13 +19,14 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt update && apt install -y curl gnupg && rm -rf /var/lib/apt/lists/*
 RUN curl http://repo.ros2.org/repos.key | apt-key add -
-RUN sh -c 'echo "deb [arch=amd64,arm64] http://repo.ros2.org/ubuntu/main bionic main" > /etc/apt/sources.list.d/ros2-latest.list'
+RUN sh -c 'echo "deb [arch=amd64,arm64] http://packages.ros.org/ros2/ubuntu bionic main" > /etc/apt/sources.list.d/ros2-latest.list'
 
 RUN apt update && apt install -y \
     build-essential \
     cmake \
     git \
     python3-colcon-common-extensions \
+    python3-lark-parser \
     python3-pip \
     python-rosdep \
     python3-vcstool \
@@ -66,3 +67,5 @@ RUN apt update && apt install -y \
     g++-aarch64-linux-gnu \
     gcc-aarch64-linux-gnu \
  && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install -U numpy pytest

@@ -23,8 +23,7 @@ export CXX=/usr/bin/$TARGET_TRIPLE-g++
 export CROSS_COMPILE=/usr/bin/$TARGET_TRIPLE-
 export SYSROOT=$ROOT_DIR/sysroot
 export PYTHON_SOABI=cpython-36m-$TARGET_TRIPLE
-# export ROS2_INSTALL_PATH=$ROOT_DIR/$1/install
-
+export ROS2_INSTALL_PATH=$ROOT_DIR/
 
 colcon build \
   --build-base build_armhf \
