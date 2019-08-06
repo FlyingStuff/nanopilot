@@ -122,7 +122,7 @@ void blocking_uart_init(BlockingUARTDriver *driver, USART_TypeDef *uart, uint32_
 
 
 
-#elif defined(STM32F3XX)
+#elif defined(STM32F3XX) || defined(STM32F7XX)
 
 
 msg_t blocking_uart_put(void *instance, uint8_t b)
