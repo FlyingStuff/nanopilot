@@ -44,12 +44,12 @@ public:
     inertial_frame("NED")
     {
         imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
-            "imu", std::bind(&AttitudeEKF::imu_cb, this, _1));
+            "imu", 10, std::bind(&AttitudeEKF::imu_cb, this, _1));
         pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/vrpn_client_node/quad/pose", std::bind(&AttitudeEKF::pose_cb, this, _1));
+            "/vrpn_client_node/quad/pose", 10, std::bind(&AttitudeEKF::pose_cb, this, _1));
 
 
-        pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose");
+        pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
 
         x.setZero();
         P0.setZero();
