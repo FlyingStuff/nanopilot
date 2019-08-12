@@ -27,4 +27,4 @@
 	url = https://github.com/eigenteam/eigen-git-mirror.git
 [submodule "scripts/cross_compile"]
 	path = scripts/cross_compile
-	url = //github.com/ros2/cross_compile.git
+	url = https://github.com/ros2/cross_compile.git
