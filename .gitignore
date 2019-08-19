@@ -1,6 +1,7 @@
 /log
 /build*
 /install*
+/sysroot/
 
 env
 .tags
@@ -15,3 +16,10 @@ tags
 *.fdb_latexmk
 *.toc
 *.aux
+*.bbl
+*.bcf
+*.blg
+*.pdf
+*.run.xml
+# latex bib is generated from .tex
+*.bib
