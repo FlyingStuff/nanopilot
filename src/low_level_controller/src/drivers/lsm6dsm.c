@@ -72,7 +72,7 @@ static int16_t read_word(const uint8_t *buf)
     return ((int16_t)((int16_t)buf[1]) << 8 | buf[0]);
 }
 
-float deg_p_sec_to_rad_p_sec(float x){
+static float deg_p_sec_to_rad_p_sec(float x){
     return x*M_PI/180;
 }
 
@@ -81,9 +81,8 @@ void lsm6dsm_init(lsm6dsm_t *dev, SPIDriver *driver, const SPIConfig *config)
 {
     dev->driver = driver;
     dev->driver_config = *config;
-    // GYRO_FS = 2000;
     dev->gyro_FS = deg_p_sec_to_rad_p_sec(2000);
-    dev->acc_FS = 8;
+    dev->acc_FS = 8*STANDARD_GRAVITY;
 }
 
 
@@ -162,9 +161,9 @@ int lsm6dsm_read(lsm6dsm_t *dev, float *gyro, float *acc, float *temperature){
 
     if (status_register & STATUS_REG_XLDA) {
         updated_sensors |= LSM6DSM_READ_ACC_WAS_UPDATED;
-        acc[0] = (float) dev->acc_FS * read_word(&buf[2+8]) * STANDARD_GRAVITY/(1<<15);
-        acc[1] = (float) dev->acc_FS * read_word(&buf[2+10]) * STANDARD_GRAVITY/(1<<15);
-        acc[2] = (float) dev->acc_FS * read_word(&buf[2+12]) * STANDARD_GRAVITY/(1<<15);
+        acc[0] = (float) dev->acc_FS * read_word(&buf[2+8])/(1<<15);
+        acc[1] = (float) dev->acc_FS * read_word(&buf[2+10])/(1<<15);
+        acc[2] = (float) dev->acc_FS * read_word(&buf[2+12])/(1<<15);
     }
 
     return updated_sensors;
