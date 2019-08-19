@@ -5,6 +5,7 @@ import yaml
 import sys
 from pprint import pprint
 import time
+import argparse
 
 
 def dict_diff(d1, d2):
@@ -59,8 +60,19 @@ def main(args=None):
     node = rclpy.create_node('config_client')
     cli = node.create_client(SendMsgpackConfig, 'send_config')
 
-    filename = sys.argv[1]
+    parser = argparse.ArgumentParser(description='Low level controller parameter loading')
+    parser.add_argument('filename', help='yaml parameter file')
+    parser.add_argument('--init', help='send all parameters', action='store_true')
+
+    args = parser.parse_args()
+
+    filename = args.filename
     prev_parameters = {}
+    if (args.init):
+        print('sending all parameters')
+        prev_parameters = {}
+    else:
+        prev_parameters = yaml.load(open(filename))
     while True:
         parameters = yaml.load(open(filename))
         parameters_diff = dict_diff(prev_parameters, parameters)
