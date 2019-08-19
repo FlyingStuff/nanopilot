@@ -44,32 +44,19 @@ public:
             exit(-1);
         }
 
-        rmw_qos_profile_t custom_qos_profile = rmw_qos_profile_default;
-        // // Depth represents how many messages to store in history when the history policy is KEEP_LAST.
-        custom_qos_profile.depth = 100;
-        // // The reliability policy can be reliable, meaning that the underlying transport layer will try
-        // // ensure that every message gets received in order, or best effort, meaning that the transport
-        // // makes no guarantees about the order or reliability of delivery.
-        // custom_qos_profile.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
-        // // The history policy determines how messages are saved until the message is taken by the reader.
-        // // KEEP_ALL saves all messages until they are taken.
-        // // KEEP_LAST enforces a limit on the number of messages that are saved, specified by the "depth"
-        // // parameter.
-        custom_qos_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_LAST;
+        m_timestamp_pub = this->create_publisher<std_msgs::msg::UInt64>("timestamp", 10);
+        m_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", 10);
+        m_mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>("magnetometer", 10);
+        m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", 10);
+        m_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency", 10);
+        m_rate_ctrl_setpoint_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/setpoint", 10);
+        m_rate_ctrl_measured_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/measured", 10);
+        m_rate_ctrl_output_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/output", 10);
+        m_output_armed_pub = this->create_publisher<std_msgs::msg::Bool>("output_armed", 10);
+        m_ap_in_control_pub = this->create_publisher<std_msgs::msg::Bool>("ap_in_control", 10);
+        m_output_pub = this->create_publisher<autopilot_msgs::msg::ActuatorPositions>("output", 10);
 
-        m_timestamp_pub = this->create_publisher<std_msgs::msg::UInt64>("timestamp", custom_qos_profile);
-        m_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", custom_qos_profile);
-        m_mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>("magnetometer", custom_qos_profile);
-        m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", custom_qos_profile);
-        m_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency", custom_qos_profile);
-        m_rate_ctrl_setpoint_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/setpoint", custom_qos_profile);
-        m_rate_ctrl_measured_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/measured", custom_qos_profile);
-        m_rate_ctrl_output_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/output", custom_qos_profile);
-        m_output_armed_pub = this->create_publisher<std_msgs::msg::Bool>("output_armed", custom_qos_profile);
-        m_ap_in_control_pub = this->create_publisher<std_msgs::msg::Bool>("ap_in_control", custom_qos_profile);
-        m_output_pub = this->create_publisher<autopilot_msgs::msg::ActuatorPositions>("output", custom_qos_profile);
-
-        m_ap_ctrl_sub = this->create_subscription<autopilot_msgs::msg::RateControlSetpoint>("control", std::bind(&LowLevelControllerInterface::control_cb, this, _1));
+        m_ap_ctrl_sub = this->create_subscription<autopilot_msgs::msg::RateControlSetpoint>("control", 1, std::bind(&LowLevelControllerInterface::control_cb, this, _1));
 
         auto rx_thd = std::thread(rx_thd_fn, &m_interface);
         rx_thd.detach();

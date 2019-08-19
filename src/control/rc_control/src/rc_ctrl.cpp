@@ -24,11 +24,11 @@ public:
     : Node("AttitudeRemoteControlSetpoint"), yaw_angle_q(1, 0, 0, 0)
     {
         rc_in_sub = this->create_subscription<autopilot_msgs::msg::RCInput>(
-            "rc_input", std::bind(&AttitudeRemoteControlSetpoint::rc_in_cb, this, _1));
+            "rc_input", 1, std::bind(&AttitudeRemoteControlSetpoint::rc_in_cb, this, _1));
         // rate_setpt_sub = this->create_publisher<autopilot_msgs::msg::RateControlSetpoint>("rate_setpoint");
 
-        att_setpt_pub = this->create_publisher<autopilot_msgs::msg::AttitudeTrajectorySetpoint>("attitude_setpoint");
-        att_setpt_pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("attitude_setpoint_pose");
+        att_setpt_pub = this->create_publisher<autopilot_msgs::msg::AttitudeTrajectorySetpoint>("attitude_setpoint", 10);
+        att_setpt_pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("attitude_setpoint_pose", 10);
     }
 
 
