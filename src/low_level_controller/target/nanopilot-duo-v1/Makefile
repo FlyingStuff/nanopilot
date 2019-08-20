@@ -133,7 +133,7 @@ CSRC = $(ALLCSRC) \
 CPPSRC = $(PROJCPPSRC) $(ALLCPPSRC)
 
 # List ASM source files here.
-ASMSRC = $(ALLASMSRC)
+ASMSRC = $(PROJASMSRC) $(ALLASMSRC)
 
 # List ASM with preprocessor source files here.
 ASMXSRC = $(ALLXASMSRC)
