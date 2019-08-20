@@ -229,6 +229,11 @@
 #define STM32_PWM_USE_TIM5                  FALSE
 #define STM32_PWM_USE_TIM8                  FALSE
 #define STM32_PWM_USE_TIM9                  TRUE
+#define STM32_PWM_USE_TIM10                 FALSE
+#define STM32_PWM_USE_TIM11                 FALSE
+#define STM32_PWM_USE_TIM12                 TRUE
+#define STM32_PWM_USE_TIM13                 TRUE
+#define STM32_PWM_USE_TIM14                 TRUE
 #define STM32_PWM_TIM1_IRQ_PRIORITY         7
 #define STM32_PWM_TIM2_IRQ_PRIORITY         7
 #define STM32_PWM_TIM3_IRQ_PRIORITY         7
@@ -236,6 +241,12 @@
 #define STM32_PWM_TIM5_IRQ_PRIORITY         7
 #define STM32_PWM_TIM8_IRQ_PRIORITY         7
 #define STM32_PWM_TIM9_IRQ_PRIORITY         7
+#define STM32_TIM3_SUPPRESS_ISR
+#define STM32_TIM4_SUPPRESS_ISR
+#define STM32_TIM9_SUPPRESS_ISR
+#define STM32_TIM12_SUPPRESS_ISR
+#define STM32_TIM13_SUPPRESS_ISR
+#define STM32_TIM14_SUPPRESS_ISR
 
 /*
  * RTC driver system settings.

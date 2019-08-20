@@ -14,6 +14,8 @@ public:
     void set_update_period_us(uint16_t period_us);
     void set_channel_pos_us(uint8_t channel_idx, uint16_t pulse_width_us);
     void disable_channel(uint8_t channel_idx);
+    void disable_all_channels();
+
 
 private:
     PWMDriver &m_pwm_driver;

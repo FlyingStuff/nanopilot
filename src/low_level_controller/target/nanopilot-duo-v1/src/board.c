@@ -268,14 +268,14 @@ void boardInit(void) {
 
 bool arm_switch_is_armed(void)
 {
-    return false;//palReadPad(GPIOE, GPIOE_PIN10_ARM_SWITCH);
+    return palReadPad(GPIOB, GPIOB_PIN3_ARM_SWITCH);
 }
 
 void arm_led_set(bool on)
 {
     if (on) {
-        // palSetPad(GPIOE, GPIOE_PIN9_ARM_LED);
+        palSetPad(GPIOB, GPIOB_PIN2_ARM_LED);
     } else {
-        // palClearPad(GPIOE, GPIOE_PIN9_ARM_LED);
+        palClearPad(GPIOB, GPIOB_PIN2_ARM_LED);
     }
 }

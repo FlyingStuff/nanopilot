@@ -42,6 +42,13 @@ void PWMOutputBank::disable_channel(uint8_t channel_idx)
     pwmDisableChannel(&m_pwm_driver, channel_idx);
 }
 
+void PWMOutputBank::disable_all_channels()
+{
+    for (int i = 0; i < m_pwm_driver.channels; i++) {
+        pwmDisableChannel(&m_pwm_driver, i);
+    }
+}
+
 
 
 PWMActuator::PWMActuator()
