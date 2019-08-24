@@ -154,8 +154,8 @@ int main(void) {
         .cr2 = 0,
     };
     Eigen::Matrix3f R_icm20602_to_board;
-    R_icm20602_to_board << 1, 0, 0, // TODO
-                          0, 1, 0,
+    R_icm20602_to_board << 0, -1, 0,
+                          1, 0, 0,
                           0, 0, 1;
     icm20602_publisher_start(&SPID3, &icm20602_spi_config, R_icm20602_to_board);
 
@@ -167,7 +167,6 @@ int main(void) {
 
 
     while (true) {
-        log_debug("time check");
         chThdSleepMilliseconds(1000);
     }
 }

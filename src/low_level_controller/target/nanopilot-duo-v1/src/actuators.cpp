@@ -2,7 +2,7 @@
 #include "actuators.hpp"
 #include "log.h"
 
-static std::array<PWMOutputBank, 6> pwm_banks = { {PWMD3, PWMD12, PWMD4, PWMD9, PWMD14, PWMD13} };
+static std::array<PWMOutputBank, 6> pwm_banks = { {PWMD3, PWMD12, PWMD4, PWMD9, PWMD13, PWMD14} };
 static std::array<PWMActuator, NB_ACTUATORS> actuators;
 parameter_namespace_t actuators_namespace;
 std::array<parameter_t, 6> pwm_bank_output_period_us_param;
