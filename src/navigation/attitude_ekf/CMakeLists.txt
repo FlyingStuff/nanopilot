@@ -31,4 +31,18 @@ ament_target_dependencies(attitude_ekf rclcpp std_msgs sensor_msgs geometry_msgs
 install(TARGETS attitude_ekf
   DESTINATION lib/${PROJECT_NAME})
 
+
+
+add_executable(attitude_pos_ekf
+    src/attitude_pos_ekf.cpp
+)
+target_include_directories(attitude_pos_ekf PUBLIC
+    ${EIGEN3_INCLUDE_DIR}
+)
+
+ament_target_dependencies(attitude_pos_ekf rclcpp std_msgs sensor_msgs geometry_msgs autopilot_msgs tf2 tf2_ros tf2_sensor_msgs)
+
+install(TARGETS attitude_pos_ekf
+  DESTINATION lib/${PROJECT_NAME})
+
 ament_package()

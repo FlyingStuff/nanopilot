@@ -147,18 +147,31 @@ Expanding the quaternion multiplication using the vector operations we have:
 
 
 
+\section{Position \& Velocity}
+
+Position $\bm{p}$ \& velocity $\bm{v}$ are estimated in inertial frame. Acceleration $\bm{x}_b$ is measured in body frame and input to the filter using the attitude estimate.
+
+\begin{equation}
+    \dot{\bm{p}}_I = \bm{v}_I
+\end{equation}
+
+\begin{equation}
+    \dot{\bm{v}}_I = R(q_b^I) \bm{x}_b = R(q_{ref}) R(\bm{a}) \bm{x}_b + \bm{g}
+\end{equation}
+
+
 
 \section{Gyroscope}
 
 The output of the gyroscopes is modeled as the real body angular rate with additive time varying bias and white noise:
 
 \begin{equation}
-    \bm{\omega}_g(t) = \bm{\omega}(t) + \bm{b}(t) + \bm{n}_g(t)
+    \bm{\omega}_g(t) = \bm{\omega}(t) + \bm{b}_g(t) + \bm{n}_g(t)
 \end{equation}
 
 The bias is modeled as a random walk.
 \begin{equation}
-    \dot{\bm{b}}(t) = \bm{n}_b(t)
+    \dot{\bm{b}_g}(t) = \bm{n}_b(t)
 \end{equation}
 
 \section{Direction Vector Measurement}
@@ -187,7 +200,17 @@ Then:
 
 The measurement noise $R_a$ is the covariance of the error angle.
 
+\section{Position Measurement}
+
+\begin{equation}
+    \bm{z} = h(p) = \bm{p}
+    \label{eq:pos_measurement_fn}
+\end{equation}
+
+
 \section{EKF covariance propagation}
+
+\subsection{Attitude only}
 
 For a filter tracking attitude error and gyro bias, the state $\bm{x}$ is:
 
@@ -195,7 +218,7 @@ For a filter tracking attitude error and gyro bias, the state $\bm{x}$ is:
     \bm{x} = \left[
         \begin{matrix}
             \bm{a}\\[0.3em]
-            \bm{b}\\
+            \bm{b}_g\\
         \end{matrix}
         \right]
 \end{equation}
@@ -217,8 +240,8 @@ The update Jacobians are:
     F = E \left\{
         \left[
         \begin{matrix}
-            \frac{\partial \dot{\bm{a}}}{\partial \bm{a}} & \frac{\partial \dot{\bm{a}}}{\partial \bm{b}}\\[0.3em]
-            \frac{\partial \dot{\bm{b}}}{\partial \bm{a}} & \frac{\partial \dot{\bm{b}}}{\partial \bm{b}}\\
+            \frac{\partial \dot{\bm{a}}}{\partial \bm{a}} & \frac{\partial \dot{\bm{a}}}{\partial \bm{b}_g}\\[0.3em]
+            \frac{\partial \dot{\bm{b}_g}}{\partial \bm{a}} & \frac{\partial \dot{\bm{b}_g}}{\partial \bm{b}_g}\\
         \end{matrix}
         \right]
     \right\}
@@ -235,7 +258,7 @@ The update Jacobians are:
         \left[
         \begin{matrix}
             \frac{\partial \dot{\bm{a}}}{\partial \bm{n}_g} & \frac{\partial \dot{\bm{a}}}{\partial \bm{n}_b}\\[0.3em]
-            \frac{\partial \dot{\bm{b}}}{\partial \bm{n}_g} & \frac{\partial \dot{\bm{b}}}{\partial \bm{n}_b}\\
+            \frac{\partial \dot{\bm{b}_g}}{\partial \bm{n}_g} & \frac{\partial \dot{\bm{b}_g}}{\partial \bm{n}_b}\\
         \end{matrix}
         \right]
     \right\}
@@ -247,7 +270,96 @@ The update Jacobians are:
         \right]
 \end{equation}
 
+\subsection{Attitude, Velocity \& Position}
 
+The state vector is:
+\begin{equation}
+    \bm{x} = \left[
+        \begin{matrix}
+            \bm{a}\\[0.3em]
+            \bm{b}_g\\[0.3em]
+            \bm{p}\\[0.3em]
+            \bm{v}\\[0.3em]
+        \end{matrix}
+        \right]
+\end{equation}
+
+The expectation of the time derivative is:
+
+\begin{equation}
+    E (\bm{\dot x}) = \left[
+        \begin{matrix}
+            0_{3\times1}\\[0.3em]
+            0_{3\times1}\\[0.3em]
+            v\\[0.3em]
+            R(q_{ref})\bm{x}_b + \bm{g}\\
+        \end{matrix}
+        \right]
+\end{equation}
+
+The update Jacobians are:
+
+\begin{equation}
+    F = E \left\{
+        \left[
+        \begin{matrix}
+            \frac{\partial \dot{\bm{a}}}{\partial \bm{a}} &
+            \frac{\partial \dot{\bm{a}}}{\partial \bm{b}_g} &
+            \frac{\partial \dot{\bm{a}}}{\partial \bm{p}} &
+            \frac{\partial \dot{\bm{a}}}{\partial \bm{v}}\\[0.3em]
+            \frac{\partial \dot{\bm{b}_b}}{\partial \bm{a}} &
+            \frac{\partial \dot{\bm{b}_b}}{\partial \bm{b}_g} &
+            \frac{\partial \dot{\bm{b}_b}}{\partial \bm{p}} &
+            \frac{\partial \dot{\bm{b}_b}}{\partial \bm{v}}\\[0.3em]
+            \frac{\partial \dot{\bm{p}}}{\partial \bm{a}} &
+            \frac{\partial \dot{\bm{p}}}{\partial \bm{b}_g} &
+            \frac{\partial \dot{\bm{p}}}{\partial \bm{p}} &
+            \frac{\partial \dot{\bm{p}}}{\partial \bm{v}}\\[0.3em]
+            \frac{\partial \dot{\bm{v}}}{\partial \bm{a}} &
+            \frac{\partial \dot{\bm{v}}}{\partial \bm{b}_g} &
+            \frac{\partial \dot{\bm{v}}}{\partial \bm{p}} &
+            \frac{\partial \dot{\bm{v}}}{\partial \bm{v}}\\
+        \end{matrix}
+        \right]
+    \right\}
+    = \left[
+        \begin{matrix}
+            -{[\bm{\omega}_{ref}]}_\times &
+            -I_{3\times3}&
+            0_{3\times3} &
+            0_{3\times3}\\[0.3em]
+            0_{3\times3} &
+            0_{3\times3} &
+            0_{3\times3} &
+            0_{3\times3}\\[0.3em]
+            0_{3\times3} &
+            0_{3\times3} &
+            0_{3\times3} &
+            I_{3\times3}\\[0.3em]
+            -R(q_{ref}){[\bm{x}_b]}_\times &
+            0_{3\times3} &
+            0_{3\times3} &
+            0_{3\times3}\\
+        \end{matrix}
+        \right]
+\end{equation}
+
+\begin{equation}
+    G = E \left\{
+        \left[
+        \begin{matrix}
+            \frac{\partial \dot{\bm{a}}}{\partial \bm{n}_g} & \frac{\partial \dot{\bm{a}}}{\partial \bm{n}_b}\\[0.3em]
+            \frac{\partial \dot{\bm{b}_g}}{\partial \bm{n}_g} & \frac{\partial \dot{\bm{b}_g}}{\partial \bm{n}_b}\\
+        \end{matrix}
+        \right]
+    \right\}
+    = \left[
+        \begin{matrix}
+            -I_{3\times3} & 0_{3\times3}\\[0.3em]
+            0_{3\times3} & I_{3\times3}\\
+        \end{matrix}
+        \right]
+\end{equation}
 
 
 \clearpage
