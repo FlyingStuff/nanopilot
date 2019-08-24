@@ -19,7 +19,7 @@ void PIDRateController::process(const float rate_setpoint_rpy[3], const float ra
     float error_rate_rpy[3];
     int i;
     for (i = 0; i < 3; i++){
-        error_rate_rpy[i] = rate_setpoint_rpy[i] - rate_measured_rpy[i];
+        error_rate_rpy[i] = rate_measured_rpy[i] - rate_setpoint_rpy[i];
     }
     rate_ctrl_output_rpy[0] = pid_roll_controller.process(error_rate_rpy[0]);
     rate_ctrl_output_rpy[1] = pid_pitch_controller.process(error_rate_rpy[1]);
