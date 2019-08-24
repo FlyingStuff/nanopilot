@@ -30,7 +30,7 @@ SPI: MSBit first, sampled on rising edge, max freq 10MHz
 #define INT_STATUS 0x3A
 
 
-#define STANDARD_GRAVITY 9.80665f // m/s
+#define STANDARD_GRAVITY 9.80665f // m/s2
 
 static float deg_p_sec_to_rad_p_sec(float x){
     return x*M_PI/180;

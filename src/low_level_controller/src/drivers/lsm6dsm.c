@@ -62,7 +62,7 @@ CTRL10_C = 0 // default
 #define LSM6DSM_READ_TEMP_WAS_UPDATED (1<<2)
 
 #define LSM6DSM_STATUS_REG 0x1E
-#define STANDARD_GRAVITY 9.80665f // m/s
+#define STANDARD_GRAVITY 9.80665f // m/s2
 
 
 
