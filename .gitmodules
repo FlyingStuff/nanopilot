@@ -18,7 +18,7 @@
 	url = https://github.com/Stapelzeiger/parameter
 [submodule "src/low_level_controller/lib/arm-cortex-tools"]
 	path = src/low_level_controller/lib/mcu/arm-cortex-tools
-	url = https://github.com/cvra/arm-cortex-tools.git
+	url = https://github.com/Stapelzeiger/arm-cortex-tools.git
 [submodule "src/low_level_controller/lib/libnop"]
 	path = src/low_level_controller/lib/libnop
 	url = https://github.com/google/libnop.git
