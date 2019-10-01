@@ -55,6 +55,29 @@ static THD_FUNCTION(comm_rx_thread, arg) {
     }
 }
 
+static msgbus::Topic<int> log_update_trigger;
+static log_handler_t log_handler_comm;
+static char log_buffer[300];
+static size_t log_buffer_wi;
+static MUTEX_DECL(log_mutex);
+static void log_handler_comm_cb(log_level_t lvl, const char *msg, size_t len)
+{
+    (void)lvl;
+    chMtxLock(&log_mutex);
+    // comm_send(&comm_if, RosInterfaceCommMsgID::LOG, msg, len);
+    if (log_buffer_wi + len > sizeof(log_buffer)) {
+        // drop message
+    } else {
+        memcpy(&log_buffer[log_buffer_wi], msg, len);
+        log_buffer_wi += len;
+    }
+    chMtxUnlock(&log_mutex);
+    log_update_trigger.publish(0);
+}
+
+
+
+
 static THD_WORKING_AREA(comm_tx_thread_wa, (2000));
 static THD_FUNCTION(comm_tx_thread, arg) {
     (void)arg;
@@ -70,8 +93,9 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     auto magnetometer_sub = msgbus::subscribe(magnetometer);
     auto output_armed_sub = msgbus::subscribe(output_armed_topic);
     auto ap_in_control_sub = msgbus::subscribe(ap_in_control_topic);
+    auto log_update_trigger_sub = msgbus::subscribe(log_update_trigger);
 
-    std::array<msgbus::SubscriberBase*, 9> sub_list = {
+    std::array<msgbus::SubscriberBase*, 10> sub_list = {
         &rc_in_sub,
         &rate_gyro_sub,
         // accelerometer_sub not checked for update
@@ -82,6 +106,7 @@ static THD_FUNCTION(comm_tx_thread, arg) {
         &magnetometer_sub,
         &output_armed_sub,
         &ap_in_control_sub,
+        &log_update_trigger_sub,
     };
     while (true) {
         comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
@@ -146,16 +171,36 @@ static THD_FUNCTION(comm_tx_thread, arg) {
             comm_send(&comm_if, RosInterfaceCommMsgID::AP_IN_CONTROL, buf, serializer.writer().size());
         }
 
+        if (log_update_trigger_sub.has_update()) {
+            log_update_trigger_sub.get_value();
+
+            size_t log_buffer_sz;
+            chMtxLock(&log_mutex);
+            log_buffer_sz = log_buffer_wi;
+            chMtxUnlock(&log_mutex);
+
+            comm_send(&comm_if, RosInterfaceCommMsgID::LOG, log_buffer, log_buffer_sz);
+
+            bool more_data = false;
+            chMtxLock(&log_mutex);
+            if (log_buffer_wi > log_buffer_sz) {
+                // more data has been written during send
+                size_t new_size = log_buffer_wi - log_buffer_sz;
+                memmove(&log_buffer[0], &log_buffer[log_buffer_sz], new_size);
+                log_buffer_wi = new_size;
+                more_data = true;
+            } else {
+                log_buffer_wi = 0; // reset buffer
+            }
+            chMtxUnlock(&log_mutex);
+            if (more_data) {
+                log_update_trigger.publish(0);
+            }
+        }
+
         chThdSleepMilliseconds(1); // todo this is a temporary fix to avoid using 100% CPU
         msgbus::wait_for_update_on_any(sub_list.begin(), sub_list.end());
     }
-}
-
-static log_handler_t log_handler_comm;
-static void log_handler_comm_cb(log_level_t lvl, const char *msg, size_t len)
-{
-    (void)lvl;
-    comm_send(&comm_if, RosInterfaceCommMsgID::LOG, msg, len);
 }
 
 

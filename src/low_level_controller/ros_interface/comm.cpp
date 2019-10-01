@@ -210,7 +210,6 @@ void comm_send(comm_interface_t *i,
 #else // ChibiOS
         systime_t timeout = TIME_US2I(100);
         size_t ret = sdWriteTimeout(i->fd, &i->send_datagram_buffer[bytes_written], datagram_size - bytes_written, timeout);
-        break; // todo
 #endif
         bytes_written += ret;
     }
