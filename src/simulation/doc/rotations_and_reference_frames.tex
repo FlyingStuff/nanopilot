@@ -393,11 +393,17 @@ If the rate is expressed in the body frame we have:
 \end{equation}
 respectively for quaternions:
 \begin{equation}
-    \dot {q_b^I} = \frac{1}{2} q_b^I \bar\omega^b_{Ib}
+\begin{aligned}
+    \dot {q_b^I} &= \frac{1}{2} q_b^I \bar\omega^b_{Ib}\\
+    \omega^b_{Ib} &= \left[ 2  {q_b^I}^* \dot {q_b^I} \right]_v
+\end{aligned}
 \label{eq:rotation_qdot}
 \end{equation}
 
-
+\begin{equation}
+    \alpha^b_{Ib} = \left[ 2  {q_b^I}^* \ddot {q_b^I} \right]_v
+\label{eq:rotation_qdot2}
+\end{equation}
 
 \subsection{Translations \& Homogeneous Coordinates}
 
