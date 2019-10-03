@@ -100,8 +100,8 @@ static THD_FUNCTION(control_thread, arg)
 
     auto sub_rc = msgbus::subscribe(rc_input);
     sub_rc.wait_for_update(); // make sure rc_input is valid
-    auto sub_gyro = msgbus::subscribe(rate_gyro);
-    sub_gyro.wait_for_update(); // make sure gyro is valid
+    auto imu_sub = msgbus::subscribe(imu);
+    imu_sub.wait_for_update(); // make sure gyro is valid
     auto sub_ap_ctrl = msgbus::subscribe(ap_ctrl);
 
     timestamp_t last_rc_signal = 0;
@@ -124,7 +124,7 @@ static THD_FUNCTION(control_thread, arg)
         if (!rc_in.no_signal) {
             last_rc_signal = rc_in.timestamp;
         }
-        rate_gyro_sample_t gyro = sub_gyro.get_value();
+        imu_sample_t imu = imu_sub.get_value();
 
         static bool was_armed = true;
         if (!arm_switch_is_armed()) {
@@ -139,7 +139,7 @@ static THD_FUNCTION(control_thread, arg)
         }
         if (arm_remote_switch_is_armed(rc_in)
             && timestamp_duration(last_rc_signal, now) < 1.5f
-            && timestamp_duration(gyro.timestamp, now) < 0.01f) {
+            && timestamp_duration(imu.timestamp, now) < 0.01f) {
 
             std::array<float, NB_ACTUATORS> output;
             std::array<float, 3> rate_setpoint_rpy;
@@ -167,7 +167,7 @@ static THD_FUNCTION(control_thread, arg)
             ap_control_timeout.publish(ap_timeout);
 
             // transform rate to body frame
-            Eigen::Map<Eigen::Vector3f> rate_measured_board(gyro.rate);
+            Eigen::Map<Eigen::Vector3f> rate_measured_board(imu.angular_rate);
             Eigen::Map<Eigen::Vector3f> rate_measured_rpy_vect(rate_measured_rpy.data());
             rate_measured_rpy_vect = R_board_to_body * rate_measured_board;
 

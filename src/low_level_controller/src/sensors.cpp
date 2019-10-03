@@ -1,5 +1,4 @@
 #include "sensors.hpp"
 
-msgbus::Topic<rate_gyro_sample_t> rate_gyro;
-msgbus::Topic<accelerometer_sample_t> accelerometer;
+msgbus::Topic<imu_sample_t> imu;
 msgbus::Topic<magnetometer_sample_t> magnetometer;

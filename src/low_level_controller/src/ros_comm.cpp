@@ -75,8 +75,15 @@ static void log_handler_comm_cb(log_level_t lvl, const char *msg, size_t len)
     log_update_trigger.publish(0);
 }
 
-
-
+template<typename MsgType>
+void send_if_updated(msgbus::Subscriber<MsgType> &sub, comm_msg_id_t msg_id, char *buf, size_t buf_sz)
+{
+    auto serializer = nop::Serializer<nop::BufferWriter>(buf, buf_sz);
+    if (sub.has_update()) {
+        serializer.Write(sub.get_value());
+        comm_send(&comm_if, msg_id, buf, serializer.writer().size());
+    }
+}
 
 static THD_WORKING_AREA(comm_tx_thread_wa, (2000));
 static THD_FUNCTION(comm_tx_thread, arg) {
@@ -88,8 +95,7 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     auto rate_setpoint_rpy_sub = msgbus::subscribe(rate_setpoint_rpy_topic);
     auto rate_measured_rpy_sub = msgbus::subscribe(rate_measured_rpy_topic);
     auto rate_ctrl_output_rpy_sub = msgbus::subscribe(rate_ctrl_output_rpy_topic);
-    auto rate_gyro_sub = msgbus::subscribe(rate_gyro);
-    auto accelerometer_sub = msgbus::subscribe(accelerometer);
+    auto imu_sub = msgbus::subscribe(imu);
     auto magnetometer_sub = msgbus::subscribe(magnetometer);
     auto output_armed_sub = msgbus::subscribe(output_armed_topic);
     auto ap_in_control_sub = msgbus::subscribe(ap_in_control_topic);
@@ -97,79 +103,33 @@ static THD_FUNCTION(comm_tx_thread, arg) {
 
     std::array<msgbus::SubscriberBase*, 10> sub_list = {
         &rc_in_sub,
-        &rate_gyro_sub,
-        // accelerometer_sub not checked for update
+        &imu_sub,
+        &magnetometer_sub,
         &output_sub,
         &rate_setpoint_rpy_sub,
         &rate_measured_rpy_sub,
         &rate_ctrl_output_rpy_sub,
-        &magnetometer_sub,
         &output_armed_sub,
         &ap_in_control_sub,
         &log_update_trigger_sub,
     };
     while (true) {
-        comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
+        // comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
 
-        uint64_t timestamp = timestamp_get();
-        comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
+        // uint64_t timestamp = timestamp_get();
+        // comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
 
         static char buf[1000];
 
-        if (rc_in_sub.has_update()) {
-            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-            serializer.Write(rc_in_sub.get_value());
-            comm_send(&comm_if, RosInterfaceCommMsgID::RC_INPUT, buf, serializer.writer().size());
-        }
-
-        if (rate_gyro_sub.has_update()) {
-            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-            serializer.Write(rate_gyro_sub.get_value());
-            serializer.Write(accelerometer_sub.get_value());
-            comm_send(&comm_if, RosInterfaceCommMsgID::IMU, buf, serializer.writer().size());
-        }
-
-        if (magnetometer_sub.has_update()) {
-            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-            serializer.Write(magnetometer_sub.get_value());
-            comm_send(&comm_if, RosInterfaceCommMsgID::MAGNETOMETER, buf, serializer.writer().size());
-        }
-
-        if (output_sub.has_update()) {
-            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-            serializer.Write(output_sub.get_value());
-            comm_send(&comm_if, RosInterfaceCommMsgID::ACTUATOR_OUTPUT, buf, serializer.writer().size());
-        }
-
-        if (rate_setpoint_rpy_sub.has_update()) {
-            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-            serializer.Write(rate_setpoint_rpy_sub.get_value());
-            comm_send(&comm_if, RosInterfaceCommMsgID::RATE_CTRL_SETPOINT_RPY, buf, serializer.writer().size());
-        }
-
-        if (rate_measured_rpy_sub.has_update()) {
-            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-            serializer.Write(rate_measured_rpy_sub.get_value());
-            comm_send(&comm_if, RosInterfaceCommMsgID::RATE_CTRL_MEASURED_RPY, buf, serializer.writer().size());
-        }
-
-        if (rate_ctrl_output_rpy_sub.has_update()) {
-            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-            serializer.Write(rate_ctrl_output_rpy_sub.get_value());
-            comm_send(&comm_if, RosInterfaceCommMsgID::RATE_CTRL_OUTPUT_RPY, buf, serializer.writer().size());
-        }
-
-        if (output_armed_sub.has_update()) {
-            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-            serializer.Write(output_armed_sub.get_value());
-            comm_send(&comm_if, RosInterfaceCommMsgID::OUTPUT_IS_ARMED, buf, serializer.writer().size());
-        }
-
-        if (ap_in_control_sub.has_update()) {
-            auto serializer = nop::Serializer<nop::BufferWriter>(buf, sizeof(buf));
-            serializer.Write(ap_in_control_sub.get_value());
-            comm_send(&comm_if, RosInterfaceCommMsgID::AP_IN_CONTROL, buf, serializer.writer().size());
-        }
+        send_if_updated(rc_in_sub, RosInterfaceCommMsgID::RC_INPUT, buf, sizeof(buf));
+        send_if_updated(imu_sub, RosInterfaceCommMsgID::IMU, buf, sizeof(buf));
+        send_if_updated(magnetometer_sub, RosInterfaceCommMsgID::MAGNETOMETER, buf, sizeof(buf));
+        send_if_updated(output_sub, RosInterfaceCommMsgID::ACTUATOR_OUTPUT, buf, sizeof(buf));
+        send_if_updated(rate_setpoint_rpy_sub, RosInterfaceCommMsgID::RATE_CTRL_SETPOINT_RPY, buf, sizeof(buf));
+        send_if_updated(rate_measured_rpy_sub, RosInterfaceCommMsgID::RATE_CTRL_MEASURED_RPY, buf, sizeof(buf));
+        send_if_updated(rate_ctrl_output_rpy_sub, RosInterfaceCommMsgID::RATE_CTRL_OUTPUT_RPY, buf, sizeof(buf));
+        send_if_updated(output_armed_sub, RosInterfaceCommMsgID::OUTPUT_IS_ARMED, buf, sizeof(buf));
+        send_if_updated(ap_in_control_sub, RosInterfaceCommMsgID::AP_IN_CONTROL, buf, sizeof(buf));
 
         if (log_update_trigger_sub.has_update()) {
             log_update_trigger_sub.get_value();
@@ -181,24 +141,18 @@ static THD_FUNCTION(comm_tx_thread, arg) {
 
             comm_send(&comm_if, RosInterfaceCommMsgID::LOG, log_buffer, log_buffer_sz);
 
-            bool more_data = false;
             chMtxLock(&log_mutex);
-            if (log_buffer_wi > log_buffer_sz) {
-                // more data has been written during send
+            if (log_buffer_wi > log_buffer_sz) { // more data has been written during send
                 size_t new_size = log_buffer_wi - log_buffer_sz;
                 memmove(&log_buffer[0], &log_buffer[log_buffer_sz], new_size);
                 log_buffer_wi = new_size;
-                more_data = true;
             } else {
                 log_buffer_wi = 0; // reset buffer
             }
             chMtxUnlock(&log_mutex);
-            if (more_data) {
-                log_update_trigger.publish(0);
-            }
         }
 
-        chThdSleepMilliseconds(1); // todo this is a temporary fix to avoid using 100% CPU
+        // chThdSleepMilliseconds(1); // todo this is a temporary fix to avoid using 100% CPU
         msgbus::wait_for_update_on_any(sub_list.begin(), sub_list.end());
     }
 }

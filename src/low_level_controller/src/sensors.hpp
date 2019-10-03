@@ -13,17 +13,11 @@ struct quaternion_s{
 };
 
 typedef struct {
-    float rate[3];                  // [rad/s]
+    float angular_rate[3];                  // [rad/s]
     struct quaternion_s accumulated_angle;
+    float linear_acceleration[3];          // [m/s^2]
     timestamp_t timestamp;
-} rate_gyro_sample_t;
-
-
-typedef struct {
-    float acceleration[3];          // [m/s^2]
-    timestamp_t timestamp;
-} accelerometer_sample_t;
-
+} imu_sample_t;
 
 typedef struct {
     float pressure;                 // [Pa]
@@ -38,8 +32,7 @@ typedef struct {
 } magnetometer_sample_t;
 
 
-extern msgbus::Topic<rate_gyro_sample_t> rate_gyro;
-extern msgbus::Topic<accelerometer_sample_t> accelerometer;
+extern msgbus::Topic<imu_sample_t> imu;
 extern msgbus::Topic<magnetometer_sample_t> magnetometer;
 
 
