@@ -150,14 +150,14 @@ int main(void) {
         .end_cb = NULL,
         .ssport = GPIOC,
         .sspad = GPIOC_PIN15_SPI_ICM20602_CS,
-        .cr1 =  SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA,
+        .cr1 =  SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA, // ~6.7MHz
         .cr2 = 0,
     };
     Eigen::Matrix3f R_icm20602_to_board;
     R_icm20602_to_board << 0, -1, 0,
                           1, 0, 0,
                           0, 0, 1;
-    icm20602_publisher_start(&SPID3, &icm20602_spi_config, R_icm20602_to_board);
+    icm20602_publisher_start(&SPID3, &icm20602_spi_config, R_icm20602_to_board, PAL_LINE(GPIOC, GPIOC_PIN14_ICM20602_INT));
 
     Eigen::Matrix3f R_lis3mdl_to_board; // todo
     R_lis3mdl_to_board << 1, 0, 0,

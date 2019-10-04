@@ -6,7 +6,7 @@
 
 static icm20602_t _icm20602_dev;
 static Eigen::Matrix3f _R_sensor_to_board;
-
+static ioline_t _int_line;
 
 static THD_WORKING_AREA(icm20602_publisher_wa, 1800);
 static THD_FUNCTION(icm20602_publisher, arg)
@@ -23,10 +23,10 @@ static THD_FUNCTION(icm20602_publisher, arg)
     icm20602_setup(&_icm20602_dev);
     timestamp_t prev_time = timestamp_get();
     while (true) {
+        timestamp_t now = timestamp_get();
         bool ok = icm20602_read(&_icm20602_dev, rate_gyro_sensor.data(),  acc_sensor.data(), &temperature);
         if (ok){
             imu_sample_t imu_sample;
-            timestamp_t now = timestamp_get();
             float dt = timestamp_duration(prev_time, now);
             imu_sample.timestamp = now;
             Eigen::Map<Eigen::Vector3f> rate_gyro_board(imu_sample.angular_rate);
@@ -45,12 +45,14 @@ static THD_FUNCTION(icm20602_publisher, arg)
             prev_time = now;
         }
 
-        chThdSleepMilliseconds(1);
+        palWaitLineTimeout(_int_line, TIME_INFINITE);
     }
 }
 
-void icm20602_publisher_start(SPIDriver *spi, const SPIConfig *config, const Eigen::Matrix3f &R_sensor_to_board)
+void icm20602_publisher_start(SPIDriver *spi, const SPIConfig *config, const Eigen::Matrix3f &R_sensor_to_board, ioline_t int_line)
 {
+    _int_line = int_line;
+    palEnableLineEvent(int_line, PAL_EVENT_MODE_RISING_EDGE);
     _R_sensor_to_board = R_sensor_to_board;
     icm20602_init(&_icm20602_dev, spi, config);
     chThdCreateStatic(icm20602_publisher_wa, sizeof(icm20602_publisher_wa), THD_PRIO_SPI_DRIVERS, icm20602_publisher, NULL);
