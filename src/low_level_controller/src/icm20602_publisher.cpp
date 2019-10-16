@@ -45,7 +45,7 @@ static THD_FUNCTION(icm20602_publisher, arg)
             prev_time = now;
         }
 
-        palWaitLineTimeout(_int_line, TIME_INFINITE);
+        palWaitLineTimeout(_int_line, OSAL_MS2I(1));
     }
 }
 
