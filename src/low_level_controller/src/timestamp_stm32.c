@@ -21,6 +21,7 @@ CH_FAST_IRQ_HANDLER(TIMER_IRQ_NAME)
 {
     TIMER_REG->SR &= ~STM32_TIM_SR_UIF; // clear interrupt flag
     time_ns += ((uint64_t)COUNTER_MAX * TICK_PERIOD_NS);
+    nvicClearPending(NVIC_NB); // sometimes the interrupt runs twice, not sure why. This solves it
 }
 
 void timestamp_stm32_init(void)

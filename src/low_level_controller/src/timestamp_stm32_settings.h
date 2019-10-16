@@ -23,7 +23,7 @@ extern "C" {
 #else
 #define PRESCALER       (2*STM32_PCLK1/2000000 - 1)
 #endif
-#define INTERRUPT_PRIO  5
+#define INTERRUPT_PRIO  2
 
 #if (PRESCALER < 0)
 // todo check for rounding
