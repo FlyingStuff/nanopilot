@@ -129,7 +129,7 @@
 
 
 #define VAL_GPIOA_MODER             (PIN_MODE_INPUT(GPIOA_PIN0_TIME_SYNC) |\
-                                     PIN_MODE_INPUT(GPIOA_PIN1_SPI_CONN_S2) |\
+                                     PIN_MODE_OUTPUT(GPIOA_PIN1_SPI_CONN_S2) |\
                                      PIN_MODE_ALTERNATE(GPIOA_PIN2_SERVO_9_PWM) |\
                                      PIN_MODE_ALTERNATE(GPIOA_PIN3_SERVO_10_PWM) |\
                                      PIN_MODE_ANALOG(GPIOA_PIN4_I_BAT_ADC) |\
@@ -143,7 +143,7 @@
                                      PIN_MODE_ALTERNATE(GPIOA_PIN12_UART1_RTS) |\
                                      PIN_MODE_ALTERNATE(GPIOA_SWDIO) |\
                                      PIN_MODE_ALTERNATE(GPIOA_SWCLK) |\
-                                     PIN_MODE_INPUT(GPIOA_PIN15_SPI_CONN_S0))
+                                     PIN_MODE_OUTPUT(GPIOA_PIN15_SPI_CONN_S0))
 #define VAL_GPIOA_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOA_PIN0_TIME_SYNC) |\
                                      PIN_OTYPE_PUSHPULL(GPIOA_PIN1_SPI_CONN_S2) |\
                                      PIN_OTYPE_PUSHPULL(GPIOA_PIN2_SERVO_9_PWM) |\
@@ -229,7 +229,7 @@
 
 
 
-#define VAL_GPIOB_MODER             (PIN_MODE_INPUT(GPIOB_PIN0_SPI_CONN_S1) |\
+#define VAL_GPIOB_MODER             (PIN_MODE_OUTPUT(GPIOB_PIN0_SPI_CONN_S1) |\
                                      PIN_MODE_ALTERNATE(GPIOB_PIN1_SERVO_4_PWM) |\
                                      PIN_MODE_OUTPUT(GPIOB_PIN2_ARM_LED) |\
                                      PIN_MODE_INPUT(GPIOB_PIN3_ARM_SWITCH) |\
