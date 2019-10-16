@@ -10,6 +10,7 @@
 extern msgbus::Topic<bool> output_armed_topic;
 extern msgbus::Topic<bool> ap_in_control_topic;
 extern msgbus::Topic<bool> ap_control_timeout;
+extern msgbus::Topic<uint64_t> ap_control_latency_topic;
 extern msgbus::Topic<struct ap_ctrl_s> ap_ctrl;
 extern msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;
 extern msgbus::Topic<std::array<float, 3>> rate_setpoint_rpy_topic;

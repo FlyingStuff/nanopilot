@@ -25,6 +25,7 @@ rosidl_generate_interfaces(autopilot_msgs
   "msg/PositionTrajectorySetpoint.msg"
   "msg/AccelerationTrajectorySetpoint.msg"
   "msg/RateControlSetpoint.msg"
+  "msg/TimeSyncStat.msg"
   "srv/SendMsgpackConfig.srv"
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs
 )

@@ -12,6 +12,7 @@
 msgbus::Topic<bool> output_armed_topic;
 msgbus::Topic<bool> ap_in_control_topic;
 msgbus::Topic<bool> ap_control_timeout;
+msgbus::Topic<uint64_t> ap_control_latency_topic;
 msgbus::Topic<struct ap_ctrl_s> ap_ctrl;
 msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;
 msgbus::Topic<std::array<float, 3>> rate_setpoint_rpy_topic;
@@ -154,6 +155,7 @@ static THD_FUNCTION(control_thread, arg)
             if (ap_ctrl_en) {
                 if (sub_ap_ctrl.has_value()) {
                     ap_ctrl_msg = sub_ap_ctrl.get_value();
+                    ap_control_latency_topic.publish(timestamp_duration_ns(ap_ctrl_msg.timestamp, now));
                     if (fabsf(timestamp_duration(ap_ctrl_msg.timestamp, now)) < 0.1f) {
                         rate_setpoint_rpy = ap_ctrl_msg.rate_setpoint_rpy;
                         ap_in_control = true;

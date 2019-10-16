@@ -23,6 +23,13 @@ static void comm_rcv_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
     case RosInterfaceCommMsgID::PING:
         comm_send(&comm_if, RosInterfaceCommMsgID::PONG, msg, len);
         break;
+    case RosInterfaceCommMsgID::TIME_SYNC:
+    {
+        uint64_t timestamp = timestamp_get();
+        // timestamp = chTimeI2US(chVTGetSystemTimeX())*1000;
+        comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
+        break;
+    }
     case RosInterfaceCommMsgID::SET_PARAMETERS: {
         int ret = parameter_msgpack_read(&parameters, msg, len, [](void *arg, const char *id, const char *err){
             (void)arg;
@@ -99,9 +106,10 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     auto magnetometer_sub = msgbus::subscribe(magnetometer);
     auto output_armed_sub = msgbus::subscribe(output_armed_topic);
     auto ap_in_control_sub = msgbus::subscribe(ap_in_control_topic);
+    auto ap_control_latency_sub = msgbus::subscribe(ap_control_latency_topic);
     auto log_update_trigger_sub = msgbus::subscribe(log_update_trigger);
 
-    std::array<msgbus::SubscriberBase*, 10> sub_list = {
+    std::array<msgbus::SubscriberBase*, 11> sub_list = {
         &rc_in_sub,
         &imu_sub,
         &magnetometer_sub,
@@ -111,18 +119,23 @@ static THD_FUNCTION(comm_tx_thread, arg) {
         &rate_ctrl_output_rpy_sub,
         &output_armed_sub,
         &ap_in_control_sub,
+        &ap_control_latency_sub,
         &log_update_trigger_sub,
     };
     while (true) {
         // comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
 
-        // uint64_t timestamp = timestamp_get();
-        // comm_send(&comm_if, RosInterfaceCommMsgID::TIME, &timestamp, sizeof(timestamp));
-
         static char buf[1000];
 
         send_if_updated(rc_in_sub, RosInterfaceCommMsgID::RC_INPUT, buf, sizeof(buf));
-        send_if_updated(imu_sub, RosInterfaceCommMsgID::IMU, buf, sizeof(buf));
+        if (imu_sub.has_update()) {
+            static unsigned i = 0;
+            if (i++ % 32 == 0) {
+                send_if_updated(imu_sub, RosInterfaceCommMsgID::IMU, buf, sizeof(buf));
+            } else {
+                imu_sub.get_value();
+            }
+        }
         send_if_updated(magnetometer_sub, RosInterfaceCommMsgID::MAGNETOMETER, buf, sizeof(buf));
         send_if_updated(output_sub, RosInterfaceCommMsgID::ACTUATOR_OUTPUT, buf, sizeof(buf));
         send_if_updated(rate_setpoint_rpy_sub, RosInterfaceCommMsgID::RATE_CTRL_SETPOINT_RPY, buf, sizeof(buf));
@@ -130,6 +143,7 @@ static THD_FUNCTION(comm_tx_thread, arg) {
         send_if_updated(rate_ctrl_output_rpy_sub, RosInterfaceCommMsgID::RATE_CTRL_OUTPUT_RPY, buf, sizeof(buf));
         send_if_updated(output_armed_sub, RosInterfaceCommMsgID::OUTPUT_IS_ARMED, buf, sizeof(buf));
         send_if_updated(ap_in_control_sub, RosInterfaceCommMsgID::AP_IN_CONTROL, buf, sizeof(buf));
+        send_if_updated(ap_control_latency_sub, RosInterfaceCommMsgID::AP_LATENCY, buf, sizeof(buf));
 
         if (log_update_trigger_sub.has_update()) {
             log_update_trigger_sub.get_value();

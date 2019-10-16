@@ -4,6 +4,7 @@
 #include <string>
 #include <string.h>
 #include <iostream>
+#include <unistd.h>
 #include <rclcpp/rclcpp.hpp>
 #include "std_msgs/msg/string.hpp"
 #include <std_msgs/msg/u_int64.hpp>
@@ -19,10 +20,13 @@
 #include "autopilot_msgs/msg/actuator_positions_stamped.hpp"
 #include "autopilot_msgs/msg/actuator_positions.hpp"
 #include "autopilot_msgs/srv/send_msgpack_config.hpp"
+#include "autopilot_msgs/msg/time_sync_stat.hpp"
 #include <chrono>
 #include "comm.h"
 #include "msg.h"
 using std::placeholders::_1;
+using namespace std::chrono_literals;
+
 
 #include <sys/time.h>
 
@@ -32,6 +36,8 @@ struct ping_s {
     uint32_t idx;
     struct timeval tv;
 };
+
+
 
 
 template<typename MsgType>
@@ -56,20 +62,24 @@ public:
         if (!comm_init(&m_interface, portname.c_str(), baudrate, cb)) {
             exit(-1);
         }
+        rclcpp::QoS pub_qos_settings(10);
+        // pub_qos_settings.best_effort();
+        m_time_sync_pub = this->create_publisher<autopilot_msgs::msg::TimeSyncStat>("time_sync", pub_qos_settings);
+        m_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", pub_qos_settings);
+        m_mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>("magnetometer", pub_qos_settings);
+        m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", pub_qos_settings);
+        m_ping_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency", pub_qos_settings);
+        m_rate_ctrl_setpoint_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/setpoint", pub_qos_settings);
+        m_rate_ctrl_measured_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/measured", pub_qos_settings);
+        m_rate_ctrl_output_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/output", pub_qos_settings);
+        m_output_armed_pub = this->create_publisher<std_msgs::msg::Bool>("output_armed", pub_qos_settings);
+        m_ap_in_control_pub = this->create_publisher<std_msgs::msg::Bool>("ap_in_control", pub_qos_settings);
+        m_ap_latency_pub = this->create_publisher<std_msgs::msg::UInt64>("ap_latency", pub_qos_settings);
+        m_output_pub = this->create_publisher<autopilot_msgs::msg::ActuatorPositions>("output", pub_qos_settings);
 
-        m_timestamp_pub = this->create_publisher<std_msgs::msg::UInt64>("timestamp", 10);
-        m_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", 10);
-        m_mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>("magnetometer", 10);
-        m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", 10);
-        m_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency", 10);
-        m_rate_ctrl_setpoint_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/setpoint", 10);
-        m_rate_ctrl_measured_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/measured", 10);
-        m_rate_ctrl_output_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/output", 10);
-        m_output_armed_pub = this->create_publisher<std_msgs::msg::Bool>("output_armed", 10);
-        m_ap_in_control_pub = this->create_publisher<std_msgs::msg::Bool>("ap_in_control", 10);
-        m_output_pub = this->create_publisher<autopilot_msgs::msg::ActuatorPositions>("output", 10);
-
-        m_ap_ctrl_sub = this->create_subscription<autopilot_msgs::msg::RateControlSetpoint>("control", 1, std::bind(&LowLevelControllerInterface::control_cb, this, _1));
+        rclcpp::QoS sub_qos_settings(1);
+        sub_qos_settings.best_effort();
+        m_ap_ctrl_sub = this->create_subscription<autopilot_msgs::msg::RateControlSetpoint>("control", sub_qos_settings, std::bind(&LowLevelControllerInterface::control_cb, this, _1));
 
         auto rx_thd = std::thread(rx_thd_fn, &m_interface);
         rx_thd.detach();
@@ -125,14 +135,47 @@ private:
             break;
 
         case RosInterfaceCommMsgID::TIME:
-            if (len == sizeof(uint64_t)) {
+        {
+            auto now = this->now();
+            auto message_latency = now - m_timesync_trigger_time;
+            if (message_latency < rclcpp::Duration(50ms)) {
+                assert(len == sizeof(uint64_t));
                 uint64_t timestamp;
                 memcpy(&timestamp, msg, sizeof(timestamp));
-                // auto message = std_msgs::msg::UInt64();
-                // message.data = timestamp;
-                // m_timestamp_pub->publish(message);
+                auto llc_time = rclcpp::Time(timestamp, RCL_ROS_TIME);
+                // m_timesync_trigger_time = rclcpp::Time(std::chrono::steady_clock.now().time_since_epoch(), RCL_ROS_TIME);
+                rclcpp::Duration offset = m_timesync_trigger_time - llc_time;
+                rclcpp::Duration uncertainty(0);
+                if (m_timesync_gpio_fd >= 0) {
+                    // we are using a GPIO to sync time
+                    uncertainty = m_timesync_uncertainty;
+                } else {
+                    // using TIME_SYNC message to sync time
+                    uncertainty = message_latency;
+                }
+                rclcpp::Duration adjust = offset - m_timestamp_offset;
+                if (abs(adjust.nanoseconds()) > rclcpp::Duration(500ms).nanoseconds()) {
+                    RCLCPP_WARN(this->get_logger(), "time jump %f s", (float)adjust.nanoseconds()/1e9);
+                    m_timestamp_offset = offset;
+                } else {
+                    if (uncertainty < rclcpp::Duration(10us)) {
+                        uncertainty = rclcpp::Duration(10us);
+                    }
+                    float estimate_var = 10e6*10e6;
+                    float meas_var = (float)uncertainty.nanoseconds()*uncertainty.nanoseconds();
+                    float alpha = estimate_var / (estimate_var + meas_var);
+                    adjust = adjust * alpha;
+                    m_timestamp_offset = m_timestamp_offset + adjust;
+                }
+                auto message = autopilot_msgs::msg::TimeSyncStat();
+                message.header.stamp = now;
+                message.timestamp = timestamp;
+                message.offset = m_timestamp_offset.nanoseconds();
+                message.adjust = adjust.nanoseconds();
+                m_time_sync_pub->publish(message);
             }
             break;
+        }
 
         case RosInterfaceCommMsgID::RC_INPUT:
             deserialize_and_publish(msg, len, m_rc_input_buf);
@@ -161,6 +204,9 @@ private:
         case RosInterfaceCommMsgID::AP_IN_CONTROL:
             deserialize_and_publish(msg, len, m_ap_in_control_buf);
             break;
+        case RosInterfaceCommMsgID::AP_LATENCY:
+            deserialize_and_publish(msg, len, m_ap_latency_buf);
+            break;
         default:
             std::string msg_str((char*)msg, len);
             printf("unknown rx msg %d, len: %d, %s\n", (int)msg_id, (int)len, msg_str.c_str());
@@ -171,7 +217,7 @@ private:
     void control_cb(const autopilot_msgs::msg::RateControlSetpoint::SharedPtr msg)
     {
         struct ap_ctrl_s ctrl;
-        ctrl.timestamp = rclcpp::Time(msg->header.stamp).nanoseconds();
+        ctrl.timestamp = (rclcpp::Time(msg->header.stamp) - m_timestamp_offset).nanoseconds();
         ctrl.rate_setpoint_rpy[0] = msg->rate_control_setpoint.x;
         ctrl.rate_setpoint_rpy[1] = msg->rate_control_setpoint.y;
         ctrl.rate_setpoint_rpy[2] = msg->rate_control_setpoint.z;
@@ -216,6 +262,8 @@ private:
         sub_list.push_back(&ap_in_control_sub);
         auto ping_latency_sub = msgbus::subscribe(m_ping_latency_buf);
         sub_list.push_back(&ping_latency_sub);
+        auto ap_latency_sub = msgbus::subscribe(m_ap_latency_buf);
+        sub_list.push_back(&ap_latency_sub);
         while (1) {
             msgbus::wait_for_update_on_any(sub_list.begin(), sub_list.end());
             struct timeval start;
@@ -249,7 +297,7 @@ private:
                     topic = "imu";
                     auto imu = imu_sub.get_value();
                     auto message = sensor_msgs::msg::Imu();
-                    message.header.stamp = rclcpp::Time(imu.timestamp, RCL_SYSTEM_TIME);
+                    message.header.stamp = rclcpp::Time(imu.timestamp, RCL_SYSTEM_TIME) + m_timestamp_offset;
                     message.header.frame_id = "imu";
                     message.orientation.x = imu.accumulated_angle.x;
                     message.orientation.y = imu.accumulated_angle.y;
@@ -270,7 +318,7 @@ private:
                     topic = "mag";
                     magnetometer_sample_t mag = mag_sub.get_value();
                     auto message = sensor_msgs::msg::MagneticField();
-                    message.header.stamp = rclcpp::Time(mag.timestamp, RCL_SYSTEM_TIME);
+                    message.header.stamp = rclcpp::Time(mag.timestamp, RCL_SYSTEM_TIME) + m_timestamp_offset;
                     message.header.frame_id = "imu";
                     message.magnetic_field.x = mag.magnetic_field[0];
                     message.magnetic_field.y = mag.magnetic_field[1];
@@ -324,7 +372,14 @@ private:
                     auto val = ping_latency_sub.get_value();
                     auto message = std_msgs::msg::Float64();
                     message.data = val;
-                    m_latency_pub->publish(message);
+                    m_ping_latency_pub->publish(message);
+                } else
+                if (ap_latency_sub.has_update()) {
+                    topic = "ap_latency";
+                    auto val = ap_latency_sub.get_value();
+                    auto message = std_msgs::msg::UInt64();
+                    message.data = val;
+                    m_ap_latency_pub->publish(message);
                 }
             } catch(rclcpp::exceptions::RCLError const& e) {
                 std::cout << "Message: " << e.what() << "\n";
@@ -373,10 +428,30 @@ private:
 
 
     void trigger_timesync(void) {
+        if (m_timesync_gpio_fd >= 0) {
+            // use GPIO to sync time
+            auto before = this->now();
+            if (write(m_timesync_gpio_fd, "1", 1) == 1) {
+                auto after = this->now();
+                // todo lock
+                m_timesync_uncertainty = after - before;
+                m_timesync_trigger_time = this->now();
+            }
+            if (write(m_timesync_gpio_fd, "0", 1) != 1) {
+                // todo
+            }
+        } else {
+            m_timesync_trigger_time = this->now();
+            comm_send(&m_interface, RosInterfaceCommMsgID::TIME_SYNC, NULL, 0);
+        }
     }
 
     rclcpp::TimerBase::SharedPtr m_ping_timer;
     rclcpp::TimerBase::SharedPtr m_timesync_timer;
+    int m_timesync_gpio_fd{-1};
+    rclcpp::Time m_timesync_trigger_time{{0, RCL_ROS_TIME}};
+    rclcpp::Duration m_timesync_uncertainty{-1};
+    rclcpp::Duration m_timestamp_offset{0};
     rclcpp::Service<autopilot_msgs::srv::SendMsgpackConfig>::SharedPtr m_param_set_srv;
     uint64_t m_ping_idx{0};
     uint64_t m_ping_rcv_idx{0};
@@ -384,8 +459,8 @@ private:
 
     rclcpp::Publisher<autopilot_msgs::msg::RCInput>::SharedPtr m_rcinput_pub;
     msgbus::Topic<struct rc_input_s> m_rc_input_buf;
-    rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr m_timestamp_pub;
-    rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr m_latency_pub;
+    rclcpp::Publisher<autopilot_msgs::msg::TimeSyncStat>::SharedPtr m_time_sync_pub;
+    rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr m_ping_latency_pub;
     msgbus::Topic<float> m_ping_latency_buf;
     rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr m_imu_pub;
     msgbus::Topic<imu_sample_t> m_imu_buf;
@@ -401,9 +476,10 @@ private:
     msgbus::Topic<bool> m_output_armed_buf;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr m_ap_in_control_pub;
     msgbus::Topic<bool> m_ap_in_control_buf;
+    rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr m_ap_latency_pub;
+    msgbus::Topic<uint64_t> m_ap_latency_buf;
     rclcpp::Publisher<autopilot_msgs::msg::ActuatorPositions>::SharedPtr m_output_pub;
     msgbus::Topic<std::vector<float> > m_actuator_output_buf;
-
     rclcpp::Subscription<autopilot_msgs::msg::RateControlSetpoint>::SharedPtr m_ap_ctrl_sub;
 };
 
