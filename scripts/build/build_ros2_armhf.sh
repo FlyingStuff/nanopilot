@@ -24,7 +24,7 @@ export TARGET_ARCH=armhf
 export CC=/usr/bin/$TARGET_TRIPLE-gcc
 export CXX=/usr/bin/$TARGET_TRIPLE-g++
 export CROSS_COMPILE=/usr/bin/$TARGET_TRIPLE-
-export SYSROOT=$ROOT_DIR/sysroot
+export SYSROOT=$ROOT_DIR/sysroot_armhf
 export PYTHON_SOABI=cpython-36m-$TARGET_TRIPLE
 export ROS2_INSTALL_PATH=$ROOT_DIR/$1/install
 echo $ROS2_INSTALL_PATH
@@ -33,8 +33,8 @@ echo $ROS2_INSTALL_PATH
 ## This is temporarily required to find the Poco libraries on the SYSROOT.
 ## The exported target comming with the pre-build binaries has a hard-coded
 ## path to "/usr/lib/<arch>/libz.so" and "/usr/lib/<arch>/libpcre.so"
-ln -s `pwd`/../sysroot/lib/$TARGET_TRIPLE/libz.so.1 /usr/lib/$TARGET_TRIPLE/libz.so
-ln -s `pwd`/../sysroot/lib/$TARGET_TRIPLE/libpcre.so.3 /usr/lib/$TARGET_TRIPLE/libpcre.so
+ln -s `pwd`/../sysroot_armhf/lib/$TARGET_TRIPLE/libz.so.1 /usr/lib/$TARGET_TRIPLE/libz.so
+ln -s `pwd`/../sysroot_armhf/lib/$TARGET_TRIPLE/libpcre.so.3 /usr/lib/$TARGET_TRIPLE/libpcre.so
 
 rm -f ros2.repos
 # wget https://raw.githubusercontent.com/ros2/ros2/release-crystal-20190408/ros2.repos

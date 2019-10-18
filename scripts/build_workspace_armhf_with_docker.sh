@@ -1,7 +1,7 @@
 #/usr/bin/env bash
 set -e
 
-# assuming you previously built ros2 for armhf under ROOT_DIR/build_ros2_armhf
+# assuming you previously built ros2 for armhf under ROOT_DIR/ros2_armhf
 COLCON_ARGS=$@
 
 cd ${BASH_SOURCE%/*}

@@ -15,3 +15,5 @@ docker run --rm -v `pwd`:`pwd`:cached -w `pwd` ros2-cross-compile ./scripts/buil
 
 # make sure colcon doesn't rebuild everything
 touch ${ROS2_DIR}/COLCON_IGNORE
+
+cp -a ${ROS2_DIR}/install ros2_armhf
