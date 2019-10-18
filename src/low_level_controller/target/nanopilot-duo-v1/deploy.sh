@@ -8,6 +8,7 @@ cd ${BASH_SOURCE%/*}
 ROOT_DIR=`pwd`
 
 scp ${ROOT_DIR}/build/nanopilot-low-level-controller.bin ${HOST}:llc.bin
+scp ${ROOT_DIR}/init_gpio.sh ${HOST}:
 
 BOOT0_IO=203
 RST_IO=363
