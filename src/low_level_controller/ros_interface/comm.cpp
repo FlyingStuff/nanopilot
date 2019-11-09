@@ -154,7 +154,7 @@ bool comm_init(comm_interface_t *i,
 #else // ChibiOS
 
 void comm_init(comm_interface_t *i,
-               SerialDriver* serial_device,
+               BaseSequentialStream* serial_device,
                comm_rcv_cb_t rcv_cb)
 {
     i->fd = serial_device;
@@ -208,8 +208,7 @@ void comm_send(comm_interface_t *i,
             break;
         }
 #else // ChibiOS
-        systime_t timeout = TIME_US2I(100);
-        size_t ret = sdWriteTimeout(i->fd, &i->send_datagram_buffer[bytes_written], datagram_size - bytes_written, timeout);
+        size_t ret = streamWrite(i->fd, &i->send_datagram_buffer[bytes_written], datagram_size - bytes_written);
 #endif
         bytes_written += ret;
     }
@@ -234,7 +233,7 @@ void comm_receive(comm_interface_t *i)
         return;
     }
 #else // ChibiOS
-    size_t len = sdRead(i->fd, buf, 1);
+    size_t len = streamRead(i->fd, buf, 1);
     if (len == 0) {
         chThdSleepMilliseconds(1); // queue is probably reset, avoid busy loop
     }

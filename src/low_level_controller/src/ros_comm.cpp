@@ -172,7 +172,7 @@ static THD_FUNCTION(comm_tx_thread, arg) {
 }
 
 
-void ros_comm_init(SerialDriver *sd)
+void ros_comm_init(BaseSequentialStream *sd)
 {
     comm_init(&comm_if, sd, comm_rcv_cb);
 

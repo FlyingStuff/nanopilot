@@ -27,7 +27,7 @@ typedef struct {
     pthread_mutex_t send_lock;
     std::function<void(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)> rcv_cb;
 #else // ChibiOS
-    SerialDriver *fd;
+    BaseSequentialStream *fd;
     mutex_t send_lock;
     comm_rcv_cb_t rcv_cb;
 #endif
@@ -51,7 +51,7 @@ bool comm_init(comm_interface_t *i,
                std::function<void(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)> rcv_cb);
 #else // ChibiOS
 void comm_init(comm_interface_t *i,
-               SerialDriver* serial_device,
+               BaseSequentialStream* serial_device,
                comm_rcv_cb_t rcv_cb);
 #endif
 

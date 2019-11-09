@@ -114,7 +114,7 @@ int main(void) {
     log_init();
     log_handler_register(&log_handler_stdout, LOG_LVL_DEBUG, log_handler_stdout_cb);
 
-    ros_comm_init(&SD2);
+    ros_comm_init((BaseSequentialStream*)&SD2);
 
     log_info("=== boot ===");
 

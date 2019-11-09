@@ -5,6 +5,6 @@
 
 extern comm_interface_t comm_if;
 
-void ros_comm_init(SerialDriver *sd);
+void ros_comm_init(BaseSequentialStream *sd);
 
 #endif /* ROS_COMM_HPP */
