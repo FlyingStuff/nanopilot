@@ -43,13 +43,15 @@ public:
     body_frame("body"),
     inertial_frame("NED")
     {
+        rclcpp::QoS qos_settings(1);
+        qos_settings.best_effort();
         imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
-            "imu", 10, std::bind(&AttitudeEKF::imu_cb, this, _1));
+            "imu", qos_settings, std::bind(&AttitudeEKF::imu_cb, this, _1));
         pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/vrpn_client_node/quad/pose", 10, std::bind(&AttitudeEKF::pose_cb, this, _1));
+            "/vrpn_client_node/quad/pose", qos_settings, std::bind(&AttitudeEKF::pose_cb, this, _1));
 
 
-        pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
+        pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", qos_settings);
 
         x.setZero();
         P0.setZero();
@@ -185,8 +187,9 @@ private:
     void imu_cb(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
         // todo use tf2
-        Eigen::Quaterniond imu_to_body(Eigen::AngleAxisd(0.5*M_PI, Eigen::Vector3d::UnitZ())
-                                        * Eigen::AngleAxisd(M_PI,  Eigen::Vector3d::UnitY()));
+        // Eigen::Quaterniond imu_to_body(Eigen::AngleAxisd(0.5*M_PI, Eigen::Vector3d::UnitZ())
+        //                                 * Eigen::AngleAxisd(M_PI,  Eigen::Vector3d::UnitY()));
+        Eigen::Quaterniond imu_to_body(1, 0, 0, 0);
 
         if (prev_imu_msg) {
             rclcpp::Duration dt = rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_imu_msg->header.stamp);

@@ -32,6 +32,7 @@ static THD_FUNCTION(sumd_input_task, arg)
             rc_input.publish(in);
         } else if (ret == SUMD_RECEIVE_ERROR) {
             log_warning("SUMD input error, crc error cnt %d", rc.error_cnt);
+            // todo flush stream
         }
     }
 }

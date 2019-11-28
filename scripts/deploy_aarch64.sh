@@ -7,5 +7,5 @@ HOST=$1
 cd ${BASH_SOURCE%/*}
 ROOT_DIR=`pwd`/..
 
-rsync -ac -L --partial --progress ${ROOT_DIR}/ros2_aarch64/ ${HOST}:ros2
-rsync -ac -L --partial --progress ${ROOT_DIR}/install_aarch64/ ${HOST}:ap
+rsync -ac -L --partial --delete --progress ${ROOT_DIR}/ros2_aarch64/ ${HOST}:ros2
+rsync -ac -L --partial --delete --progress ${ROOT_DIR}/install_aarch64/ ${HOST}:ap

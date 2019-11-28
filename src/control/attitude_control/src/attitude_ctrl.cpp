@@ -7,6 +7,7 @@
 using std::placeholders::_1;
 #include <iostream>
 #include <chrono>
+using namespace std::chrono_literals;
 
 #include <Eigen/Dense>
 
@@ -19,14 +20,16 @@ public:
     AttitudeCtrl()
     : Node("AttitudeCtrl")
     {
+        rclcpp::QoS qos_settings(1);
+        qos_settings.best_effort();
         att_setpt_sub = this->create_subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>(
-            "attitude_setpoint", 1, std::bind(&AttitudeCtrl::att_setpt_cb, this, _1));
+            "attitude_setpoint", qos_settings, std::bind(&AttitudeCtrl::att_setpt_cb, this, _1));
         pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "pose", 1, std::bind(&AttitudeCtrl::pose_cb, this, _1));
-        ctrl_pub = this->create_publisher<autopilot_msgs::msg::RateControlSetpoint>("control", 10);
+            "pose", qos_settings, std::bind(&AttitudeCtrl::pose_cb, this, _1));
+        ctrl_pub = this->create_publisher<autopilot_msgs::msg::RateControlSetpoint>("control", qos_settings);
 
         control_timer = create_wall_timer(
-            20ms, std::bind(&AttitudeCtrl::control_update, this));
+            5ms, std::bind(&AttitudeCtrl::control_update, this));
     }
 
 
@@ -70,7 +73,11 @@ private:
         ctrl_msg.rate_control_setpoint.z = rate_setpt[2];
         ctrl_msg.force = att_setpt_msg->force;
         ctrl_pub->publish(ctrl_msg);
-        // RCLCPP_INFO(this->get_logger(), "ctrl '%f %f %f'", rate_setpt[0], rate_setpt[1], rate_setpt[2]);
+
+        auto dt = this->now() - rclcpp::Time(pose_msg->header.stamp);
+        if (dt > rclcpp::Duration(10ms)) {
+            RCLCPP_WARN(this->get_logger(), "old pose data %f ms", (float)dt.nanoseconds()/1000/1000);
+        }
     }
 
 

@@ -25,6 +25,9 @@ export SYSROOT=$ROOT_DIR/sysroot_armhf
 export PYTHON_SOABI=cpython-36m-$TARGET_TRIPLE
 export ROS2_INSTALL_PATH=$ROOT_DIR/
 
+#somehow libtinyxml2.so is not found in sysroot
+ln -s ${SYSROOT}/usr/lib/arm-linux-gnueabihf/libtinyxml2.so /usr/lib/arm-linux-gnueabihf/libtinyxml2.so
+
 colcon build \
   --build-base build_armhf \
   --install-base install_armhf \

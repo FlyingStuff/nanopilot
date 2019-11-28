@@ -86,6 +86,8 @@ private:
             acc_ctrl_msg.acceleration.x = acc_setpt_x;
             acc_ctrl_msg.acceleration.y = acc_setpt_y;
             acc_ctrl_msg.acceleration.z = acc_setpt_z;
+            acc_ctrl_msg.jerk = position_setpt_msg->jerk;
+            acc_ctrl_msg.snap = position_setpt_msg->snap;
             acc_ctrl_pub->publish(acc_ctrl_msg);
         }
     }
