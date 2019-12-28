@@ -55,8 +55,12 @@ void deserialize_and_publish(const uint8_t *msg, size_t len, msgbus::Topic<MsgTy
 class LowLevelControllerInterface : public rclcpp::Node
 {
 public:
-    LowLevelControllerInterface(const std::string portname, uint32_t baudrate)
+    LowLevelControllerInterface()
     : Node("LowLevelControllerInterface") {
+        this->declare_parameter("baud");
+        this->declare_parameter("port");
+        uint32_t baudrate = this->get_parameter("baud").as_int();
+        const std::string portname = this->get_parameter("port").as_string();
 
         auto cb = [this](comm_msg_id_t msg_id, const uint8_t *msg, size_t len){this->rx_handler(msg_id, msg, len);};
         if (!comm_init(&m_interface, portname.c_str(), baudrate, cb)) {
@@ -487,16 +491,9 @@ private:
 
 int main(const int argc, const char **argv)
 {
-    if (argc != 3) {
-        printf("usage: %s /dev/serialport baudrate\n", argv[0]);
-        return -1;
-    }
-    const char *portname = argv[1];
-    int baudrate = atoi(argv[2]);
-
     rclcpp::init(argc, argv);
 
-    auto llc_if_node = std::make_shared<LowLevelControllerInterface>(portname, baudrate);
+    auto llc_if_node = std::make_shared<LowLevelControllerInterface>();
 
     rclcpp::spin(llc_if_node);
     rclcpp::shutdown();
