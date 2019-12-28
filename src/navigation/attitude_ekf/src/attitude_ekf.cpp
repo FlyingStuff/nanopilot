@@ -43,15 +43,18 @@ public:
     body_frame("body"),
     inertial_frame("NED")
     {
-        rclcpp::QoS qos_settings(1);
-        qos_settings.best_effort();
+        rclcpp::QoS pub_qos_settings(10);
+        // pub_qos_settings.best_effort();
+        rclcpp::QoS sub_qos_settings(1);
+        sub_qos_settings.best_effort();
+
         imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
-            "imu", qos_settings, std::bind(&AttitudeEKF::imu_cb, this, _1));
+            "imu", sub_qos_settings, std::bind(&AttitudeEKF::imu_cb, this, _1));
         pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/vrpn_client_node/quad/pose", qos_settings, std::bind(&AttitudeEKF::pose_cb, this, _1));
+            "/vrpn_client_node/quad/pose", sub_qos_settings, std::bind(&AttitudeEKF::pose_cb, this, _1));
 
 
-        pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", qos_settings);
+        pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", pub_qos_settings);
 
         x.setZero();
         P0.setZero();

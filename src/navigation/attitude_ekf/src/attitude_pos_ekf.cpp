@@ -46,14 +46,19 @@ public:
     body_frame("body"),
     inertial_frame("NED")
     {
-        imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
-            "imu", 1, std::bind(&AttitudeEKF::imu_cb, this, _1));
-        pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/vrpn_client_node/test/pose", 1, std::bind(&AttitudeEKF::pose_cb, this, _1));
+        rclcpp::QoS pub_qos_settings(10);
+        // pub_qos_settings.best_effort();
+        rclcpp::QoS sub_qos_settings(1);
+        sub_qos_settings.best_effort();
 
-        pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
-        twist_pub = this->create_publisher<geometry_msgs::msg::TwistStamped>("twist", 10);
-        accel_pub = this->create_publisher<geometry_msgs::msg::AccelStamped>("accel", 10);
+        imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
+            "imu", sub_qos_settings, std::bind(&AttitudeEKF::imu_cb, this, _1));
+        pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            "/t265/pose", sub_qos_settings, std::bind(&AttitudeEKF::pose_cb, this, _1));
+
+        pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", pub_qos_settings);
+        twist_pub = this->create_publisher<geometry_msgs::msg::TwistStamped>("twist", pub_qos_settings);
+        accel_pub = this->create_publisher<geometry_msgs::msg::AccelStamped>("accel", pub_qos_settings);
 
         x.setZero();
         P0.setZero();

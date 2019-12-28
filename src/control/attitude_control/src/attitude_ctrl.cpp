@@ -20,13 +20,15 @@ public:
     AttitudeCtrl()
     : Node("AttitudeCtrl")
     {
-        rclcpp::QoS qos_settings(1);
-        qos_settings.best_effort();
+        rclcpp::QoS pub_qos_settings(10);
+        // pub_qos_settings.best_effort();
+        rclcpp::QoS sub_qos_settings(1);
+        sub_qos_settings.best_effort();
         att_setpt_sub = this->create_subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>(
-            "attitude_setpoint", qos_settings, std::bind(&AttitudeCtrl::att_setpt_cb, this, _1));
+            "attitude_setpoint", sub_qos_settings, std::bind(&AttitudeCtrl::att_setpt_cb, this, _1));
         pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            "pose", qos_settings, std::bind(&AttitudeCtrl::pose_cb, this, _1));
-        ctrl_pub = this->create_publisher<autopilot_msgs::msg::RateControlSetpoint>("control", qos_settings);
+            "pose", sub_qos_settings, std::bind(&AttitudeCtrl::pose_cb, this, _1));
+        ctrl_pub = this->create_publisher<autopilot_msgs::msg::RateControlSetpoint>("control", pub_qos_settings);
 
         control_timer = create_wall_timer(
             5ms, std::bind(&AttitudeCtrl::control_update, this));
