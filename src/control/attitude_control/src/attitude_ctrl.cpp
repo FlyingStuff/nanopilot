@@ -13,6 +13,29 @@ using namespace std::chrono_literals;
 
 using namespace std::chrono_literals;
 
+/* split a rotation such that:
+ * rotation = rotation_twist * rotation_tilt
+ * (first tilt, then twist)
+ * where rotation_twist is around twist_axis and rotation_tilt is around a
+ * perpendicular axis
+ */
+void rotation_split_tilt_twist(const Eigen::Quaterniond &rotation,
+    const Eigen::Vector3d &twist_axis,
+    Eigen::Quaterniond &rotation_tilt,
+    Eigen::Quaterniond &rotation_twist)
+{
+    auto q = rotation.normalized();
+    if (q.w() < 0) { // fix quaternion sign to have positive real part
+        q.coeffs() = -q.coeffs();
+    }
+    auto t = twist_axis.normalized();
+    double qv_dot_t = q.vec().dot(t);
+    double s = 1/sqrt(qv_dot_t*qv_dot_t + q.w()*q.w());
+    rotation_twist.w() = q.w() * s;
+    auto b = qv_dot_t * s;
+    rotation_twist.vec() = b * t;
+    rotation_tilt = rotation_twist.conjugate()*q;
+}
 
 class AttitudeCtrl : public rclcpp::Node
 {
@@ -21,7 +44,6 @@ public:
     : Node("AttitudeCtrl")
     {
         rclcpp::QoS pub_qos_settings(10);
-        // pub_qos_settings.best_effort();
         rclcpp::QoS sub_qos_settings(1);
         sub_qos_settings.best_effort();
         att_setpt_sub = this->create_subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>(
@@ -36,16 +58,18 @@ public:
 
 
 private:
-
     void control_update(void)
     {
-        // https://doi.org/10.3929/ethz-a-009970340
-
         auto ctrl_msg = autopilot_msgs::msg::RateControlSetpoint();
 
         if (!pose_msg || !att_setpt_msg) {
             return;
         }
+        if (pose_msg->header.frame_id != att_setpt_msg->header.frame_id) {
+            auto clock = *(this->get_clock());
+            RCLCPP_ERROR_THROTTLE(this->get_logger(), clock, 100, "setpt and pose frame mismatch");
+        }
+
         double roll_time_cst = 0.1; // [s]
         double pitch_time_cst = 0.1; // [s]
         double yaw_time_cst = 0.5; // [s]
@@ -61,12 +85,17 @@ private:
             pose_msg->pose.orientation.z);
 
         auto att_error = (setpt_body_to_nav.conjugate()*estimate_body_to_nav).normalized();
-        Eigen::Vector3d att_error_vec;
-        if (att_error.w() < 0) {
-            att_error_vec = -2*att_error.normalized().vec();
-        } else {
-            att_error_vec = 2*att_error.normalized().vec();
+        if (att_error.w() < 0) { // fix attitude error to have positive real part
+            att_error.coeffs() = -att_error.coeffs();
         }
+        Eigen::Vector3d twist_axis(0, 0, 1);
+        Eigen::Quaterniond att_error_twist, att_error_tilt;
+        rotation_split_tilt_twist(att_error, twist_axis, att_error_tilt, att_error_twist);
+
+        Eigen::Vector3d att_error_vec;
+        att_error_vec = 2*(att_error_tilt.vec() + att_error_twist.vec());
+        // att_error_vec = 2*att_error.vec();
+
         Eigen::Vector3d rate_setpt = -K.cwiseProduct(att_error_vec);
         rate_setpt = rate_setpt.cwiseMin(max_rate_setpt).cwiseMax(-max_rate_setpt);
         ctrl_msg.header.stamp = pose_msg->header.stamp;
