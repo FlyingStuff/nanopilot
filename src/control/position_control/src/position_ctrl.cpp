@@ -12,6 +12,7 @@ using std::placeholders::_1;
 #include <pid/pid.hpp>
 #include <Eigen/Dense>
 #include <string.h>
+#include <math.h>
 #include <stdio.h>
 
 using namespace std::chrono_literals;
@@ -30,7 +31,7 @@ public:
         twist_sub = this->create_subscription<geometry_msgs::msg::TwistStamped>(
             "twist", 1, std::bind(&PositionCtrl::twist_cb, this, _1));
 
-        acc_ctrl_pub = this->create_publisher<autopilot_msgs::msg::AccelerationTrajectorySetpoint>("acceleration_traj_setpoint", 10);
+        acc_ctrl_pub = this->create_publisher<autopilot_msgs::msg::AccelerationTrajectorySetpoint>("acceleration_setpoint", 10);
         vel_setpt_pub = this->create_publisher<geometry_msgs::msg::Vector3>("velocity_setpoint", 10);
 
         this->parameters_client = std::make_shared<rclcpp::SyncParametersClient>(this);
@@ -47,9 +48,12 @@ public:
         });
 
         parameters_init();
+        int update_rate = 50; // [Hz]
         control_timer = create_wall_timer(
-            100ms, std::bind(&PositionCtrl::control_update, this));
-
+            1.0s/update_rate, std::bind(&PositionCtrl::control_update, this));
+        pid_velocity_x.set_frequency(update_rate);
+        pid_velocity_y.set_frequency(update_rate);
+        pid_velocity_z.set_frequency(update_rate);
     }
 
 private:
@@ -59,13 +63,50 @@ private:
 
         if (current_pose_msg && position_setpt_msg && current_twist_msg)
         {
-            double error_position_x = current_pose_msg->pose.position.x - position_setpt_msg->position.x;
-            double error_position_y = current_pose_msg->pose.position.y - position_setpt_msg->position.y;
-            double error_position_z = current_pose_msg->pose.position.z - position_setpt_msg->position.z;
+            if (current_pose_msg->header.frame_id != position_setpt_msg->header.frame_id) {
+                auto clock = rclcpp::Clock(RCL_SYSTEM_TIME);
+                RCLCPP_ERROR_THROTTLE(this->get_logger(), clock, 100, "setpt and pose frame mismatch");
+            }
+            if (current_twist_msg->header.frame_id != position_setpt_msg->header.frame_id) {
+                auto clock = rclcpp::Clock(RCL_SYSTEM_TIME);
+                RCLCPP_ERROR_THROTTLE(this->get_logger(), clock, 100, "setpt and twist frame mismatch");
+            }
+
+            // TODO check time of messages
+            double error_position_x = 0;
+            double error_position_y = 0;
+            double error_position_z = 0;
+            if (isfinite(position_setpt_msg->position.x)) {
+                if (isfinite(current_pose_msg->pose.position.x)) {
+                    error_position_x = current_pose_msg->pose.position.x - position_setpt_msg->position.x;
+                } else {
+                    auto clock = *(this->get_clock());
+                    RCLCPP_DEBUG_THROTTLE(this->get_logger(), clock, 100, "No x position available");
+                }
+            }
+            if (isfinite(position_setpt_msg->position.y)) {
+                if (isfinite(current_pose_msg->pose.position.y)) {
+                    error_position_y = current_pose_msg->pose.position.y - position_setpt_msg->position.y;
+                } else {
+                    auto clock = *(this->get_clock());
+                    RCLCPP_DEBUG_THROTTLE(this->get_logger(), clock, 100, "No y position available");
+                }
+            }
+            if (isfinite(position_setpt_msg->position.z)) {
+                if (isfinite(current_pose_msg->pose.position.z)) {
+                    error_position_z = current_pose_msg->pose.position.z - position_setpt_msg->position.z;
+                } else {
+                    auto clock = *(this->get_clock());
+                    RCLCPP_DEBUG_THROTTLE(this->get_logger(), clock, 100, "No z position available");
+                }
+            }
 
             double velocity_setpoint_x = -kp_position_x * error_position_x + position_setpt_msg->velocity.x;
             double velocity_setpoint_y = -kp_position_y * error_position_y + position_setpt_msg->velocity.y;
             double velocity_setpoint_z = -kp_position_z * error_position_z + position_setpt_msg->velocity.z;
+
+            // TODO limit velocity as a vector
+            // zero higher derivatives if limited
 
             double error_velocity_x = current_twist_msg->twist.linear.x - velocity_setpoint_x;
             double error_velocity_y = current_twist_msg->twist.linear.y - velocity_setpoint_y;
@@ -82,7 +123,8 @@ private:
             vel_setpt_pub->publish(vel_setpt_msg);
 
             auto acc_ctrl_msg = autopilot_msgs::msg::AccelerationTrajectorySetpoint();
-            acc_ctrl_msg.header.stamp = current_pose_msg->header.stamp;
+            acc_ctrl_msg.header.stamp = current_twist_msg->header.stamp;
+            acc_ctrl_msg.header.frame_id = position_setpt_msg->header.frame_id;
             acc_ctrl_msg.acceleration.x = acc_setpt_x;
             acc_ctrl_msg.acceleration.y = acc_setpt_y;
             acc_ctrl_msg.acceleration.z = acc_setpt_z;
