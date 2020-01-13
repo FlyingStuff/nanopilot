@@ -3,10 +3,13 @@
 #include "log.h"
 #include "thread_prio.h"
 #include <Eigen/Geometry>
+#include "low_pass_filter.hpp"
 
 static icm20602_t _icm20602_dev;
 static Eigen::Matrix3f _R_sensor_to_board;
 static ioline_t _int_line;
+static LowPassFilter acc_lp[3];
+static LowPassFilter gyro_lp[3];
 
 static THD_WORKING_AREA(icm20602_publisher_wa, 1800);
 static THD_FUNCTION(icm20602_publisher, arg)
@@ -20,6 +23,12 @@ static THD_FUNCTION(icm20602_publisher, arg)
         log_error("icm20602 ping failed");
         return;
     }
+    acc_lp[0].set_update_frequency(8000);
+    acc_lp[1].set_update_frequency(8000);
+    acc_lp[2].set_update_frequency(8000);
+    gyro_lp[0].set_update_frequency(8000);
+    gyro_lp[1].set_update_frequency(8000);
+    gyro_lp[2].set_update_frequency(8000);
     icm20602_setup(&_icm20602_dev);
     timestamp_t prev_time = timestamp_get();
     while (true) {
@@ -39,7 +48,10 @@ static THD_FUNCTION(icm20602_publisher, arg)
             imu_sample.accumulated_angle.z = accumulated_angle.z();
             Eigen::Map<Eigen::Vector3f> acc_board(imu_sample.linear_acceleration);
             acc_board = _R_sensor_to_board * acc_sensor;
-
+            for (int i=0; i < 3; i++) {
+                acc_board[i] = acc_lp[i].process(acc_board[i]);
+                rate_gyro_board[i] = gyro_lp[i].process(rate_gyro_board[i]);
+            }
             imu.publish(imu_sample);
 
             prev_time = now;
@@ -47,6 +59,16 @@ static THD_FUNCTION(icm20602_publisher, arg)
 
         palWaitLineTimeout(_int_line, OSAL_MS2I(1));
     }
+}
+
+void icm20602_parameter_declare(parameter_namespace_t *parent_ns)
+{
+    acc_lp[0].declare_parameters(parent_ns, "acc_x_lp");
+    acc_lp[1].declare_parameters(parent_ns, "acc_y_lp");
+    acc_lp[2].declare_parameters(parent_ns, "acc_z_lp");
+    gyro_lp[0].declare_parameters(parent_ns, "gyro_x_lp");
+    gyro_lp[1].declare_parameters(parent_ns, "gyro_y_lp");
+    gyro_lp[2].declare_parameters(parent_ns, "gyro_z_lp");
 }
 
 void icm20602_publisher_start(SPIDriver *spi, const SPIConfig *config, const Eigen::Matrix3f &R_sensor_to_board, ioline_t int_line)

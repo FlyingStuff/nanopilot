@@ -146,6 +146,7 @@ int main(void) {
     control_init();
     initialize_actuators(&parameters);
 
+    icm20602_parameter_declare(&parameters);
     static PIDRateController rate_ctrl;
     static LinearOutputMixer mixer;
     rate_ctrl.declare_parameters(&control_ns);
