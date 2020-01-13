@@ -34,4 +34,5 @@ colcon build \
   ${COLCON_ARGS} \
   --cmake-args \
     -DCMAKE_TOOLCHAIN_FILE=$ROOT_DIR/scripts/cross_compile/cmake-toolchains/generic_linux.cmake \
-    -DCMAKE_SYSROOT=$ROOT_DIR/sysroot_armhf
+    -DCMAKE_SYSROOT=$ROOT_DIR/sysroot_armhf \
+    -DCMAKE_CXX_FLAGS="-Wno-psabi"
