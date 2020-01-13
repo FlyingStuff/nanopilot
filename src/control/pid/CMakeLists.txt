@@ -21,7 +21,7 @@ target_include_directories(pid PUBLIC
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 
-ament_target_dependencies(pid rclcpp std_msgs sensor_msgs geometry_msgs autopilot_msgs)
+ament_target_dependencies(pid)
 
 install(TARGETS pid
   DESTINATION lib)
