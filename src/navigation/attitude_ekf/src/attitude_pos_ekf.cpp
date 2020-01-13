@@ -3,16 +3,23 @@
 // todo: these two lines are needed because of the Node being created with make shared
 // http://eigen.tuxfamily.org/dox-devel/group__TopicUnalignedArrayAssert.html
 
-#include "rclcpp/rclcpp.hpp"
+#include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/accel_stamped.hpp>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/create_timer_ros.h>
+#include <tf2_eigen/tf2_eigen.h>
 using std::placeholders::_1;
 #include <iostream>
 #include <string>
-// #include <tf2_ros/transform_listener.h>
+#include <chrono>
+using namespace std::chrono_literals;
+
 
 #include <Eigen/Dense>
 
@@ -44,10 +51,10 @@ public:
     AttitudeEKF()
     : Node("AttitudePosEKF"),
     body_frame("body"),
-    inertial_frame("NED")
+    inertial_frame("NED"),
+    measurement_pose_frame("t265")
     {
         rclcpp::QoS pub_qos_settings(10);
-        // pub_qos_settings.best_effort();
         rclcpp::QoS sub_qos_settings(1);
         sub_qos_settings.best_effort();
 
@@ -60,6 +67,14 @@ public:
         twist_pub = this->create_publisher<geometry_msgs::msg::TwistStamped>("twist", pub_qos_settings);
         accel_pub = this->create_publisher<geometry_msgs::msg::AccelStamped>("accel", pub_qos_settings);
 
+        tf_buffer = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+        auto timer_interface = std::make_shared<tf2_ros::CreateTimerROS>(
+            this->get_node_base_interface(),
+            this->get_node_timers_interface());
+        tf_buffer->setCreateTimerInterface(timer_interface);
+        tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
+        tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+
         x.setZero();
         P0.setZero();
         P0.diagonal() <<
@@ -71,7 +86,7 @@ public:
         double gyro_noise = deg_to_rad(0.004); // gyro noise density [rad/s/sqrt(Hz)]
         // double gyro_random_walk = deg_to_rad(0.0002); // gyro bias random walk [rad/s^2/sqrt(Hz)]
         double gyro_random_walk = deg_to_rad(0.02); // gyro bias random walk [rad/s^2/sqrt(Hz)]
-        double acc_noise = 1.0; // [m/s2/sqrt(Hz)]
+        double acc_noise = 0.2; // [m/s2/sqrt(Hz)]
         Q.diagonal() <<
             sq(gyro_noise), sq(gyro_noise), sq(gyro_noise),
             sq(gyro_random_walk), sq(gyro_random_walk), sq(gyro_random_walk),
@@ -83,7 +98,7 @@ public:
             sq(0.1), sq(0.1), sq(0.1); // covariance of a position measurement [(m)^2]
         R_QUAT.setZero();
         R_QUAT.diagonal() <<
-            sq(deg_to_rad(10)), sq(deg_to_rad(10)), sq(deg_to_rad(10)); // angle covariance in body [(rad)^2]
+            sq(deg_to_rad(20)), sq(deg_to_rad(20)), sq(deg_to_rad(5)); // angle covariance in body [(rad)^2]
         this->reset();
     }
 
@@ -169,7 +184,7 @@ private:
         this->attitude_reference_B_to_I.normalize();
     }
 
-    void pos_measurement_update(Eigen::Vector3d &pos)
+    void pos_measurement_update(const Eigen::Vector3d &pos)
     {
         Eigen::Matrix<double, POS_MEASURE_DIM, STATE_DIM> H;
         H.setZero();
@@ -181,7 +196,7 @@ private:
 
         y = pos - x.block<3,1>(6, 0);
         S = H * P * H.transpose() + R_POS;
-        K = P * H.transpose() * S.inverse(); // todo use pseudo inverse to be safe
+        K = P * H.transpose() * S.inverse();
 
         Eigen::Matrix<double, STATE_DIM, STATE_DIM> I;
         I.setIdentity();
@@ -196,7 +211,7 @@ private:
         attitude_error_to_reference_transfer();
     }
 
-    void quaternion_measurement_update(Eigen::Quaterniond &measured_B_to_I)
+    void quaternion_measurement_update(const Eigen::Quaterniond &measured_B_to_I)
     {
         Eigen::Matrix<double, QUATERNION_MEASURE_DIM, STATE_DIM> H;
         H.setZero();
@@ -211,7 +226,7 @@ private:
 
         y = a_measured; // a_expected is zero
         S = H * P * H.transpose() + R_QUAT;
-        K = P * H.transpose() * S.inverse(); // todo use pseudo inverse to be safe
+        K = P * H.transpose() * S.inverse();
 
         auto &I = Eigen::Matrix<double, STATE_DIM, STATE_DIM>::Identity();
         P = (I - K * H) * P;
@@ -227,23 +242,24 @@ private:
         Eigen::Quaterniond imu_to_body(1, 0, 0, 0);
 
         if (prev_imu_msg) {
-            rclcpp::Duration dt = rclcpp::Time(msg->header.stamp) - rclcpp::Time(prev_imu_msg->header.stamp);
-            // RCLCPP_INFO(this->get_logger(), "*****************");
-            // RCLCPP_INFO(this->get_logger(), "imu delta t %f", dt.seconds());
-            // RCLCPP_INFO(this->get_logger(), "imu omega: '%f %f %f'", msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
+            auto current_time = rclcpp::Time(msg->header.stamp);
+            rclcpp::Duration dt = current_time - rclcpp::Time(prev_imu_msg->header.stamp);
             Eigen::Quaternion<double> current_imu_to_I(msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z);
             Eigen::Quaternion<double> prev_imu_to_I(prev_imu_msg->orientation.w, prev_imu_msg->orientation.x, prev_imu_msg->orientation.y, prev_imu_msg->orientation.z);
             Eigen::Quaternion<double> current_b_to_I = current_imu_to_I*imu_to_body.conjugate();
             Eigen::Quaternion<double> prev_b_to_I = prev_imu_to_I*imu_to_body.conjugate();
             auto current_b_to_prev_b = prev_b_to_I.conjugate()*current_b_to_I; // transform from current body to previous body frame
-            // RCLCPP_INFO(this->get_logger(), "imu dq '%f %f %f %f'", current_b_to_prev_b.w(), current_b_to_prev_b.x(), current_b_to_prev_b.y(), current_b_to_prev_b.z());
-            // RCLCPP_INFO(this->get_logger(), "imu omega(dq,dt) '%f %f %f'", current_b_to_prev_b.x()*2/dt.seconds(), current_b_to_prev_b.y()*2/dt.seconds(), current_b_to_prev_b.z()*2/dt.seconds());
 
             Eigen::Vector3d acc(msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
             auto acc_body = imu_to_body*acc;
-            time_update(current_b_to_prev_b, dt.seconds(), acc_body);
 
-            publish_estimate(rclcpp::Time(msg->header.stamp));
+            time_update(current_b_to_prev_b, dt.seconds(), acc_body);
+            time = current_time;
+            publish_estimate(current_time);
+
+            if (dt > rclcpp::Duration(50ms)) {
+                RCLCPP_WARN(this->get_logger(), "imu dt high (%f s)", dt.seconds());
+            }
 
             // Eigen::Vector3d tmp(0, 0, 0);
             // pos_measurement_update(tmp);
@@ -253,29 +269,42 @@ private:
 
     void pose_cb(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
-        auto measured_tracker_to_Mocap = Eigen::Quaterniond(msg->pose.orientation.w,
-            msg->pose.orientation.x,
-            msg->pose.orientation.y,
-            msg->pose.orientation.z);
+        auto msg_age = time - rclcpp::Time(msg->header.stamp);
+        if (msg_age > rclcpp::Duration(50ms)) {
+            RCLCPP_WARN(this->get_logger(), "msg time too far from current time (%f s)", msg_age.seconds());
+            return;
+        }
 
-        // Optitrack is Z-up, todo use TF2 for this
-        auto Mocap_to_I = Eigen::Quaterniond(cos(M_PI/2), sin(M_PI/2), 0, 0);
-        auto tracker_to_B = Eigen::Quaterniond(cos(M_PI/2), sin(M_PI/2), 0, 0);
-        auto measured_tracker_to_I = Mocap_to_I*measured_tracker_to_Mocap;
-        auto measured_B_to_I = measured_tracker_to_I*tracker_to_B.conjugate();
+        try {
+            auto pose_ref_to_inertial_tf = tf_buffer->lookupTransform(
+                inertial_frame /*target*/, msg->header.frame_id /*source*/, tf2::TimePointZero/*time 0 => latest*/);
+            Eigen::Affine3d pose_ref_to_inertial = tf2::transformToEigen(pose_ref_to_inertial_tf);
 
-        quaternion_measurement_update(measured_B_to_I);
+            auto body_to_measured_pose_tf = tf_buffer->lookupTransform(
+                measurement_pose_frame /*target*/, body_frame /*source*/, tf2::TimePointZero/*time 0 => latest*/);
+            Eigen::Affine3d body_to_measured_pose = tf2::transformToEigen(body_to_measured_pose_tf);
 
+            Eigen::Affine3d measured_pose_to_pose_ref;
+            tf2::fromMsg(msg->pose, measured_pose_to_pose_ref);
 
-        Eigen::Vector3d pos_mocap(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
-        Eigen::Vector3d pos_I = Mocap_to_I.toRotationMatrix()*pos_mocap;
-        pos_measurement_update(pos_I);
-        RCLCPP_INFO(this->get_logger(), "pose update '%f %f %f'", pos_I[0], pos_I[1], pos_I[2]);
+            // chain all transforms
+            Eigen::Affine3d measured_body_to_inertial = pose_ref_to_inertial * measured_pose_to_pose_ref * body_to_measured_pose;
+            Eigen::Vector3d pos_I = measured_body_to_inertial.translation();
+            Eigen::Quaterniond measured_B_to_I(measured_body_to_inertial.rotation());
 
+            pos_measurement_update(pos_I);
+            RCLCPP_INFO(this->get_logger(), "pose update '%f %f %f'", pos_I[0], pos_I[1], pos_I[2]);
+
+            quaternion_measurement_update(measured_B_to_I);
+
+        } catch (const tf2::TransformException &e) {
+            RCLCPP_INFO(get_logger(), "TF2 transform failed: %s", e.what());
+        }
     }
 
     std::string body_frame;
     std::string inertial_frame;
+    std::string measurement_pose_frame;
 
     static const int STATE_DIM=12; // attitude err [3], gyro bias [3], position [3], velocity [3]
     static const int QUATERNION_MEASURE_DIM=3;
@@ -285,6 +314,7 @@ private:
     Eigen::Quaternion<double> attitude_reference_B_to_I; // body to inerital transform
     Eigen::Matrix<double, STATE_DIM, 1> x;
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> P;
+    rclcpp::Time time{{0, RCL_ROS_TIME}};
     // Parameters
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> P0;
     Eigen::Matrix<double, STATE_DIM, STATE_DIM> Q;
@@ -297,6 +327,10 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub;
     sensor_msgs::msg::Imu::SharedPtr prev_imu_msg;
+    // tf2
+    std::shared_ptr<tf2_ros::Buffer> tf_buffer;
+    std::shared_ptr<tf2_ros::TransformListener> tf_listener;
+    std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
     // ROS Publishers
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub;

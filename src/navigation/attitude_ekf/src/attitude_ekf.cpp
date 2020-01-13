@@ -164,7 +164,7 @@ private:
         attitude_error_to_reference_transfer();
     }
 
-    void quaternion_measurement_update(Eigen::Quaterniond &measured_B_to_I)
+    void quaternion_measurement_update(const Eigen::Quaterniond &measured_B_to_I)
     {
         Eigen::Matrix<double, QUATERNION_MEASURE_DIM, STATE_DIM> H;
         H.setZero();
