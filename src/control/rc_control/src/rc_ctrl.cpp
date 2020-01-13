@@ -5,12 +5,14 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include <autopilot_msgs/msg/attitude_trajectory_setpoint.hpp>
+#include <autopilot_msgs/msg/position_trajectory_setpoint.hpp>
 #include <autopilot_msgs/msg/rate_control_setpoint.hpp>
 #include <autopilot_msgs/msg/rc_input.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 using std::placeholders::_1;
 #include <iostream>
 #include <chrono>
+#include <cmath>
 
 #include <Eigen/Dense>
 
@@ -34,6 +36,7 @@ public:
 
         att_setpt_pub = this->create_publisher<autopilot_msgs::msg::AttitudeTrajectorySetpoint>("attitude_setpoint", pub_qos_settings);
         att_setpt_pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("attitude_setpoint_pose", pub_qos_settings);
+        pos_vel_setpt_pub = this->create_publisher<autopilot_msgs::msg::PositionTrajectorySetpoint>("position_setpoint", pub_qos_settings);
     }
 
 
@@ -56,28 +59,48 @@ private:
             auto attitude = yaw_angle_q * roll_angle_q * pitch_angle_q;
             double thrust = (msg->channels[0] + 1)/2;
 
+            double fwd_vel = 1*msg->channels[2];
+            double right_vel = -1*msg->channels[1];
+            double down_vel = -1*msg->channels[0];
+
             // RCLCPP_INFO(this->get_logger(), "ctrl att %f %f %f",
             //     roll_angle,
             //     pitch_angle,
             //     yaw_angle_q.z());
-
-            auto ctrl_msg = autopilot_msgs::msg::AttitudeTrajectorySetpoint();
-            ctrl_msg.header.frame_id = "NED";
-            ctrl_msg.header.stamp = msg->stamp;
-            ctrl_msg.orientation.w = attitude.w();
-            ctrl_msg.orientation.x = attitude.x();
-            ctrl_msg.orientation.y = attitude.y();
-            ctrl_msg.orientation.z = attitude.z();
-            ctrl_msg.force.z = -thrust;
-            att_setpt_pub->publish(ctrl_msg);
-            auto pose_msg = geometry_msgs::msg::PoseStamped();
-            pose_msg.header.frame_id = "NED";
-            pose_msg.header.stamp = msg->stamp;
-            pose_msg.pose.orientation.w = attitude.w();
-            pose_msg.pose.orientation.x = attitude.x();
-            pose_msg.pose.orientation.y = attitude.y();
-            pose_msg.pose.orientation.z = attitude.z();
-            att_setpt_pose_pub->publish(pose_msg);
+            bool mode_attitude = msg->channels[5] > 0;
+            if (mode_attitude) {
+                auto ctrl_msg = autopilot_msgs::msg::AttitudeTrajectorySetpoint();
+                ctrl_msg.header.frame_id = "NED";
+                ctrl_msg.header.stamp = msg->stamp;
+                ctrl_msg.orientation.w = attitude.w();
+                ctrl_msg.orientation.x = attitude.x();
+                ctrl_msg.orientation.y = attitude.y();
+                ctrl_msg.orientation.z = attitude.z();
+                ctrl_msg.force.z = -thrust;
+                att_setpt_pub->publish(ctrl_msg);
+                auto pose_msg = geometry_msgs::msg::PoseStamped();
+                pose_msg.header.frame_id = "NED";
+                pose_msg.header.stamp = msg->stamp;
+                pose_msg.pose.orientation.w = attitude.w();
+                pose_msg.pose.orientation.x = attitude.x();
+                pose_msg.pose.orientation.y = attitude.y();
+                pose_msg.pose.orientation.z = attitude.z();
+                att_setpt_pose_pub->publish(pose_msg);
+            } else { // position control
+                auto ctrl_msg = autopilot_msgs::msg::PositionTrajectorySetpoint();
+                ctrl_msg.header.frame_id = "NED";
+                ctrl_msg.header.stamp = msg->stamp;
+                ctrl_msg.position.x = NAN;
+                ctrl_msg.position.y = NAN;
+                ctrl_msg.position.z = NAN;
+                ctrl_msg.velocity.x = fwd_vel; // TODO transform to global frame
+                ctrl_msg.velocity.y = right_vel;
+                ctrl_msg.velocity.z = down_vel;
+                // acceleration
+                // jerk
+                // snap
+                pos_vel_setpt_pub->publish(ctrl_msg);
+            }
 
         }
         prev_rc_in = msg;
@@ -92,6 +115,7 @@ private:
     // ROS Publishers
     rclcpp::Publisher<autopilot_msgs::msg::AttitudeTrajectorySetpoint>::SharedPtr att_setpt_pub;
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr att_setpt_pose_pub;
+    rclcpp::Publisher<autopilot_msgs::msg::PositionTrajectorySetpoint>::SharedPtr pos_vel_setpt_pub;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
