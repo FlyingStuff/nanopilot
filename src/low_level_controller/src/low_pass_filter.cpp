@@ -11,7 +11,9 @@ float compute_alpha(float update_frequency, float cutoff_freq)
 
 LowPassFilter::LowPassFilter()
 {
+    declare_parameters(NULL, "");
     m_prev_output = 0;
+    set_update_frequency(1);
 }
 
 void LowPassFilter::set_update_frequency(float freq)
