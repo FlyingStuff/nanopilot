@@ -1,0 +1,86 @@
+\documentclass[a4paper]{paper}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage[left=2.5cm,top=3cm,right=2.5cm,bottom=3cm,bindingoffset=0.cm]{geometry}
+\usepackage{bm} % used for bold math symbols
+\usepackage{parskip} % vertical space instead of indented paragraphs
+\usepackage{hyperref}
+\usepackage{graphicx}
+
+\usepackage{biblatex}
+\usepackage{filecontents}
+
+
+% \author{
+% Patrick Spieler \\
+% \texttt{stapelzeiger@gmail.com}
+% }
+
+\title{Attitude Setpoint Generation}
+
+
+\begin{document}
+\maketitle
+\hrule
+\bigskip
+
+The frames used are:
+\begin{itemize}
+    \item $I$: inertial frame
+    \item $b$: current body frame
+    \item $d$: desired body frame
+    \item $Y$: intermediate frame to fix Yaw
+\end{itemize}
+
+\textit{Notation:} Vectors use subscript to denote the frame in which they are given. Attitudes are represented in terms of transforms that map vectors in one frame to vectors in another. Quaternions are used as a parametrization of that transform, notation is:
+$q_A^B$ maps vectors from $A$ to vectors in $B$, $R(q_A^B)$ is the rotation matrix such that $\bm{v}_B = R(q_A^B)\bm{v}_A$
+
+The goal is to find an attitude $q_d^I$ in which a desired force setpoint $\bm{f}_I = \left[ X, Y, Z \right]$ is aligned with the body fixed thrust axis $\bm{t}_d$.
+For a standard multirotor the body fixed thrust axis is: $\bm{t}_d = \left[ 0, 0, -1 \right]^T$
+
+The desired attitude will be a sequence of two rotations using the intermediate $Y$ frame:
+\begin{equation}
+    q_d^I =  q_Y^I * q_d^Y
+\end{equation}
+
+The transform $q_d^Y$ is chosen as the shortest rotation that rotates $\bm{t}_d$ to $\bm{f}_Y$.
+\begin{equation}
+    q_d^Y = q(\bm{t}_d \rightarrow \bm{f}_Y)
+\end{equation}
+with $\bm{f}_Y = R(q_I^Y)\bm{f}_I = R({q_Y^I}^*)\bm{f}_I$.
+
+The shortest rotation that rotates unit vectors $\bm{v}_1$ to $\bm{v}_2$ can be found with:
+\begin{equation}
+    q(\bm{v}_1 \rightarrow \bm{v}_2) =
+    \left[\begin{matrix}
+        \bm{v}_1 \cdot \bm{c} \\
+        \bm{v}_1 \times \bm{c}
+    \end{matrix}\right]
+    \text{~where:~}
+    \bm{c} = \frac{\bm{v}_1 + \bm{v}_2}{\left\lVert\bm{v}_1 + \bm{v}_2\right\rVert}, \left\lVert\bm{v}_1\right\rVert=\left\lVert\bm{v}_2\right\rVert=1
+\end{equation}
+The above definition works for any two vectors except when $\bm{v}_1 = -\bm{v}_2$, in which case there is no unique shortest rotation.
+
+The frame Y has to be chosen such that it avoids the above case of undefined shortest rotation.
+The simplest solution is to choose a slightly different (rotated) $Y$ frame if the shortest rotation is not defined.
+
+The choice of $Y$ frame defines the yaw direction of the multirotor. Possible choices are:
+\begin{itemize}
+    \item $Y = b$: Choosing the current body frame will produce no yaw error and therefore reduce yaw control effort.
+    \item $q_Y^I = \left[\begin{matrix} \cos(\Psi/2) & 0 & 0 & \sin(\Psi/2)\end{matrix}\right]^T$: where $\Psi$ will fix a yaw direction in inertial frame.
+    \item $R_Y^I = \left[\begin{matrix}
+    \frac{\dot{x}}{\left\lVert\dot{x}\right\rVert},
+    \frac{\dot{x} \times \ddot{x}}{\left\lVert \dot{x} \times \ddot{x} \right\rVert},
+    \frac{\dot{x}}{\left\lVert\dot{x}\right\rVert} \times \frac{\dot{x} \times \ddot{x}}{\left\lVert \dot{x} \times \ddot{x} \right\rVert}
+     \end{matrix}\right]$, where $x$ is a trajectory in inertial frame. This will align yaw along the trajectory.
+\end{itemize}
+
+
+The error quaternion is computed in the attitude controller as:
+\begin{equation}
+    \tilde{q} = q_b^d = {q_d^I}^* * q_b^I
+\end{equation}
+In the case of choosing $Y = b$, the error simplifies to $\tilde{q} = (q_b^I * q(\bm{t}_d \rightarrow \bm{f}_b))^* * q_b^I$ = q(\bm{t}_d \rightarrow \bm{f}_b)^*.
+
+\end{document}
