@@ -3,12 +3,8 @@
 #include "control_loop.hpp"
 
 class PIDRateController: public RateController {
-    PIDController pid_roll_controller;
-    PIDController pid_pitch_controller;
-    PIDController pid_yaw_controller;
-    LowPassFilter roll_lp;
-    LowPassFilter pitch_lp;
-    LowPassFilter yaw_lp;
+    PIDController pid_controller_rpy[3];
+    LowPassFilter output_lp_rpy[3];
 
 public:
     PIDRateController();
