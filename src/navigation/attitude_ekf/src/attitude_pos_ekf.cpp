@@ -236,10 +236,15 @@ private:
 
     void imu_cb(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
-        // todo use tf2
-        // Eigen::Quaterniond imu_to_body(Eigen::AngleAxisd(0.5*M_PI, Eigen::Vector3d::UnitZ())
-        //                                 * Eigen::AngleAxisd(M_PI,  Eigen::Vector3d::UnitY()));
-        Eigen::Quaterniond imu_to_body(1, 0, 0, 0);
+        Eigen::Quaterniond imu_to_body;
+        try {
+            auto imu_to_body_tf = tf_buffer->lookupTransform(
+                body_frame /*target*/, msg->header.frame_id /*source*/, tf2::TimePointZero/*time 0 => latest*/);
+            imu_to_body = Eigen::Quaterniond(tf2::transformToEigen(imu_to_body_tf).rotation());
+        } catch (const tf2::TransformException &e) {
+            RCLCPP_INFO(get_logger(), "TF2 transform failed: %s", e.what());
+            return;
+        }
 
         if (prev_imu_msg) {
             auto current_time = rclcpp::Time(msg->header.stamp);
