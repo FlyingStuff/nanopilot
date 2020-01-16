@@ -289,7 +289,7 @@
                                      PIN_PUPDR_PULLUP(GPIOB_PIN8_I2C_SCL) |\
                                      PIN_PUPDR_PULLUP(GPIOB_PIM9_I2C_SDA) |\
                                      PIN_PUPDR_FLOATING(GPIOB_PIN10_TX3_MOTOR9) |\
-                                     PIN_PUPDR_PULLUP(GPIOB_PIN11_RX3_MOTOR10) |\
+                                     PIN_PUPDR_FLOATING(GPIOB_PIN11_RX3_MOTOR10) |\
                                      PIN_PUPDR_FLOATING(GPIOB_PIN12_OSD_CS) |\
                                      PIN_PUPDR_FLOATING(GPIOB_PIN13_SPI_OSD_SCLK) |\
                                      PIN_PUPDR_PULLUP(GPIOB_PIN14_SPI_OSD_MISO) |\
