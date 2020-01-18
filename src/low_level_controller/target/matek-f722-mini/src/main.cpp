@@ -76,7 +76,7 @@ static void init_interfaces()
     uart_config.speed = 115200;
     sdStart(&SD1, &uart_config);
     // uart2 connected to nanopi
-    uart_config.speed = 1500000;
+    uart_config.speed = 1000000;
     sdStart(&SD2, &uart_config);
     // uart3 connected to receiver telemetry
     uart_config.speed = 19200;
@@ -174,9 +174,9 @@ int main(void) {
         .cr2 = 0,
     };
     Eigen::Matrix3f R_icm20602_to_board;
-    R_icm20602_to_board << 0, -1, 0,
+    R_icm20602_to_board << 0, 1, 0,
                           1, 0, 0,
-                          0, 0, 1;
+                          0, 0, -1;
     icm20602_publisher_start(&SPID1, &icm20602_spi_config, R_icm20602_to_board, PAL_LINE(GPIOC, GPIOC_PIN3_GYRO2_INT));
 
     Eigen::Matrix3f R_lis3mdl_to_board; // todo
