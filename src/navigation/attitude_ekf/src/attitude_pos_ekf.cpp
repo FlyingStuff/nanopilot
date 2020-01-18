@@ -242,7 +242,7 @@ private:
                 body_frame /*target*/, msg->header.frame_id /*source*/, tf2::TimePointZero/*time 0 => latest*/);
             imu_to_body = Eigen::Quaterniond(tf2::transformToEigen(imu_to_body_tf).rotation());
         } catch (const tf2::TransformException &e) {
-            RCLCPP_INFO(get_logger(), "TF2 transform failed: %s", e.what());
+            RCLCPP_WARN(get_logger(), "TF2 transform failed: %s", e.what());
             return;
         }
 
@@ -303,7 +303,7 @@ private:
             quaternion_measurement_update(measured_B_to_I);
 
         } catch (const tf2::TransformException &e) {
-            RCLCPP_INFO(get_logger(), "TF2 transform failed: %s", e.what());
+            RCLCPP_WARN(get_logger(), "TF2 transform failed: %s", e.what());
         }
     }
 
