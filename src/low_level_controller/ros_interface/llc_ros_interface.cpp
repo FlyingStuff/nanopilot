@@ -89,8 +89,8 @@ public:
         rx_thd.detach();
         auto publish_thd = std::thread(std::bind(&LowLevelControllerInterface::publish_thd_fn, this));
         publish_thd.detach();
-        m_ping_timer = this->create_wall_timer(100ms, [this](){this->send_ping();});
-        m_timesync_timer = this->create_wall_timer(1000ms, [this](){this->trigger_timesync();});
+        m_ping_timer = this->create_wall_timer(101ms, [this](){this->send_ping();});
+        m_timesync_timer = this->create_wall_timer(100ms, [this](){this->trigger_timesync();});
 
         m_param_set_srv = this->create_service<autopilot_msgs::srv::SendMsgpackConfig>("send_config",
             [this](const std::shared_ptr<rmw_request_id_t> request_header,
@@ -165,11 +165,8 @@ private:
                     if (uncertainty < rclcpp::Duration(10us)) {
                         uncertainty = rclcpp::Duration(10us);
                     }
-                    float estimate_var = 10e6*10e6;
-                    float meas_var = (float)uncertainty.nanoseconds()*uncertainty.nanoseconds();
-                    float alpha = estimate_var / (estimate_var + meas_var);
-                    adjust = adjust * alpha;
-                    m_timestamp_offset = m_timestamp_offset + adjust;
+                    float alpha = 0.1;
+                    m_timestamp_offset = m_timestamp_offset + adjust * alpha;
                 }
                 auto message = autopilot_msgs::msg::TimeSyncStat();
                 message.header.stamp = now;
