@@ -124,8 +124,6 @@ int main(void) {
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
 
-    chThdSleepMilliseconds(5000);
-
     timestamp_stm32_init();
     parameter_init(&I2CD1, 0x50);
 
