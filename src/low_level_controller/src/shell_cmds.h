@@ -20,6 +20,7 @@ void cmd_parameter_load(BaseSequentialStream *stream, int argc, char *argv[]);
 void cmd_parameter_save(BaseSequentialStream *stream, int argc, char *argv[]);
 void cmd_parameter_erase(BaseSequentialStream *stream, int argc, char *argv[]);
 void cmd_calibrate_esc(BaseSequentialStream *stream, int argc, char *argv[]);
+void cmd_stm32_clk(BaseSequentialStream *stream, int argc, char *argv[]);
 
 
 #ifdef __cplusplus

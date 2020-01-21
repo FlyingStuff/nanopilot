@@ -213,3 +213,14 @@ void cmd_calibrate_esc(BaseSequentialStream *stream, int argc, char *argv[])
     chprintf(stream, "signal off\n");
     actuators_disable_all();
 }
+
+
+void cmd_stm32_clk(BaseSequentialStream *stream, int argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+    chprintf(stream, "STM32_SYSCLK %ld\n", STM32_SYSCLK);
+    chprintf(stream, "STM32_HCLK %ld\n", STM32_HCLK);
+    chprintf(stream, "STM32_PCLK1 %ld\n", STM32_PCLK1);
+    chprintf(stream, "STM32_PCLK2 %ld\n", STM32_PCLK2);
+}
