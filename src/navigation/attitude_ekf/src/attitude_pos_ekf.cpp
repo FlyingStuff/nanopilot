@@ -128,9 +128,9 @@ private:
         auto twist_msg = geometry_msgs::msg::TwistStamped();
         twist_msg.header.frame_id = inertial_frame;
         twist_msg.header.stamp = now;
-        twist_msg.twist.angular.x = body_angular_rate[0] - x[3];
-        twist_msg.twist.angular.y = body_angular_rate[1] - x[4];
-        twist_msg.twist.angular.z = body_angular_rate[2] - x[5];
+        twist_msg.twist.angular.x = body_angular_rate[0];
+        twist_msg.twist.angular.y = body_angular_rate[1];
+        twist_msg.twist.angular.z = body_angular_rate[2];
         twist_msg.twist.linear.x = x[9];
         twist_msg.twist.linear.y = x[10];
         twist_msg.twist.linear.z = x[11];
