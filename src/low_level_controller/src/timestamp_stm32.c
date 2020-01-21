@@ -20,7 +20,7 @@ static inline uint32_t timer_read(void)
 CH_FAST_IRQ_HANDLER(TIMER_IRQ_NAME)
 {
     TIMER_REG->SR &= ~STM32_TIM_SR_UIF; // clear interrupt flag
-    time_ns += ((uint64_t)COUNTER_MAX * TICK_PERIOD_NS);
+    time_ns += (((uint64_t)COUNTER_MAX+1) * TICK_PERIOD_NS);
     nvicClearPending(NVIC_NB); // sometimes the interrupt runs twice, not sure why. This solves it
 }
 
@@ -47,8 +47,8 @@ timestamp_t timestamp_get()
     uint32_t tim2 = timer_read();
     nvicEnableVector(NVIC_NB, INTERRUPT_PRIO);
     if (!o) {
-        return c + tim * TICK_PERIOD_NS;
+        return c + (uint64_t)tim * TICK_PERIOD_NS;
     } else {
-        return c + ((uint64_t)COUNTER_MAX * TICK_PERIOD_NS) + tim2 * TICK_PERIOD_NS;
+        return c + ((uint64_t)COUNTER_MAX * TICK_PERIOD_NS) + (uint64_t)tim2 * TICK_PERIOD_NS;
     }
 }
