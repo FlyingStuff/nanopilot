@@ -254,9 +254,9 @@ bool arm_switch_is_armed(void)
 void arm_led_set(bool on)
 {
     (void)on;
-    // if (on) {
-    //     palSetPad(GPIOB, GPIOB_PIN2_ARM_LED);
-    // } else {
-    //     palClearPad(GPIOB, GPIOB_PIN2_ARM_LED);
-    // }
+    if (on) {
+        palSetPad(GPIOA, GPIOA_SWDIO_LED2);
+    } else {
+        palClearPad(GPIOA, GPIOA_SWDIO_LED2);
+    }
 }
