@@ -1,3 +1,6 @@
+#ifndef LOW_PASS_FILTER_HPP
+#define LOW_PASS_FILTER_HPP
+
 #include <parameter/parameter.h>
 
 class LowPassFilter
@@ -14,3 +17,5 @@ private:
     float m_update_freq;
     float m_prev_output;
 };
+
+#endif /* LOW_PASS_FILTER_HPP */

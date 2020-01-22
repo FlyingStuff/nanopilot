@@ -113,6 +113,7 @@ static THD_FUNCTION(control_thread, arg)
             float loop_frequency = parameter_scalar_get(&control_loop_freq);
             loop_period_us = 1e6/loop_frequency;
             s_rate_controller->set_update_frequency(loop_frequency);
+            s_output_mixer->set_update_frequency(loop_frequency);
         }
         if (parameter_changed(&R_board_to_body_param)) {
             parameter_vector_get(&R_board_to_body_param, R_board_to_body.data());
@@ -189,9 +190,7 @@ static THD_FUNCTION(control_thread, arg)
         } else {
             s_rate_controller->reset();
             std::array<float, NB_ACTUATORS> output;
-            for (float &o: output) {
-                o = 0;
-            }
+            std::fill(output.begin(), output.end(), 0);
             actuators_set_output(output);
             actuator_output_topic.publish(output);
             output_armed_topic.publish(false);
