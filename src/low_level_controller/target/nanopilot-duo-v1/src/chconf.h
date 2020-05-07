@@ -634,6 +634,7 @@ void panic_handler(const char *reason);
 #define SHELL_CMD_TEST_ENABLED false
 #define PORT_ENABLE_GUARD_PAGES TRUE // Stack overflow check using MPU
 
+#define TEST_CFG_SIZE_REPORT 0
 
 #endif  /* CHCONF_H */
 
