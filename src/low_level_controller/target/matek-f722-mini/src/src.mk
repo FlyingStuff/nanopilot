@@ -11,6 +11,7 @@ PROJCSRC += $(TARGETROOT)/src/board.c
 PROJCSRC += $(TARGETROOT)/src/usbcfg.c
 PROJCPPSRC += $(TARGETROOT)/src/main.cpp
 PROJCPPSRC += $(TARGETROOT)/src/actuators.cpp
+PROJCPPSRC += $(TARGETROOT)/src/adc.cpp
 PROJCSRC += $(TARGETROOT)/src/run_shell.c
 
 

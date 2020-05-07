@@ -10,6 +10,7 @@ PROJINC += $(PROJROOT)/
 PROJCSRC += $(TARGETROOT)/src/board.c
 PROJCPPSRC += $(TARGETROOT)/src/main.cpp
 PROJCPPSRC += $(TARGETROOT)/src/actuators.cpp
+PROJCPPSRC += $(TARGETROOT)/src/adc.cpp
 PROJCSRC += $(TARGETROOT)/src/run_shell.c
 
 

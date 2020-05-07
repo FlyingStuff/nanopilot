@@ -20,6 +20,7 @@
 #include "lis3mdl_publisher.hpp"
 #include "icm20602_publisher.hpp"
 #include "arm_led.h"
+#include "adc.hpp"
 
 void dbg_enter_irq(void) {
     palSetPad(GPIOA, GPIOA_PIN15_SPI_CONN_S0);
@@ -126,6 +127,8 @@ int main(void) {
 
     control_init();
     initialize_actuators(&parameters);
+
+    run_adc();
 
     icm20602_parameter_declare(&parameters);
     static PIDRateController rate_ctrl;

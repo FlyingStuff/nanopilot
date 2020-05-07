@@ -21,6 +21,7 @@
 #include "icm20602_publisher.hpp"
 #include "arm_led.h"
 #include "usbcfg.h"
+#include "adc.hpp"
 
 void dbg_enter_irq(void) {
     // palSetPad(GPIOA, GPIOA_PIN15_SPI_CONN_S0);
@@ -138,9 +139,9 @@ int main(void) {
     const char *panic_msg = get_panic_message();
     if (panic_msg) {
         log_error("Reboot after panic: %s", panic_msg);
+        chThdSleepMicroseconds(1);
     }
     chThdCreateStatic(blinking_thread_wa, sizeof(blinking_thread_wa), THD_PRIO_LED, blinking_thread, NULL);
-
     control_init();
     initialize_actuators(&parameters);
 
@@ -155,6 +156,8 @@ int main(void) {
     }
 
     arm_led_task_start();
+
+    run_adc();
 
     run_shell((BaseSequentialStream*)&SD6);
     sumd_input_start((BaseSequentialStream*)&SD1);

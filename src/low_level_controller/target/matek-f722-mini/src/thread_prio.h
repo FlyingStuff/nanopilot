@@ -5,6 +5,7 @@
 
 #define THD_PRIO_LED                                    2
 #define THD_PRIO_SHELL                                  80
+#define THD_PRIO_ADC                                    81
 #define THD_PRIO_COMM_RX                                31
 #define THD_PRIO_COMM_TX                                30
 #define THD_PRIO_RC_SUMD_IN                             101
