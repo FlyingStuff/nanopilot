@@ -6,6 +6,7 @@ public:
     virtual void mix(const float rate_ctrl_output_rpy[3], const struct rc_input_s &rc_inputs, const struct ap_ctrl_s &ap_ctrl, bool ap_control_en, std::array<float, NB_ACTUATORS> &output);
     explicit LinearOutputMixer();
     void declare_parameters(parameter_namespace_t *parent_ns);
+    virtual void set_update_frequency(float loop_frequency);
 
 private:
     parameter_namespace_t m_namespace;

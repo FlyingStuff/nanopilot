@@ -79,3 +79,8 @@ void LinearOutputMixer::declare_parameters(parameter_namespace_t *parent_ns)
     parameter_vector_declare_with_default(&m_rc_mix[8], &m_namespace, "rc_in9", m_rc_mix_buf[8], NB_ACTUATORS);
     parameter_vector_declare_with_default(&m_rc_mix[9], &m_namespace, "rc_in10", m_rc_mix_buf[9], NB_ACTUATORS);
 }
+
+void LinearOutputMixer::set_update_frequency(float loop_frequency)
+{
+    (void)loop_frequency;
+}
