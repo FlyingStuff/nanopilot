@@ -90,3 +90,10 @@ void NMI_Handler(void)
 {
     chSysHalt("NMI_Handler");
 }
+
+
+// override ChibiOS weak definition that just blocks
+void _unhandled_exception(void) {
+    chSysHalt("unhandled exception");
+    while (true);
+}
