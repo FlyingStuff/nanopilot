@@ -106,8 +106,8 @@ private:
         ctrl_pub->publish(ctrl_msg);
 
         auto dt = this->now() - rclcpp::Time(pose_msg->header.stamp);
-        if (dt > rclcpp::Duration(10ms)) {
-            RCLCPP_WARN(this->get_logger(), "old pose data %f ms", (float)dt.nanoseconds()/1000/1000);
+        if (dt > rclcpp::Duration(15ms)) {
+            RCLCPP_WARN(this->get_logger(), "old pose data %f ms", dt.seconds()*1000);
         }
     }
 

@@ -95,7 +95,7 @@ public:
         std::cout << Q << std::endl;
         R_POS.setZero();
         R_POS.diagonal() <<
-            sq(0.1), sq(0.1), sq(0.1); // covariance of a position measurement [(m)^2]
+            sq(0.02), sq(0.02), sq(0.02); // covariance of a position measurement [(m)^2]
         R_QUAT.setZero();
         R_QUAT.diagonal() <<
             sq(deg_to_rad(20)), sq(deg_to_rad(20)), sq(deg_to_rad(5)); // angle covariance in body [(rad)^2]
@@ -298,7 +298,7 @@ private:
             Eigen::Quaterniond measured_B_to_I(measured_body_to_inertial.rotation());
 
             pos_measurement_update(pos_I);
-            RCLCPP_INFO(this->get_logger(), "pose update '%f %f %f'", pos_I[0], pos_I[1], pos_I[2]);
+            // RCLCPP_INFO(this->get_logger(), "pose update '%f %f %f'", pos_I[0], pos_I[1], pos_I[2]);
 
             quaternion_measurement_update(measured_B_to_I);
 
