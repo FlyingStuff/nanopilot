@@ -194,6 +194,7 @@ static THD_FUNCTION(control_thread, arg)
             actuators_set_output(output);
             actuator_output_topic.publish(output);
             output_armed_topic.publish(false);
+            ap_in_control_topic.publish(false);
         }
 
     }

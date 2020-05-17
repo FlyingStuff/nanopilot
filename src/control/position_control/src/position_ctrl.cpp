@@ -5,6 +5,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 using std::placeholders::_1;
 #include <iostream>
@@ -30,6 +31,8 @@ public:
             "pose", 1, std::bind(&PositionCtrl::pose_cb, this, _1));
         twist_sub = this->create_subscription<geometry_msgs::msg::TwistStamped>(
             "twist", 1, std::bind(&PositionCtrl::twist_cb, this, _1));
+        control_active_sub = this->create_subscription<std_msgs::msg::Bool>(
+            "ap_in_control", 1, std::bind(&PositionCtrl::control_active_cb, this, _1));
 
         acc_ctrl_pub = this->create_publisher<autopilot_msgs::msg::AccelerationTrajectorySetpoint>("acceleration_setpoint", 10);
         vel_setpt_pub = this->create_publisher<geometry_msgs::msg::Vector3>("velocity_setpoint", 10);
@@ -63,13 +66,21 @@ private:
 
         if (current_pose_msg && position_setpt_msg && current_twist_msg)
         {
+            if (!position_setpt_msg->enable_control || !control_active) {
+                pid_velocity_x.reset_integral();
+                pid_velocity_y.reset_integral();
+                pid_velocity_z.reset_integral();
+                return;
+            }
             if (current_pose_msg->header.frame_id != position_setpt_msg->header.frame_id) {
                 auto clock = rclcpp::Clock(RCL_SYSTEM_TIME);
                 RCLCPP_ERROR_THROTTLE(this->get_logger(), clock, 100, "setpt and pose frame mismatch");
+                return;
             }
             if (current_twist_msg->header.frame_id != position_setpt_msg->header.frame_id) {
                 auto clock = rclcpp::Clock(RCL_SYSTEM_TIME);
                 RCLCPP_ERROR_THROTTLE(this->get_logger(), clock, 100, "setpt and twist frame mismatch");
+                return;
             }
 
             // TODO check time of messages
@@ -195,6 +206,11 @@ private:
         current_twist_msg = msg;
     }
 
+    void control_active_cb(const std_msgs::msg::Bool::SharedPtr msg)
+    {
+        control_active = msg->data;
+    }
+
     void parameters_init(){
 
         this->declare_parameter("px_kp", 1.0);
@@ -224,6 +240,7 @@ private:
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub;
     rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr twist_sub;
     rclcpp::Subscription<rcl_interfaces::msg::ParameterEvent>::SharedPtr sub_params;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr control_active_sub;
 
     autopilot_msgs::msg::PositionTrajectorySetpoint::SharedPtr position_setpt_msg;
     geometry_msgs::msg::PoseStamped::SharedPtr current_pose_msg;
@@ -233,6 +250,7 @@ private:
     rclcpp::Publisher<autopilot_msgs::msg::AccelerationTrajectorySetpoint>::SharedPtr acc_ctrl_pub;
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr vel_setpt_pub;
 
+    bool control_active{false};
 
     rclcpp::TimerBase::SharedPtr control_timer;
     rclcpp::SyncParametersClient::SharedPtr parameters_client;
