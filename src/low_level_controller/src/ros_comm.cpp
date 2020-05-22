@@ -97,7 +97,7 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     (void)arg;
     chRegSetThreadName("comm_tx");
 
-    auto rc_in_sub = msgbus::subscribe(rc_input);
+    auto rc_in_sub = msgbus::subscribe(rc_input_topic);
     auto output_sub = msgbus::subscribe(actuator_output_topic);
     auto rate_setpoint_rpy_sub = msgbus::subscribe(rate_setpoint_rpy_topic);
     auto rate_measured_rpy_sub = msgbus::subscribe(rate_measured_rpy_topic);

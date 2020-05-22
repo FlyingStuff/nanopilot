@@ -28,6 +28,7 @@ add_executable(llc_ros_interface
 target_include_directories(llc_ros_interface PUBLIC
     ../lib/comm/
     ../lib/libnop/include/
+    ../lib/
     ../src/
 )
 

@@ -23,11 +23,11 @@ void LinearOutputMixer::mix(const float rate_ctrl_output_rpy[3], const struct rc
         }
 
         // rc_in
-        assert(rc_inputs.nb_channels <= RC_INPUT_MAX_NB_CHANNELS);
-        for (int in_idx = 0; in_idx < rc_inputs.nb_channels; in_idx++) {
+        assert(rc_inputs.channel_raw_count <= RC_INPUT_MAX_NB_CHANNELS);
+        for (int in_idx = 0; in_idx < rc_inputs.channel_raw_count; in_idx++) {
             parameter_vector_read(&m_rc_mix[in_idx], coeff.data());
             for (int i = 0; i < NB_ACTUATORS; i++) {
-                output[i] += coeff[i] * rc_inputs.channel[in_idx];
+                output[i] += coeff[i] * rc_inputs.channel_raw[in_idx];
             }
         }
     }

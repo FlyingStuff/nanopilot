@@ -14,6 +14,7 @@
 #include <nop/utility/buffer_reader.h>
 #include <nop/utility/buffer_writer.h>
 
+
 #include "comm.h"
 
 enum RosInterfaceCommMsgID : comm_msg_id_t {
@@ -45,8 +46,19 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
 };
 
 
+
 #include "rc_input.hpp"
-NOP_EXTERNAL_STRUCTURE(rc_input_s, nb_channels, no_signal, channel, timestamp);
+NOP_EXTERNAL_STRUCTURE(rc_input_s,
+    roll,
+    pitch,
+    yaw,
+    throttle,
+    switch_armed,
+    switch_ap_control,
+    (channel_raw, channel_raw_count),
+    signal,
+    rssi,
+    timestamp);
 
 const int MAX_NB_ACTUATORS=16;
 struct ap_ctrl_s {

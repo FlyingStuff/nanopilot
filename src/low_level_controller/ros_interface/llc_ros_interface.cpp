@@ -273,15 +273,20 @@ private:
             const char *topic = "";
             try {
                 if (rc_input_buf_sub.has_update()) {
-                    topic = "rc_input_buf";
+                    topic = "rc_input";
                     auto val = rc_input_buf_sub.get_value();
                     auto message = autopilot_msgs::msg::RCInput();
-                    message.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME);
-                    auto nb_channels = std::min(static_cast<uint32_t>(val.nb_channels), message.MAX_NB_CHANNELS);
+                    message.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME)  + m_timestamp_offset;
+                    message.roll = val.roll;
+                    message.pitch = val.pitch;
+                    message.yaw = val.yaw;
+                    message.throttle = val.throttle;
+                    auto nb_channels = std::min(static_cast<uint32_t>(val.channel_raw_count), message.MAX_NB_CHANNELS);
                     for (uint32_t i=0; i < nb_channels; i++) {
-                        message.channels.push_back(val.channel[i]);
+                        message.channels.push_back(val.channel_raw[i]);
                     }
-                    message.signal = !val.no_signal;
+                    message.signal = val.signal;
+                    message.rssi = val.rssi;
                     m_rcinput_pub->publish(message);
                 } else
                 if (actuator_output_sub.has_update()) {

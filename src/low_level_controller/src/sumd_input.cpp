@@ -17,19 +17,19 @@ static THD_FUNCTION(sumd_input_task, arg)
         char c = streamGet(input);
         int ret = sumd_receive(&rc, c);
         if (ret == SUMD_RECEIVE_COMPLETE) {
-            struct rc_input_s in;
-            in.no_signal = rc.no_signal_failsafe;
+            struct rc_input_raw_s in;
+            in.signal = !rc.no_signal_failsafe;
             if (rc.nb_channels > RC_INPUT_MAX_NB_CHANNELS) {
-                in.nb_channels = RC_INPUT_MAX_NB_CHANNELS;
+                in.channel_count = RC_INPUT_MAX_NB_CHANNELS;
             } else {
-                in.nb_channels = rc.nb_channels;
+                in.channel_count = rc.nb_channels;
             }
             int i;
-            for (i = 0; i < in.nb_channels; i++) {
+            for (i = 0; i < in.channel_count; i++) {
                 in.channel[i] = ((float)rc.channel[i] - SUMD_POS_NEUTRAL) / (SUMD_POS_HIGH - SUMD_POS_NEUTRAL);
             }
             in.timestamp = timestamp_get();
-            rc_input.publish(in);
+            rc_input_raw_topic.publish(in);
         } else if (ret == SUMD_RECEIVE_ERROR) {
             log_warning("SUMD input error, crc error cnt %d", rc.error_cnt);
             // todo flush stream
