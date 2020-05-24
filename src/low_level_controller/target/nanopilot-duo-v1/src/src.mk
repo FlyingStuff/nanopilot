@@ -40,6 +40,7 @@ PROJCPPSRC += $(PROJROOT)/src/lis3mdl_publisher.cpp
 PROJCPPSRC += $(PROJROOT)/src/icm20602_publisher.cpp
 PROJCPPSRC += $(PROJROOT)/src/arm_led.cpp
 PROJCPPSRC += $(PROJROOT)/src/sensors.cpp
+PROJCPPSRC += $(PROJROOT)/src/attitude_filter.cpp
 
 
 PROJCSRC += $(PROJROOT)/src/syscalls.c

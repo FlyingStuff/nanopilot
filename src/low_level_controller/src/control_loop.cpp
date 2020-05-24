@@ -6,6 +6,7 @@
 #include "thread_prio.h"
 #include "timestamp.h"
 #include "sensors.hpp"
+#include "attitude_filter.hpp"
 
 #include "control_loop.hpp"
 
@@ -23,7 +24,6 @@ static OutputMixer *s_output_mixer;
 
 parameter_namespace_t control_ns;
 static parameter_t control_loop_freq;
-static parameter_t R_board_to_body_param;
 
 
 void invalidate_rc_signal_if_older_than(struct rc_input_s &rc_in, timestamp_t now, float max_age)
@@ -43,20 +43,16 @@ static THD_FUNCTION(control_thread, arg)
 
     auto sub_rc = msgbus::subscribe(rc_input_raw_topic);
     sub_rc.wait_for_update(); // make sure rc_input is valid
-    auto imu_sub = msgbus::subscribe(imu);
-    imu_sub.wait_for_update(); // make sure gyro is valid
     auto sub_ap_ctrl = msgbus::subscribe(ap_ctrl);
 
-    Eigen::Matrix<float, 3, 3, Eigen::RowMajor> R_board_to_body;
+    auto att_filter_out_sub = msgbus::subscribe(attitude_filter_output_topic);
+
     while (true) {
         if (parameter_changed(&control_loop_freq)) {
             float loop_frequency = parameter_scalar_get(&control_loop_freq);
             loop_period_us = 1e6/loop_frequency;
             s_rate_controller->set_update_frequency(loop_frequency);
             s_output_mixer->set_update_frequency(loop_frequency);
-        }
-        if (parameter_changed(&R_board_to_body_param)) {
-            parameter_vector_get(&R_board_to_body_param, R_board_to_body.data());
         }
 
         chThdSleepMicroseconds(loop_period_us);
@@ -69,7 +65,9 @@ static THD_FUNCTION(control_thread, arg)
         invalidate_rc_signal_if_older_than(rc_in, now, 1.5f);
         rc_input_topic.publish(rc_in);
 
-        imu_sample_t imu = imu_sub.get_value();
+
+        attitude_filter_update();
+        struct attitude_filter_output_s att = att_filter_out_sub.get_value();
 
         static bool was_armed = true;
         if (!arm_switch_is_armed()) {
@@ -84,7 +82,7 @@ static THD_FUNCTION(control_thread, arg)
         }
         if (rc_in.switch_armed
             && rc_in.signal
-            && timestamp_duration(imu.timestamp, now) < 0.01f) {
+            && timestamp_duration(att.timestamp, now) < 0.01f) {
 
             std::array<float, NB_ACTUATORS> output;
             std::array<float, 3> rate_setpoint_rpy;
@@ -113,10 +111,8 @@ static THD_FUNCTION(control_thread, arg)
             }
             ap_control_timeout.publish(ap_timeout);
 
-            // transform rate to body frame
-            Eigen::Map<Eigen::Vector3f> rate_measured_board(imu.angular_rate);
             Eigen::Map<Eigen::Vector3f> rate_measured_rpy_vect(rate_measured_rpy.data());
-            rate_measured_rpy_vect = R_board_to_body * rate_measured_board;
+            rate_measured_rpy_vect = att.angular_rate;
 
             s_rate_controller->process(rate_setpoint_rpy.data(),
                                         rate_measured_rpy.data(),
@@ -153,10 +149,8 @@ void control_init()
 
     rc_input_init(&parameters);
 
-    static float R_board_to_body[9] = {1, 0, 0,
-                                        0, 1, 0,
-                                        0, 0, 1};
-    parameter_vector_declare_with_default(&R_board_to_body_param, &control_ns, "R_board_to_body", R_board_to_body, 9);
+    attitude_filter_init();
+
     output_armed_topic.publish(false);
 }
 
