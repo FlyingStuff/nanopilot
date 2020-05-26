@@ -11,30 +11,33 @@ static THD_FUNCTION(arm_led_thread, arg) {
 
     (void)arg;
     chRegSetThreadName("arm led");
-    auto armed_sub = msgbus::subscribe(output_armed_topic);
-    auto ap_ctrl_sub = msgbus::subscribe(ap_in_control_topic);
-
+    auto control_status_sub = msgbus::subscribe(control_status_topic);
+    control_status_sub.wait_for_update();
     while (true) {
         if (arm_switch_is_armed()) {
-            if (armed_sub.has_value() && armed_sub.get_value()) {
-                if (ap_ctrl_sub.has_value() && ap_ctrl_sub.get_value()) {
-                    arm_led_set(true);
-                    chThdSleepMilliseconds(50);
-                    arm_led_set(false);
-                    chThdSleepMilliseconds(50);
-                } else {
-                    arm_led_set(true);
-                    chThdSleepMilliseconds(100);
-                    arm_led_set(false);
-                    chThdSleepMilliseconds(100);
-                    arm_led_set(true);
-                    chThdSleepMilliseconds(100);
-                    arm_led_set(false);
-                    chThdSleepMilliseconds(700);
-                }
-            } else {
+            auto stat = control_status_sub.get_value();
+            switch (stat.mode) {
+            default:
+            case CTRL_MODE_DISARMED:
                 arm_led_set(true);
                 chThdSleepMilliseconds(100);
+                break;
+            case CTRL_MODE_MANUAL:
+                arm_led_set(true);
+                chThdSleepMilliseconds(100);
+                arm_led_set(false);
+                chThdSleepMilliseconds(100);
+                arm_led_set(true);
+                chThdSleepMilliseconds(100);
+                arm_led_set(false);
+                chThdSleepMilliseconds(700);
+                break;
+            case CTRL_MODE_AP:
+                arm_led_set(true);
+                chThdSleepMilliseconds(50);
+                arm_led_set(false);
+                chThdSleepMilliseconds(50);
+                break;
             }
         } else {
             arm_led_set(false);

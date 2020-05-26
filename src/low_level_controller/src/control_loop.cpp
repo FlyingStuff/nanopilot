@@ -10,17 +10,10 @@
 
 #include "control_loop.hpp"
 
-msgbus::Topic<bool> output_armed_topic;
-msgbus::Topic<bool> ap_in_control_topic;
-msgbus::Topic<bool> ap_control_timeout;
-msgbus::Topic<uint64_t> ap_control_latency_topic;
-msgbus::Topic<struct ap_ctrl_s> ap_ctrl;
+msgbus::Topic<control_status_t> control_status_topic;
 msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;
-msgbus::Topic<std::array<float, 3>> rate_setpoint_rpy_topic;
-msgbus::Topic<std::array<float, 3>> rate_measured_rpy_topic;
-msgbus::Topic<std::array<float, 3>> rate_ctrl_output_rpy_topic;
-static RateController *s_rate_controller;
-static OutputMixer *s_output_mixer;
+msgbus::Topic<float> ap_control_latency_topic;
+static ControllerInterface *s_controller=NULL;
 
 parameter_namespace_t control_ns;
 static parameter_t control_loop_freq;
@@ -43,16 +36,12 @@ static THD_FUNCTION(control_thread, arg)
 
     auto sub_rc = msgbus::subscribe(rc_input_raw_topic);
     sub_rc.wait_for_update(); // make sure rc_input is valid
-    auto sub_ap_ctrl = msgbus::subscribe(ap_ctrl);
-
-    auto att_filter_out_sub = msgbus::subscribe(attitude_filter_output_topic);
 
     while (true) {
         if (parameter_changed(&control_loop_freq)) {
             float loop_frequency = parameter_scalar_get(&control_loop_freq);
             loop_period_us = 1e6/loop_frequency;
-            s_rate_controller->set_update_frequency(loop_frequency);
-            s_output_mixer->set_update_frequency(loop_frequency);
+            s_controller->set_update_frequency(loop_frequency);
         }
 
         chThdSleepMicroseconds(loop_period_us);
@@ -65,78 +54,40 @@ static THD_FUNCTION(control_thread, arg)
         invalidate_rc_signal_if_older_than(rc_in, now, 1.5f);
         rc_input_topic.publish(rc_in);
 
-
         attitude_filter_update();
-        struct attitude_filter_output_s att = att_filter_out_sub.get_value();
+
+        std::array<float, NB_ACTUATORS> output;
+        std::fill(output.begin(), output.end(), 0);
+        control_mode_t mode;
+        bool ap_timeout = false;
+        if (!arm_switch_is_armed() || !rc_in.switch_armed || !rc_in.signal) {
+            s_controller->notify_output_disabled();
+            mode = CTRL_MODE_DISARMED;
+        } else {
+            mode = s_controller->process(rc_in, output);
+            if (rc_in.switch_ap_control && mode != CTRL_MODE_AP) {
+                ap_timeout = true;
+            }
+        }
 
         static bool was_armed = true;
-        if (!arm_switch_is_armed()) {
-            if (was_armed) {
-                actuators_disable_all(); // only run once so we can still run the esc calibration shell command
-                was_armed = false;
-            }
-            output_armed_topic.publish(false);
-            continue;
-        } else {
+        if (arm_switch_is_armed()) {
+            actuators_set_output(output);
             was_armed = true;
-        }
-        if (rc_in.switch_armed
-            && rc_in.signal
-            && timestamp_duration(att.timestamp, now) < 0.01f) {
-
-            std::array<float, NB_ACTUATORS> output;
-            std::array<float, 3> rate_setpoint_rpy;
-            std::array<float, 3> rate_measured_rpy;
-            std::array<float, 3> rate_ctrl_output;
-            rate_setpoint_rpy[0] = rc_in.roll;
-            rate_setpoint_rpy[1] = rc_in.pitch;
-            rate_setpoint_rpy[2] = rc_in.yaw;
-
-            bool ap_in_control = false;
-            bool ap_timeout = false;
-            struct ap_ctrl_s ap_ctrl_msg;
-            if (rc_in.switch_ap_control) {
-                if (sub_ap_ctrl.has_value()) {
-                    ap_ctrl_msg = sub_ap_ctrl.get_value();
-                    ap_control_latency_topic.publish(timestamp_duration_ns(ap_ctrl_msg.timestamp, now));
-                    if (fabsf(timestamp_duration(ap_ctrl_msg.timestamp, now)) < 0.1f) {
-                        rate_setpoint_rpy = ap_ctrl_msg.rate_setpoint_rpy;
-                        ap_in_control = true;
-                    } else {
-                        ap_timeout = true;
-                    }
-                } else {
-                    ap_timeout = true;
-                }
-            }
-            ap_control_timeout.publish(ap_timeout);
-
-            Eigen::Map<Eigen::Vector3f> rate_measured_rpy_vect(rate_measured_rpy.data());
-            rate_measured_rpy_vect = att.angular_rate;
-
-            s_rate_controller->process(rate_setpoint_rpy.data(),
-                                        rate_measured_rpy.data(),
-                                        rate_ctrl_output.data());
-            s_output_mixer->mix(rate_ctrl_output.data(), rc_in, ap_ctrl_msg, ap_in_control, output);
-
-            actuators_set_output(output);
-
-            output_armed_topic.publish(true);
-            rate_setpoint_rpy_topic.publish(rate_setpoint_rpy);
-            rate_measured_rpy_topic.publish(rate_measured_rpy);
-            rate_ctrl_output_rpy_topic.publish(rate_ctrl_output);
-            actuator_output_topic.publish(output);
-            ap_in_control_topic.publish(ap_in_control);
         } else {
-            s_rate_controller->reset();
-            std::array<float, NB_ACTUATORS> output;
-            std::fill(output.begin(), output.end(), 0);
-            actuators_set_output(output);
-            actuator_output_topic.publish(output);
-            output_armed_topic.publish(false);
-            ap_in_control_topic.publish(false);
+            if (was_armed) {
+                actuators_disable_all();
+            }
+            was_armed = false;
         }
 
+        actuator_output_topic.publish(output);
+        control_status_t status;
+        status.mode = mode;
+        status.ap_timeout = ap_timeout;
+        control_status_topic.publish(status);
+        float ap_latency = timestamp_duration(s_controller->ap_control_signal_timestamp(), now);
+        ap_control_latency_topic.publish(ap_latency);
     }
 }
 
@@ -150,13 +101,10 @@ void control_init()
     rc_input_init(&parameters);
 
     attitude_filter_init();
-
-    output_armed_topic.publish(false);
 }
 
-void control_start(RateController &rate_ctrl, OutputMixer &output_mixer)
+void control_start(ControllerInterface &controller)
 {
-    s_rate_controller = &rate_ctrl;
-    s_output_mixer = &output_mixer;
+    s_controller = &controller;
     chThdCreateStatic(control_thread_wa, sizeof(control_thread_wa), THD_PRIO_CONTROL_LOOP, control_thread, NULL);
 }

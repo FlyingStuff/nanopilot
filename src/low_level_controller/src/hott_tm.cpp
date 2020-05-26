@@ -33,13 +33,13 @@ static THD_FUNCTION(hott_tm_task, arg)
     hott_tm_handler_enable_gps(&tm, &gps);
     hott_tm_gps_zero(&gps);
 
-    auto ctrl_timeout_sub = msgbus::subscribe(ap_control_timeout);
+    auto control_status_sub = msgbus::subscribe(control_status_topic);
 
     while (true) {
         char c = streamGet(_tm_uart);
 
         gam.alarm = 0;
-        if (ctrl_timeout_sub.has_value() && ctrl_timeout_sub.get_value()) {
+        if (control_status_sub.has_value() && control_status_sub.get_value().ap_timeout) {
             gam.alarm = HOTT_TM_GAM_ALARM_READ_TELEM;
         }
         hott_tm_handler_receive(&tm, c);

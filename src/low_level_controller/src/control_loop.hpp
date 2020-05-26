@@ -4,35 +4,32 @@
 #include "msgbus/msgbus.hpp"
 #include "rc_input.hpp"
 #include "actuators.hpp"
-#include <ros_interface/msg.h>
 #include <Eigen/Dense>
 
-extern msgbus::Topic<bool> output_armed_topic;
-extern msgbus::Topic<bool> ap_in_control_topic;
-extern msgbus::Topic<bool> ap_control_timeout;
-extern msgbus::Topic<uint64_t> ap_control_latency_topic;
-extern msgbus::Topic<struct ap_ctrl_s> ap_ctrl;
+
+
+enum control_mode_t {CTRL_MODE_DISARMED, CTRL_MODE_MANUAL, CTRL_MODE_AP, CTRL_MODE_DIRECT_ACTUATORS};
+typedef struct {
+    control_mode_t mode;
+    bool ap_timeout;
+} control_status_t;
+
+extern msgbus::Topic<float> ap_control_latency_topic;
+extern msgbus::Topic<control_status_t> control_status_topic;
 extern msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;
-extern msgbus::Topic<std::array<float, 3>> rate_setpoint_rpy_topic;
-extern msgbus::Topic<std::array<float, 3>> rate_measured_rpy_topic;
-extern msgbus::Topic<std::array<float, 3>> rate_ctrl_output_rpy_topic;
 extern parameter_namespace_t control_ns;
 
 
-class RateController {
+class ControllerInterface {
 public:
-    virtual void process(const float rate_setpoint_rpy[3], const float rate_measured_rpy[3], float rate_ctrl_output_rpy[3]) = 0;
+    virtual control_mode_t process(const rc_input_s &rc_in, std::array<float, NB_ACTUATORS> &out) = 0;
+    virtual void notify_output_disabled() = 0;
     virtual void set_update_frequency(float freq) = 0;
-    virtual void reset() = 0;
+    virtual timestamp_t ap_control_signal_timestamp() = 0;
 };
 
-class OutputMixer {
-public:
-    virtual void mix(const float rate_ctrl_output_rpy[3], const struct rc_input_s &rc_inputs, const struct ap_ctrl_s &ap_ctrl, bool ap_control_en, std::array<float, NB_ACTUATORS> &output) = 0;
-    virtual void set_update_frequency(float loop_frequency) = 0;
-};
 
 void control_init();
-void control_start(RateController &rate_ctrl, OutputMixer &output_mixer);
+void control_start(ControllerInterface &controller);
 
 #endif /* CONTROL_LOOP_HPP */

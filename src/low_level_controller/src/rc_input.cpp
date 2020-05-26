@@ -13,9 +13,13 @@ static parameter_t ap_remote_switch_threshold;
 static parameter_t roll_input_channel;
 static parameter_t pitch_input_channel;
 static parameter_t yaw_input_channel;
-static parameter_t roll_rate_gain_param;
-static parameter_t pitch_rate_gain_param;
-static parameter_t yaw_rate_gain_param;
+static parameter_t throttle_input_channel;
+static parameter_t rssi_input_channel;
+static parameter_t roll_reverse_param;
+static parameter_t pitch_reverse_param;
+static parameter_t yaw_reverse_param;
+static parameter_t throttle_reverse_param;
+static parameter_t bidirectional_throttle_param;
 
 
 void rc_input_init(parameter_namespace_t *param_namespace)
@@ -28,9 +32,13 @@ void rc_input_init(parameter_namespace_t *param_namespace)
     parameter_integer_declare_with_default(&roll_input_channel, &rc_ns, "roll_channel", 2);
     parameter_integer_declare_with_default(&pitch_input_channel, &rc_ns, "pitch_channel", 3);
     parameter_integer_declare_with_default(&yaw_input_channel, &rc_ns, "yaw_channel", 4);
-    parameter_scalar_declare_with_default(&roll_rate_gain_param, &rc_ns, "roll_rate_gain", 2*3.14f);
-    parameter_scalar_declare_with_default(&pitch_rate_gain_param, &rc_ns, "pitch_rate_gain", 2*3.14f);
-    parameter_scalar_declare_with_default(&yaw_rate_gain_param, &rc_ns, "yaw_rate_gain", 2*3.14f);
+    parameter_integer_declare_with_default(&throttle_input_channel, &rc_ns, "throttle_channel", 1);
+    parameter_integer_declare_with_default(&rssi_input_channel, &rc_ns, "rssi_channel", -1);
+    parameter_boolean_declare_with_default(&roll_reverse_param, &rc_ns, "roll_reverse", false);
+    parameter_boolean_declare_with_default(&pitch_reverse_param, &rc_ns, "pitch_reverse", false);
+    parameter_boolean_declare_with_default(&yaw_reverse_param, &rc_ns, "yaw_reverse", false);
+    parameter_boolean_declare_with_default(&throttle_reverse_param, &rc_ns, "throttle_reverse", false);
+    parameter_boolean_declare_with_default(&bidirectional_throttle_param, &rc_ns, "bidirectional_throttle", false);
 }
 
 static bool arm_remote_switch_is_armed(const struct rc_input_raw_s &rc_inputs)
@@ -78,22 +86,36 @@ void rc_input_decode(const struct rc_input_raw_s &raw, struct rc_input_s &out)
     int roll_ch = parameter_integer_read(&roll_input_channel);
     int pitch_ch = parameter_integer_read(&pitch_input_channel);
     int yaw_ch = parameter_integer_read(&yaw_input_channel);
+    int throttle_ch = parameter_integer_read(&throttle_input_channel);
+    int rssi_ch = parameter_integer_read(&rssi_input_channel);
 
-    float roll_gain = parameter_scalar_read(&roll_rate_gain_param);
-    float pitch_gain = parameter_scalar_read(&pitch_rate_gain_param);
-    float yaw_gain = parameter_scalar_read(&yaw_rate_gain_param);
-
-    out.roll = - roll_gain * get_rc_channel_value(raw, roll_ch);
-    out.pitch = - pitch_gain * get_rc_channel_value(raw, pitch_ch);
-    out.yaw = - yaw_gain * get_rc_channel_value(raw, yaw_ch);
-    out.throttle = 0; // TODO
+    out.roll = - get_rc_channel_value(raw, roll_ch);
+    out.pitch = - get_rc_channel_value(raw, pitch_ch);
+    out.yaw = - get_rc_channel_value(raw, yaw_ch);
+    float throttle = get_rc_channel_value(raw, throttle_ch);
+    if (parameter_boolean_read(&roll_reverse_param)) {
+        out.roll = -out.roll;
+    }
+    if (parameter_boolean_read(&pitch_reverse_param)) {
+        out.pitch = -out.pitch;
+    }
+    if (parameter_boolean_read(&yaw_reverse_param)) {
+        out.yaw = -out.yaw;
+    }
+    if (parameter_boolean_read(&throttle_reverse_param)) {
+        throttle = -throttle;
+    }
+    if (!parameter_boolean_read(&bidirectional_throttle_param)) {
+        throttle = (throttle + 1)/2;
+    }
+    out.throttle = throttle;
     out.switch_armed = arm_remote_switch_is_armed(raw);
     out.switch_ap_control = ap_control_switch_is_on(raw);
 
     std::copy_n(raw.channel, raw.channel_count, out.channel_raw);
     out.channel_raw_count = raw.channel_count;
     out.signal = raw.signal;
-    out.rssi = 0; // TODO extract from channel
+    out.rssi = get_rc_channel_value(raw, rssi_ch);
     out.timestamp = raw.timestamp;
 }
 

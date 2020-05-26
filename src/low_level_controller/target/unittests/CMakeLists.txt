@@ -9,7 +9,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../cmake")
 include(cmp)
 include(cmp_mem_access)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -g")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -g")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g")
 
 add_executable(
@@ -42,6 +42,7 @@ add_executable(
     ../../src/tests/log_test.cpp
     ../../src/pid.c
     ../../src/tests/pid_test.cpp
+    ../../src/tests/libnop_tests.cpp
     )
 
 
@@ -51,6 +52,7 @@ target_include_directories(low-level-controller-unittests PUBLIC ../../lib/comm/
 target_include_directories(low-level-controller-unittests PUBLIC ../../src/eigen/)
 target_include_directories(low-level-controller-unittests PUBLIC ../../src/)
 target_include_directories(low-level-controller-unittests PUBLIC ../../src/tests/mock)
+target_include_directories(low-level-controller-unittests PUBLIC ../../lib/libnop/include)
 
 target_link_libraries(
     low-level-controller-unittests

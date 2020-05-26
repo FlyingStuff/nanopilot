@@ -1,8 +1,9 @@
 #include "attitude_filter.hpp"
 #include "control_loop.hpp"
+#include "sensors.hpp"
 
-msgbus::Topic<struct attitude_filter_output_s> attitude_filter_output_topic;
-msgbus::Topic<struct external_attitude_reference_s> attitude_reference_topic;
+msgbus::Topic<attitude_filter_output_t> attitude_filter_output_topic;
+msgbus::Topic<external_attitude_reference_t> attitude_reference_topic;
 
 static parameter_t R_board_to_body_param;
 static Eigen::Matrix<float, 3, 3, Eigen::RowMajor> R_board_to_body;
@@ -25,7 +26,7 @@ void attitude_filter_update()
         q_body_to_board = Eigen::Quaternionf(R_board_to_body).conjugate();
     }
     // TODO handle non published imu correctly
-    struct attitude_filter_output_s attitude_filter_out;
+    attitude_filter_output_t attitude_filter_out;
 
     bool imu_updated = imu_sub.has_update();
     if (imu_updated) {

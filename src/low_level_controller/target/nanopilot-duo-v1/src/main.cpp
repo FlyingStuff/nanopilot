@@ -14,8 +14,7 @@
 #include "timestamp_stm32.h"
 #include "ros_comm.hpp"
 #include "control_loop.hpp"
-#include "rate_controller_pid.hpp"
-#include "output_mixer_linear.hpp"
+#include "attitude_controller.hpp"
 #include "hott_tm.hpp"
 #include "lis3mdl_publisher.hpp"
 #include "icm20602_publisher.hpp"
@@ -131,10 +130,8 @@ int main(void) {
     run_adc();
 
     icm20602_parameter_declare(&parameters);
-    static PIDRateController rate_ctrl;
-    static LinearOutputMixer mixer;
-    rate_ctrl.declare_parameters(&control_ns);
-    mixer.declare_parameters(&control_ns);
+    static AttitudeController att_controller;
+    att_controller.declare_parameters(&control_ns);
 
     if (parameter_load_from_persistent_store()) {
         log_info("parameters loaded");
@@ -145,7 +142,7 @@ int main(void) {
     run_shell((BaseSequentialStream*)&SD6);
     sumd_input_start((BaseSequentialStream*)&SD5);
 
-    control_start(rate_ctrl, mixer);
+    control_start(att_controller);
 
     hott_tm_start((BaseSequentialStream*)&SD3);
 
