@@ -5,7 +5,7 @@
 #include "timestamp.h"
 #include "msgbus/msgbus.hpp"
 
-struct quaternion_s{
+struct quaternion_s {
     float x;
     float y;
     float z;

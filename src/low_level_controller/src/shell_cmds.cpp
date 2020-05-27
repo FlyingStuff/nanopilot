@@ -195,18 +195,15 @@ void cmd_calibrate_esc(BaseSequentialStream *stream, int argc, char *argv[])
         chThdSleepMilliseconds(1000);
     }
     chprintf(stream, "full output\n");
-    std::array<float, NB_ACTUATORS> output;
-    for (float &o: output) {
-        o = std::numeric_limits<float>::max();
-    }
+    actuators_t output;
+    std::fill(output.actuators.begin(), output.actuators.end(), std::numeric_limits<float>::max());
+    output.actuators_len = NB_ACTUATORS;
     actuators_set_output(output);
 
     chThdSleepMilliseconds(8000);
 
     chprintf(stream, "zero output\n");
-    for (float &o: output) {
-        o = 0;
-    }
+    std::fill(output.actuators.begin(), output.actuators.end(), 0);
     actuators_set_output(output);
 
     chThdSleepMilliseconds(8000);

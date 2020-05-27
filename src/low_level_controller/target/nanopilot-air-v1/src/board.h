@@ -715,6 +715,8 @@
 #define VAL_GPIOI_AFRH 0
 
 
+#define NB_ACTUATORS 16
+
 #if !defined(_FROM_ASM_)
 #ifdef __cplusplus
 extern "C" {

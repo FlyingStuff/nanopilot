@@ -38,7 +38,7 @@ void AttitudeController::declare_parameters(parameter_namespace_t *ns)
     parameter_vector_declare_with_default(&m_force_ctrl_mix[2], &m_namespace, "fz_mix", m_force_ctrl_mix_buf[2], NB_ACTUATORS);
 }
     
-control_mode_t AttitudeController::process(const rc_input_s &rc_in, std::array<float, NB_ACTUATORS> &out)
+control_mode_t AttitudeController::process(const rc_input_s &rc_in, actuators_t &out)
 {
     timestamp_t now = timestamp_get();
     attitude_controller_status_t status;
@@ -105,19 +105,20 @@ control_mode_t AttitudeController::process(const rc_input_s &rc_in, std::array<f
     }
 
 
+    out.actuators_len = NB_ACTUATORS;
     // torque
     std::array<float, NB_ACTUATORS> coeff;
     for (int axis=0; axis < 3; axis++) {
         parameter_vector_read(&m_rpy_ctrl_mix[axis], coeff.data());
         for (int i = 0; i < NB_ACTUATORS; i++) {
-            out[i] = coeff[i] * status.torque[axis];
+            out.actuators[i] = coeff[i] * status.torque[axis];
         }
     }
     // force
     for (int axis=0; axis < 3; axis++) {
         parameter_vector_read(&m_force_ctrl_mix[axis], coeff.data());
         for (int i = 0; i < NB_ACTUATORS; i++) {
-            out[i] += coeff[i] * ctrl_in.acceleration[axis];
+            out.actuators[i] += coeff[i] * ctrl_in.acceleration[axis];
         }
     }
 

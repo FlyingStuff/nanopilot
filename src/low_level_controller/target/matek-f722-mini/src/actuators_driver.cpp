@@ -1,5 +1,5 @@
 #include "rc_pwm_out.hpp"
-#include "actuators.hpp"
+#include "actuators_driver.hpp"
 #include "log.h"
 
 static std::array<PWMOutputBank, 3> pwm_banks = { {PWMD3, PWMD2, PWMD4} };
@@ -8,7 +8,7 @@ parameter_namespace_t actuators_namespace;
 std::array<parameter_t, 6> pwm_bank_output_period_us_param;
 
 
-void initialize_actuators(parameter_namespace_t *ns)
+void actuators_init(parameter_namespace_t *ns)
 {
     parameter_namespace_declare(&actuators_namespace, ns, "actuators");
     actuators[9].declare_parameters(&actuators_namespace, "pwm10");
@@ -40,7 +40,7 @@ void actuators_disable_all(void)
     }
 }
 
-void actuators_set_output(const std::array<float, NB_ACTUATORS> out)
+void actuators_set_output(const actuators_t &out)
 {
     for(unsigned i = 0; i < pwm_banks.size(); ++i) {
         if (parameter_changed(&pwm_bank_output_period_us_param[i])) {
@@ -48,18 +48,32 @@ void actuators_set_output(const std::array<float, NB_ACTUATORS> out)
         }
     }
 
-    pwm_banks[0].set_channel_pos_us(0, actuators[0].get_pulse_width(out[0]));
-    pwm_banks[0].set_channel_pos_us(1, actuators[1].get_pulse_width(out[1]));
-    pwm_banks[0].set_channel_pos_us(2, actuators[2].get_pulse_width(out[2]));
-    pwm_banks[0].set_channel_pos_us(3, actuators[3].get_pulse_width(out[3]));
+    static const uint8_t bank_idx_ch_idx_mapping[NB_ACTUATORS][2] = {
+        {0, 0},
+        {0, 1},
+        {0, 2},
+        {0, 3},
+        {1, 0},
+        {1, 1},
+        {2, 0},
+        {2, 1},
+        {1, 2},
+        {1, 3},
+    };
+    unsigned len = out.actuators_len;
+    if (len > NB_ACTUATORS) {
+        len = NB_ACTUATORS;
+    }
 
-    pwm_banks[1].set_channel_pos_us(0, actuators[4].get_pulse_width(out[4]));
-    pwm_banks[1].set_channel_pos_us(1, actuators[5].get_pulse_width(out[5]));
-
-    pwm_banks[2].set_channel_pos_us(0, actuators[6].get_pulse_width(out[6]));
-    pwm_banks[2].set_channel_pos_us(1, actuators[7].get_pulse_width(out[7]));
-
-    pwm_banks[1].set_channel_pos_us(2, actuators[8].get_pulse_width(out[8]));
-    pwm_banks[1].set_channel_pos_us(3, actuators[9].get_pulse_width(out[9]));
+    for (unsigned i = 0; i < NB_ACTUATORS; i++) {
+        auto bank_idx = bank_idx_ch_idx_mapping[i][0];
+        auto ch_idx = bank_idx_ch_idx_mapping[i][1];
+        float ch = 0;
+        if (i < len) {
+            ch = out.actuators[i];
+        }
+        auto pwm = actuators[i].get_pulse_width(ch);
+        pwm_banks[bank_idx].set_channel_pos_us(ch_idx, pwm);
+    }
 }
 

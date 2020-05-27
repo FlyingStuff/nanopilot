@@ -7,7 +7,7 @@
 #include "panic_handler.h"
 #include "run_shell.h"
 #include "log.h"
-#include "actuators.hpp"
+#include "actuators_driver.hpp"
 #include "thread_prio.h"
 #include "parameter_storage.h"
 #include "sumd_input.hpp"
@@ -18,8 +18,7 @@
 #include "lsm6dsm_publisher.hpp"
 #include "lis3mdl_publisher.hpp"
 #include "arm_led.h"
-#include "rate_controller_pid.hpp"
-#include "output_mixer_linear.hpp"
+#include "attitude_controller.hpp"
 
 void dbg_enter_irq(void) {
     palSetPad(GPIOE, GPIOE_PIN11_TP4);
@@ -125,12 +124,10 @@ int main(void) {
     chThdCreateStatic(blinking_thread_wa, sizeof(blinking_thread_wa), THD_PRIO_LED, blinking_thread, NULL);
 
     control_init();
-    initialize_actuators(&parameters);
+    actuators_init(&parameters);
 
-    static PIDRateController rate_ctrl;
-    static LinearOutputMixer mixer;
-    rate_ctrl.declare_parameters(&control_ns);
-    mixer.declare_parameters(&control_ns);
+    static AttitudeController att_controller;
+    att_controller.declare_parameters(&control_ns);
 
     if (parameter_load_from_persistent_store()) {
         log_info("parameters loaded");
@@ -142,7 +139,7 @@ int main(void) {
     run_shell((BaseSequentialStream*)&SD1);
     sumd_input_start((BaseSequentialStream*)&SD5);
 
-    control_start(rate_ctrl, mixer);
+    control_start(att_controller);
 
     hott_tm_start((BaseSequentialStream*)&SD3);
 

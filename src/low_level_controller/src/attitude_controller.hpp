@@ -52,7 +52,7 @@ public:
     explicit AttitudeController();
     void declare_parameters(parameter_namespace_t *ns);
     
-    virtual control_mode_t process(const rc_input_s &rc_in, std::array<float, NB_ACTUATORS> &out);
+    virtual control_mode_t process(const rc_input_s &rc_in, actuators_t &out);
     virtual void notify_output_disabled();
     virtual void set_update_frequency(float freq);
     virtual timestamp_t ap_control_signal_timestamp();

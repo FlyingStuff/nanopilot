@@ -44,7 +44,7 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
     SAVE_PARAMETERS_RES=53,
     GET_PARAMETER=54,
     GET_PARAMETER_RES=55,
-    CONTOLLER_ATTITUDE_IN=100,
+    CONTOLLER_ATTITUDE_SETPT=100,
     CONTOLLER_ATTITUDE_STATUS=101,
 };
 
@@ -92,6 +92,15 @@ NOP_EXTERNAL_STRUCTURE(attitude_controller_input_t,
 NOP_EXTERNAL_STRUCTURE(attitude_controller_status_t,
     angular_rate_ref,
     torque,
+    timestamp);
+
+#include "actuators.hpp"
+NOP_EXTERNAL_STRUCTURE(actuators_t,
+    actuators,
+    actuators_len);
+
+NOP_EXTERNAL_STRUCTURE(actuators_stamped_t,
+    actuators,
     timestamp);
 
 

@@ -30,6 +30,7 @@ target_include_directories(llc_ros_interface PUBLIC
     ../lib/libnop/include/
     ../lib/
     ../src/
+    .
 )
 
 ament_target_dependencies(llc_ros_interface rclcpp std_msgs sensor_msgs geometry_msgs autopilot_msgs)

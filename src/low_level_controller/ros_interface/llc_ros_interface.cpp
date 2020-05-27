@@ -16,7 +16,7 @@
 #include <sensor_msgs/msg/temperature.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <autopilot_msgs/msg/rc_input.hpp>
-#include "autopilot_msgs/msg/rate_control_setpoint.hpp"
+#include "autopilot_msgs/msg/attitude_trajectory_setpoint.hpp"
 #include "autopilot_msgs/msg/actuator_positions_stamped.hpp"
 #include "autopilot_msgs/msg/actuator_positions.hpp"
 #include "autopilot_msgs/srv/send_msgpack_config.hpp"
@@ -73,17 +73,12 @@ public:
         m_mag_pub = this->create_publisher<sensor_msgs::msg::MagneticField>("magnetometer", pub_qos_settings);
         m_rcinput_pub = this->create_publisher<autopilot_msgs::msg::RCInput>("rc_input", pub_qos_settings);
         m_ping_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency", pub_qos_settings);
-        m_rate_ctrl_setpoint_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/setpoint", pub_qos_settings);
-        m_rate_ctrl_measured_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/measured", pub_qos_settings);
-        m_rate_ctrl_output_pub = this->create_publisher<geometry_msgs::msg::Vector3>("rate_ctrl/output", pub_qos_settings);
-        m_output_armed_pub = this->create_publisher<std_msgs::msg::Bool>("output_armed", pub_qos_settings);
-        m_ap_in_control_pub = this->create_publisher<std_msgs::msg::Bool>("ap_in_control", pub_qos_settings);
-        m_ap_latency_pub = this->create_publisher<std_msgs::msg::UInt64>("ap_latency", pub_qos_settings);
-        m_output_pub = this->create_publisher<autopilot_msgs::msg::ActuatorPositions>("output", pub_qos_settings);
+        m_ap_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ap_latency", pub_qos_settings);
+        m_output_pub = this->create_publisher<autopilot_msgs::msg::ActuatorPositionsStamped>("output", pub_qos_settings);
 
         rclcpp::QoS sub_qos_settings(1);
         sub_qos_settings.best_effort();
-        m_ap_ctrl_sub = this->create_subscription<autopilot_msgs::msg::RateControlSetpoint>("control", sub_qos_settings, std::bind(&LowLevelControllerInterface::control_cb, this, _1));
+        m_ap_ctrl_sub = this->create_subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>("attitude_setpoint", sub_qos_settings, std::bind(&LowLevelControllerInterface::att_control_cb, this, _1));
 
         auto rx_thd = std::thread(rx_thd_fn, &m_interface);
         rx_thd.detach();
@@ -190,21 +185,6 @@ private:
         case RosInterfaceCommMsgID::MAGNETOMETER:
             deserialize_and_publish(msg, len, m_mag_buf);
             break;
-        case RosInterfaceCommMsgID::RATE_CTRL_SETPOINT_RPY:
-            deserialize_and_publish(msg, len, m_rate_ctrl_setpoint_buf);
-            break;
-        case RosInterfaceCommMsgID::RATE_CTRL_MEASURED_RPY:
-            deserialize_and_publish(msg, len, m_rate_ctrl_measured_buf);
-            break;
-        case RosInterfaceCommMsgID::RATE_CTRL_OUTPUT_RPY:
-            deserialize_and_publish(msg, len, m_rate_ctrl_output_buf);
-            break;
-        case RosInterfaceCommMsgID::OUTPUT_IS_ARMED:
-            deserialize_and_publish(msg, len, m_output_armed_buf);
-            break;
-        case RosInterfaceCommMsgID::AP_IN_CONTROL:
-            deserialize_and_publish(msg, len, m_ap_in_control_buf);
-            break;
         case RosInterfaceCommMsgID::AP_LATENCY:
             deserialize_and_publish(msg, len, m_ap_latency_buf);
             break;
@@ -215,28 +195,28 @@ private:
         }
     }
 
-    void control_cb(const autopilot_msgs::msg::RateControlSetpoint::SharedPtr msg)
+    void att_control_cb(const autopilot_msgs::msg::AttitudeTrajectorySetpoint::SharedPtr msg)
     {
-        struct ap_ctrl_s ctrl;
+        attitude_controller_input_t ctrl;
         ctrl.timestamp = (rclcpp::Time(msg->header.stamp) - m_timestamp_offset).nanoseconds();
-        ctrl.rate_setpoint_rpy[0] = msg->rate_control_setpoint.x;
-        ctrl.rate_setpoint_rpy[1] = msg->rate_control_setpoint.y;
-        ctrl.rate_setpoint_rpy[2] = msg->rate_control_setpoint.z;
-        static_assert(autopilot_msgs::msg::ActuatorPositions::MAX_NB_ACTUATORS == MAX_NB_ACTUATORS, "message definition mismatch");
-        for (unsigned i=0; i < msg->actuators.actuators.size(); i++) {
-            ctrl.direct_output[i] = msg->actuators.actuators[i];
-        }
-        ctrl.feed_forward_torque_rpy[0] = msg->feed_forward_torque.x;
-        ctrl.feed_forward_torque_rpy[1] = msg->feed_forward_torque.y;
-        ctrl.feed_forward_torque_rpy[2] = msg->feed_forward_torque.z;
-        ctrl.force_xyz[0] = msg->force.x;
-        ctrl.force_xyz[1] = msg->force.y;
-        ctrl.force_xyz[2] = msg->force.z;
+        ctrl.attitude.x = msg->attitude.x;
+        ctrl.attitude.y = msg->attitude.y;
+        ctrl.attitude.z = msg->attitude.z;
+        ctrl.attitude.w = msg->attitude.w;
+        ctrl.angular_rate[0] = msg->angular_rate.x;
+        ctrl.angular_rate[1] = msg->angular_rate.y;
+        ctrl.angular_rate[2] = msg->angular_rate.z;
+        ctrl.angular_acceleration[0] = msg->angular_acceleration.x;
+        ctrl.angular_acceleration[1] = msg->angular_acceleration.y;
+        ctrl.angular_acceleration[2] = msg->angular_acceleration.z;
+        ctrl.acceleration[0] = msg->acceleration.x;
+        ctrl.acceleration[1] = msg->acceleration.y;
+        ctrl.acceleration[2] = msg->acceleration.z;
 
         static uint8_t buffer[1000];
         auto serializer = nop::Serializer<nop::BufferWriter>(buffer, sizeof(buffer));
         serializer.Write(ctrl);
-        comm_send(&m_interface, RosInterfaceCommMsgID::AP_CONTROL, buffer, serializer.writer().size());
+        comm_send(&m_interface, RosInterfaceCommMsgID::CONTOLLER_ATTITUDE_SETPT, buffer, serializer.writer().size());
     }
 
     void publish_thd_fn()
@@ -251,16 +231,6 @@ private:
         sub_list.push_back(&imu_sub);
         auto mag_sub = msgbus::subscribe(m_mag_buf);
         sub_list.push_back(&mag_sub);
-        auto rate_ctrl_setpoint_sub = msgbus::subscribe(m_rate_ctrl_setpoint_buf);
-        sub_list.push_back(&rate_ctrl_setpoint_sub);
-        auto rate_ctrl_measured_sub = msgbus::subscribe(m_rate_ctrl_measured_buf);
-        sub_list.push_back(&rate_ctrl_measured_sub);
-        auto rate_ctrl_output_sub = msgbus::subscribe(m_rate_ctrl_output_buf);
-        sub_list.push_back(&rate_ctrl_output_sub);
-        auto output_armed_sub = msgbus::subscribe(m_output_armed_buf);
-        sub_list.push_back(&output_armed_sub);
-        auto ap_in_control_sub = msgbus::subscribe(m_ap_in_control_buf);
-        sub_list.push_back(&ap_in_control_sub);
         auto ping_latency_sub = msgbus::subscribe(m_ping_latency_buf);
         sub_list.push_back(&ping_latency_sub);
         auto ap_latency_sub = msgbus::subscribe(m_ap_latency_buf);
@@ -292,11 +262,12 @@ private:
                 if (actuator_output_sub.has_update()) {
                     topic = "actuator_output";
                     auto val = actuator_output_sub.get_value();
-                    auto message = autopilot_msgs::msg::ActuatorPositions();
-                    static_assert(autopilot_msgs::msg::ActuatorPositions::MAX_NB_ACTUATORS == MAX_NB_ACTUATORS, "message definition mismatch");
-                    for (auto a: val) {
-                        message.actuators.push_back(a);
+                    auto message = autopilot_msgs::msg::ActuatorPositionsStamped();
+                    static_assert(autopilot_msgs::msg::ActuatorPositions::MAX_NB_ACTUATORS == NB_ACTUATORS, "message definition mismatch");
+                    for (unsigned i = 0; i < val.actuators.actuators_len; i++) {
+                        message.actuators.actuators.push_back(val.actuators.actuators[i]);
                     }
+                    message.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME)  + m_timestamp_offset;
                     m_output_pub->publish(message);
                 } else
                 if (imu_sub.has_update()) {
@@ -332,47 +303,6 @@ private:
                     message.magnetic_field_covariance = {{0}};
                     m_mag_pub->publish(message);
                 } else
-                if(rate_ctrl_setpoint_sub.has_update()) {
-                    topic = "rate_ctrl_setpoint";
-                    auto val = rate_ctrl_setpoint_sub.get_value();
-                    auto message = geometry_msgs::msg::Vector3();
-                    message.x = val[0];
-                    message.y = val[1];
-                    message.z = val[2];
-                    m_rate_ctrl_setpoint_pub->publish(message);
-                } else
-                if(rate_ctrl_measured_sub.has_update()) {
-                    topic = "rate_ctrl_measured";
-                    auto val = rate_ctrl_measured_sub.get_value();
-                    auto message = geometry_msgs::msg::Vector3();
-                    message.x = val[0];
-                    message.y = val[1];
-                    message.z = val[2];
-                    m_rate_ctrl_measured_pub->publish(message);
-                } else
-                if(rate_ctrl_output_sub.has_update()) {
-                    topic = "rate_ctrl_output";
-                    auto val = rate_ctrl_output_sub.get_value();
-                    auto message = geometry_msgs::msg::Vector3();
-                    message.x = val[0];
-                    message.y = val[1];
-                    message.z = val[2];
-                    m_rate_ctrl_output_pub->publish(message);
-                } else
-                if (output_armed_sub.has_update()) {
-                    topic = "output_armed";
-                    auto val = output_armed_sub.get_value();
-                    auto message = std_msgs::msg::Bool();
-                    message.data = val;
-                    m_output_armed_pub->publish(message);
-                } else
-                if (ap_in_control_sub.has_update()) {
-                    topic = "ap_in_control";
-                    auto val = ap_in_control_sub.get_value();
-                    auto message = std_msgs::msg::Bool();
-                    message.data = val;
-                    m_ap_in_control_pub->publish(message);
-                } else
                 if (ping_latency_sub.has_update()) {
                     topic = "ping_latency";
                     auto val = ping_latency_sub.get_value();
@@ -383,7 +313,7 @@ private:
                 if (ap_latency_sub.has_update()) {
                     topic = "ap_latency";
                     auto val = ap_latency_sub.get_value();
-                    auto message = std_msgs::msg::UInt64();
+                    auto message = std_msgs::msg::Float64();
                     message.data = val;
                     m_ap_latency_pub->publish(message);
                 }
@@ -426,10 +356,10 @@ private:
       const std::shared_ptr<autopilot_msgs::srv::SendMsgpackConfig::Request> request,
       const std::shared_ptr<autopilot_msgs::srv::SendMsgpackConfig::Response> response)
     {
-      (void)request_header;
-      RCLCPP_INFO(this->get_logger(),"parameters received");
-      comm_send(&m_interface, RosInterfaceCommMsgID::SET_PARAMETERS, request->msgpack_config.data(), request->msgpack_config.size());
-      response->success = true;
+        (void)request_header;
+        RCLCPP_INFO(this->get_logger(),"parameters received");
+        comm_send(&m_interface, RosInterfaceCommMsgID::SET_PARAMETERS, request->msgpack_config.data(), request->msgpack_config.size());
+        response->success = true;
     }
 
 
@@ -472,21 +402,11 @@ private:
     msgbus::Topic<imu_sample_t> m_imu_buf;
     rclcpp::Publisher<sensor_msgs::msg::MagneticField>::SharedPtr m_mag_pub;
     msgbus::Topic<magnetometer_sample_t> m_mag_buf;
-    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_setpoint_pub;
-    msgbus::Topic<std::array<float, 3> > m_rate_ctrl_setpoint_buf;
-    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_measured_pub;
-    msgbus::Topic<std::array<float, 3> > m_rate_ctrl_measured_buf;
-    rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr m_rate_ctrl_output_pub;
-    msgbus::Topic<std::array<float, 3> > m_rate_ctrl_output_buf;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr m_output_armed_pub;
-    msgbus::Topic<bool> m_output_armed_buf;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr m_ap_in_control_pub;
-    msgbus::Topic<bool> m_ap_in_control_buf;
-    rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr m_ap_latency_pub;
-    msgbus::Topic<uint64_t> m_ap_latency_buf;
-    rclcpp::Publisher<autopilot_msgs::msg::ActuatorPositions>::SharedPtr m_output_pub;
-    msgbus::Topic<std::vector<float> > m_actuator_output_buf;
-    rclcpp::Subscription<autopilot_msgs::msg::RateControlSetpoint>::SharedPtr m_ap_ctrl_sub;
+    rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr m_ap_latency_pub;
+    msgbus::Topic<float> m_ap_latency_buf;
+    rclcpp::Publisher<autopilot_msgs::msg::ActuatorPositionsStamped>::SharedPtr m_output_pub;
+    msgbus::Topic<actuators_stamped_t> m_actuator_output_buf;
+    rclcpp::Subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>::SharedPtr m_ap_ctrl_sub;
 };
 
 

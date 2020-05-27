@@ -7,7 +7,7 @@
 #include "panic_handler.h"
 #include "run_shell.h"
 #include "log.h"
-#include "actuators.hpp"
+#include "actuators_driver.hpp"
 #include "thread_prio.h"
 #include "parameter_storage.h"
 #include "sumd_input.hpp"
@@ -125,7 +125,7 @@ int main(void) {
     chThdCreateStatic(blinking_thread_wa, sizeof(blinking_thread_wa), THD_PRIO_LED, blinking_thread, NULL);
 
     control_init();
-    initialize_actuators(&parameters);
+    actuators_init(&parameters);
 
     run_adc();
 

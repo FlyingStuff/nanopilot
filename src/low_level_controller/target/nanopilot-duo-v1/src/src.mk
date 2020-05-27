@@ -9,7 +9,7 @@ PROJINC += $(PROJROOT)/
 
 PROJCSRC += $(TARGETROOT)/src/board.c
 PROJCPPSRC += $(TARGETROOT)/src/main.cpp
-PROJCPPSRC += $(TARGETROOT)/src/actuators.cpp
+PROJCPPSRC += $(TARGETROOT)/src/actuators_driver.cpp
 PROJCPPSRC += $(TARGETROOT)/src/adc.cpp
 PROJCSRC += $(TARGETROOT)/src/run_shell.c
 
@@ -34,8 +34,6 @@ PROJCPPSRC += $(PROJROOT)/src/ros_comm.cpp
 PROJCPPSRC += $(PROJROOT)/src/pid_with_parameter.cpp
 PROJCPPSRC += $(PROJROOT)/src/low_pass_filter.cpp
 PROJCPPSRC += $(PROJROOT)/src/control_loop.cpp
-# PROJCPPSRC += $(PROJROOT)/src/rate_controller_pid.cpp TODO delete these files
-# PROJCPPSRC += $(PROJROOT)/src/output_mixer_linear.cpp
 PROJCPPSRC += $(PROJROOT)/src/attitude_controller.cpp
 PROJCPPSRC += $(PROJROOT)/src/lis3mdl_publisher.cpp
 PROJCPPSRC += $(PROJROOT)/src/icm20602_publisher.cpp

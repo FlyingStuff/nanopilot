@@ -1,5 +1,6 @@
 #include "attitude_filter.hpp"
 #include "control_loop.hpp"
+#include <Eigen/Dense>
 #include "sensors.hpp"
 
 msgbus::Topic<attitude_filter_output_t> attitude_filter_output_topic;
@@ -43,8 +44,13 @@ void attitude_filter_update()
 
 
         // time update
-        attitude_filter_out.angular_rate = omega_b;
-        attitude_filter_out.attitude = accumulated_angle_b; // TODO fix this
+        attitude_filter_out.angular_rate[0] = omega_b[0];
+        attitude_filter_out.angular_rate[1] = omega_b[1];
+        attitude_filter_out.angular_rate[2] = omega_b[2];
+        attitude_filter_out.attitude.w = accumulated_angle_b.w(); // TODO fix this
+        attitude_filter_out.attitude.x = accumulated_angle_b.x();
+        attitude_filter_out.attitude.y = accumulated_angle_b.y();
+        attitude_filter_out.attitude.z = accumulated_angle_b.z();
         attitude_filter_out.timestamp = imu.timestamp;
     }
     // if external reference

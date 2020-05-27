@@ -11,7 +11,7 @@
 #include "control_loop.hpp"
 
 msgbus::Topic<control_status_t> control_status_topic;
-msgbus::Topic<std::array<float, NB_ACTUATORS>> actuator_output_topic;
+msgbus::Topic<actuators_stamped_t> actuator_output_topic;
 msgbus::Topic<float> ap_control_latency_topic;
 static ControllerInterface *s_controller=NULL;
 
@@ -56,15 +56,14 @@ static THD_FUNCTION(control_thread, arg)
 
         attitude_filter_update();
 
-        std::array<float, NB_ACTUATORS> output;
-        std::fill(output.begin(), output.end(), 0);
+        actuators_stamped_t output;
         control_mode_t mode;
         bool ap_timeout = false;
         if (!arm_switch_is_armed() || !rc_in.switch_armed || !rc_in.signal) {
             s_controller->notify_output_disabled();
             mode = CTRL_MODE_DISARMED;
         } else {
-            mode = s_controller->process(rc_in, output);
+            mode = s_controller->process(rc_in, output.actuators);
             if (rc_in.switch_ap_control && mode != CTRL_MODE_AP) {
                 ap_timeout = true;
             }
@@ -72,7 +71,7 @@ static THD_FUNCTION(control_thread, arg)
 
         static bool was_armed = true;
         if (arm_switch_is_armed()) {
-            actuators_set_output(output);
+            actuators_set_output(output.actuators);
             was_armed = true;
         } else {
             if (was_armed) {

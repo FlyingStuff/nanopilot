@@ -1,6 +1,0 @@
-std_msgs/Header header
-
-geometry_msgs/Vector3 rate_control_setpoint
-geometry_msgs/Vector3 feed_forward_torque
-geometry_msgs/Vector3 force
-ActuatorPositions actuators

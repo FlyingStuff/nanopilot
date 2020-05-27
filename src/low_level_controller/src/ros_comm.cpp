@@ -9,6 +9,7 @@
 #include <parameter/parameter_msgpack.h>
 #include "control_loop.hpp"
 #include "log.h"
+#include <cstring>
 
 #include <math.h>
 
@@ -40,7 +41,7 @@ static void comm_rcv_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
         comm_send(&comm_if, RosInterfaceCommMsgID::SET_PARAMETERS_RES, &ok, 1);
         break;
     }
-    case RosInterfaceCommMsgID::CONTOLLER_ATTITUDE_IN: {
+    case RosInterfaceCommMsgID::CONTOLLER_ATTITUDE_SETPT: {
         auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
         attitude_controller_input_t ctrl_msg;
         if (deserializer.Read(&ctrl_msg)) {

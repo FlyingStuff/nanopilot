@@ -9,17 +9,17 @@
 
 #include "msgbus/msgbus.hpp"
 #include "timestamp.h"
-#include <Eigen/Dense>
+#include "sensors.hpp"
 
 typedef struct {
-    Eigen::Vector3f gyro_bias;
-    Eigen::Quaternionf attitude_reference;
+    float gyro_bias[3];
+    quaternion_s attitude_reference;
     timestamp_t timestamp;
 } external_attitude_reference_t;
 
 typedef struct {
-    Eigen::Vector3f angular_rate; // body frame
-    Eigen::Quaternionf attitude;
+    float angular_rate[3]; // body frame
+    quaternion_s attitude;
     timestamp_t timestamp;
 } attitude_filter_output_t;
 
