@@ -41,6 +41,14 @@ static void comm_rcv_cb(comm_msg_id_t msg_id, const uint8_t *msg, size_t len)
         comm_send(&comm_if, RosInterfaceCommMsgID::SET_PARAMETERS_RES, &ok, 1);
         break;
     }
+    case RosInterfaceCommMsgID::ATTITUDE_FILTER_REFERENCE: {
+        auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
+        external_attitude_reference_t ctrl_msg;
+        if (deserializer.Read(&ctrl_msg)) {
+            attitude_reference_topic.publish(ctrl_msg);
+        }
+        break;
+    }
     case RosInterfaceCommMsgID::CONTOLLER_ATTITUDE_SETPT: {
         auto deserializer = nop::Deserializer<nop::BufferReader>(msg, len);
         attitude_controller_input_t ctrl_msg;
@@ -101,32 +109,23 @@ static THD_FUNCTION(comm_tx_thread, arg) {
     auto rc_in_sub = msgbus::subscribe(rc_input_topic);
     auto output_sub = msgbus::subscribe(actuator_output_topic);
     auto control_status_sub = msgbus::subscribe(control_status_topic);
-    // auto rate_setpoint_rpy_sub = msgbus::subscribe(rate_setpoint_rpy_topic);
-    // auto rate_measured_rpy_sub = msgbus::subscribe(rate_measured_rpy_topic);
-    // auto rate_ctrl_output_rpy_sub = msgbus::subscribe(rate_ctrl_output_rpy_topic);
-    // auto output_armed_sub = msgbus::subscribe(output_armed_topic);
-    // auto ap_in_control_sub = msgbus::subscribe(ap_in_control_topic);
     auto imu_sub = msgbus::subscribe(imu);
     auto magnetometer_sub = msgbus::subscribe(magnetometer);
     auto ap_control_latency_sub = msgbus::subscribe(ap_control_latency_topic);
     auto log_update_trigger_sub = msgbus::subscribe(log_update_trigger);
-
     auto attitude_controller_status_sub = msgbus::subscribe(attitude_controller_status_topic);
+    auto attitude_filter_output_sub = msgbus::subscribe(attitude_filter_output_topic);
 
-    std::array<msgbus::SubscriberBase*, 8> sub_list = {
+    std::array<msgbus::SubscriberBase*, 9> sub_list = {
         &rc_in_sub,
         &output_sub,
         &control_status_sub,
         &imu_sub,
         &magnetometer_sub,
-        // &rate_setpoint_rpy_sub,
-        // &rate_measured_rpy_sub,
-        // &rate_ctrl_output_rpy_sub,
-        // &output_armed_sub,
-        // &ap_in_control_sub,
         &ap_control_latency_sub,
         &log_update_trigger_sub,
         &attitude_controller_status_sub,
+        &attitude_filter_output_sub,
     };
     while (true) {
         // comm_send(&comm_if, RosInterfaceCommMsgID::HEARTBEAT, NULL, 0);
@@ -145,13 +144,9 @@ static THD_FUNCTION(comm_tx_thread, arg) {
         send_if_updated(magnetometer_sub, RosInterfaceCommMsgID::MAGNETOMETER, buf, sizeof(buf));
         send_if_updated(output_sub, RosInterfaceCommMsgID::ACTUATOR_OUTPUT, buf, sizeof(buf));
         send_if_updated(control_status_sub, RosInterfaceCommMsgID::CONTROL_STATUS, buf, sizeof(buf));
-        // send_if_updated(rate_setpoint_rpy_sub, RosInterfaceCommMsgID::RATE_CTRL_SETPOINT_RPY, buf, sizeof(buf));
-        // send_if_updated(rate_measured_rpy_sub, RosInterfaceCommMsgID::RATE_CTRL_MEASURED_RPY, buf, sizeof(buf));
-        // send_if_updated(rate_ctrl_output_rpy_sub, RosInterfaceCommMsgID::RATE_CTRL_OUTPUT_RPY, buf, sizeof(buf));
-        // send_if_updated(output_armed_sub, RosInterfaceCommMsgID::OUTPUT_IS_ARMED, buf, sizeof(buf));
-        // send_if_updated(ap_in_control_sub, RosInterfaceCommMsgID::AP_IN_CONTROL, buf, sizeof(buf));
         send_if_updated(ap_control_latency_sub, RosInterfaceCommMsgID::AP_LATENCY, buf, sizeof(buf));
         send_if_updated(attitude_controller_status_sub, RosInterfaceCommMsgID::CONTOLLER_ATTITUDE_STATUS, buf, sizeof(buf));
+        send_if_updated(attitude_filter_output_sub, RosInterfaceCommMsgID::ATTITUDE_FILTER_OUTPUT, buf, sizeof(buf));
 
         if (log_update_trigger_sub.has_update()) {
             log_update_trigger_sub.get_value();

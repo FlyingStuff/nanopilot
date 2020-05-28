@@ -36,7 +36,6 @@ public:
     MCForceAllocNode()
     : Node("MCForceAlloc")
     {
-        this->declare_parameter("mass", 1.0);
         acc_setpt_sub = this->create_subscription<autopilot_msgs::msg::AccelerationTrajectorySetpoint>(
             "acceleration_setpoint", 1, std::bind(&MCForceAllocNode::acc_setpt_cb, this, _1));
         pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
@@ -50,20 +49,19 @@ private:
         const Eigen::Quaterniond &current_att_b_to_I,
         const Eigen::Quaterniond &yaw_ref_att_Y_to_I,
         Eigen::Quaterniond &desired_att,
-        Eigen::Vector3d &force)
+        Eigen::Vector3d &acceleration)
     {
-        const double mass = this->get_parameter("mass").as_double();
-        const Eigen::Vector3d gravity(0, 0, 9.81*mass);
+        const Eigen::Vector3d gravity(0, 0, 9.81);
         double hover_thrust = 0.5;
-        const Eigen::Vector3d force_I = (accel*mass - gravity)*(hover_thrust/(9.81*mass));
+        const Eigen::Vector3d accel_I = (accel - gravity)*(hover_thrust/(9.81));
 
         // see Attitude Setpoint Generation in doc folder
-        Eigen::Vector3d force_Y = yaw_ref_att_Y_to_I.conjugate().toRotationMatrix() * force_I;
-        Eigen::Vector3d force_d(0, 0, -1); // up
-        auto desired_to_Y = shortest_rotation_quaternion(force_d, force_Y);
+        Eigen::Vector3d accel_Y = yaw_ref_att_Y_to_I.conjugate().toRotationMatrix() * accel_I;
+        Eigen::Vector3d accel_d(0, 0, -1); // up
+        auto desired_to_Y = shortest_rotation_quaternion(accel_d, accel_Y);
         desired_att = yaw_ref_att_Y_to_I * desired_to_Y;
 
-        force = current_att_b_to_I.conjugate().toRotationMatrix() * force_I;
+        acceleration = current_att_b_to_I.conjugate().toRotationMatrix() * accel_I;
     }
 
     void acc_setpt_cb(autopilot_msgs::msg::AccelerationTrajectorySetpoint::SharedPtr msg)
@@ -87,26 +85,26 @@ private:
 
             Eigen::Vector3d accel(msg->acceleration.x, msg->acceleration.y, msg->acceleration.z);
             Eigen::Quaterniond att_d;
-            Eigen::Vector3d force;
+            Eigen::Vector3d acceleration_b;
 
-            accel_to_attitude(accel, current_att, yaw_ref_att, att_d, force);
+            accel_to_attitude(accel, current_att, yaw_ref_att, att_d, acceleration_b);
 
             autopilot_msgs::msg::AttitudeTrajectorySetpoint setpt;
             setpt.header.frame_id = msg->header.frame_id;
             setpt.header.stamp = msg->header.stamp;
-            setpt.orientation.w = att_d.w();
-            setpt.orientation.x = att_d.x();
-            setpt.orientation.y = att_d.y();
-            setpt.orientation.z = att_d.z();
+            setpt.attitude.w = att_d.w();
+            setpt.attitude.x = att_d.x();
+            setpt.attitude.y = att_d.y();
+            setpt.attitude.z = att_d.z();
             setpt.angular_rate.x = 0;
             setpt.angular_rate.y = 0;
             setpt.angular_rate.z = 0;
             setpt.angular_acceleration.x = 0;
             setpt.angular_acceleration.y = 0;
             setpt.angular_acceleration.z = 0;
-            setpt.force.x = force[0];
-            setpt.force.y = force[1];
-            setpt.force.z = force[2];
+            setpt.acceleration.x = acceleration_b[0];
+            setpt.acceleration.y = acceleration_b[1];
+            setpt.acceleration.z = acceleration_b[2];
             ctrl_pub->publish(setpt);
         }
     }

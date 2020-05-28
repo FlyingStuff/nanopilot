@@ -15,10 +15,13 @@
 #include <sensor_msgs/msg/magnetic_field.hpp>
 #include <sensor_msgs/msg/temperature.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <autopilot_msgs/msg/rc_input.hpp>
+#include "autopilot_msgs/msg/attitude_controller_status.hpp"
 #include "autopilot_msgs/msg/attitude_trajectory_setpoint.hpp"
 #include "autopilot_msgs/msg/actuator_positions_stamped.hpp"
 #include "autopilot_msgs/msg/actuator_positions.hpp"
+#include "autopilot_msgs/msg/control_status.hpp"
 #include "autopilot_msgs/srv/send_msgpack_config.hpp"
 #include "autopilot_msgs/msg/time_sync_stat.hpp"
 #include <chrono>
@@ -75,10 +78,14 @@ public:
         m_ping_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ping_latency", pub_qos_settings);
         m_ap_latency_pub = this->create_publisher<std_msgs::msg::Float64>("ap_latency", pub_qos_settings);
         m_output_pub = this->create_publisher<autopilot_msgs::msg::ActuatorPositionsStamped>("output", pub_qos_settings);
+        m_ctrl_status_pub = this->create_publisher<autopilot_msgs::msg::ControlStatus>("control_status", pub_qos_settings);
+        m_attitude_filter_out_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("attitude_filter", pub_qos_settings);
+        m_ctrl_attitude_status_pub = this->create_publisher<autopilot_msgs::msg::AttitudeControllerStatus>("attitude_control_status", pub_qos_settings);
 
         rclcpp::QoS sub_qos_settings(1);
         sub_qos_settings.best_effort();
-        m_ap_ctrl_sub = this->create_subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>("attitude_setpoint", sub_qos_settings, std::bind(&LowLevelControllerInterface::att_control_cb, this, _1));
+        m_att_ctrl_sub = this->create_subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>("attitude_control_setpoint", sub_qos_settings, std::bind(&LowLevelControllerInterface::att_control_cb, this, _1));
+        m_att_ref_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>("attitude_reference", sub_qos_settings, std::bind(&LowLevelControllerInterface::att_ref_cb, this, _1));
 
         auto rx_thd = std::thread(rx_thd_fn, &m_interface);
         rx_thd.detach();
@@ -188,6 +195,15 @@ private:
         case RosInterfaceCommMsgID::AP_LATENCY:
             deserialize_and_publish(msg, len, m_ap_latency_buf);
             break;
+        case RosInterfaceCommMsgID::CONTROL_STATUS:
+            deserialize_and_publish(msg, len, m_ctrl_status_buf);
+            break;
+        case RosInterfaceCommMsgID::ATTITUDE_FILTER_OUTPUT:
+            deserialize_and_publish(msg, len, m_attitude_filter_out_buf);
+            break;
+        case RosInterfaceCommMsgID::CONTOLLER_ATTITUDE_STATUS:
+            deserialize_and_publish(msg, len, m_ctrl_attitude_status_buf);
+            break;
         default:
             std::string msg_str((char*)msg, len);
             printf("unknown rx msg %d, len: %d, %s\n", (int)msg_id, (int)len, msg_str.c_str());
@@ -219,6 +235,20 @@ private:
         comm_send(&m_interface, RosInterfaceCommMsgID::CONTOLLER_ATTITUDE_SETPT, buffer, serializer.writer().size());
     }
 
+    void att_ref_cb(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+    {
+        external_attitude_reference_t ref;
+        ref.attitude_reference.w = msg->pose.orientation.w;
+        ref.attitude_reference.x = msg->pose.orientation.x;
+        ref.attitude_reference.y = msg->pose.orientation.y;
+        ref.attitude_reference.z = msg->pose.orientation.z;
+        ref.timestamp = (rclcpp::Time(msg->header.stamp) - m_timestamp_offset).nanoseconds();
+        static uint8_t buffer[1000];
+        auto serializer = nop::Serializer<nop::BufferWriter>(buffer, sizeof(buffer));
+        serializer.Write(ref);
+        comm_send(&m_interface, RosInterfaceCommMsgID::ATTITUDE_FILTER_REFERENCE, buffer, serializer.writer().size());
+    }
+
     void publish_thd_fn()
     {
         std::vector<msgbus::SubscriberBase*> sub_list;
@@ -235,6 +265,12 @@ private:
         sub_list.push_back(&ping_latency_sub);
         auto ap_latency_sub = msgbus::subscribe(m_ap_latency_buf);
         sub_list.push_back(&ap_latency_sub);
+        auto ctrl_status_sub = msgbus::subscribe(m_ctrl_status_buf);
+        sub_list.push_back(&ctrl_status_sub);
+        auto attitude_filter_out_sub = msgbus::subscribe(m_attitude_filter_out_buf);
+        sub_list.push_back(&attitude_filter_out_sub);
+        auto ctrl_attitude_status_sub = msgbus::subscribe(m_ctrl_attitude_status_buf);
+        sub_list.push_back(&ctrl_attitude_status_sub);
         while (1) {
             msgbus::wait_for_update_on_any(sub_list.begin(), sub_list.end());
             struct timeval start;
@@ -258,8 +294,8 @@ private:
                     message.signal = val.signal;
                     message.rssi = val.rssi;
                     m_rcinput_pub->publish(message);
-                } else
-                if (actuator_output_sub.has_update()) {
+                }
+                else if (actuator_output_sub.has_update()) {
                     topic = "actuator_output";
                     auto val = actuator_output_sub.get_value();
                     auto message = autopilot_msgs::msg::ActuatorPositionsStamped();
@@ -269,8 +305,8 @@ private:
                     }
                     message.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME)  + m_timestamp_offset;
                     m_output_pub->publish(message);
-                } else
-                if (imu_sub.has_update()) {
+                }
+                else if (imu_sub.has_update()) {
                     topic = "imu";
                     auto imu = imu_sub.get_value();
                     auto message = sensor_msgs::msg::Imu();
@@ -290,8 +326,8 @@ private:
                     message.linear_acceleration.z = imu.linear_acceleration[2];
                     message.linear_acceleration_covariance = {{0}};
                     m_imu_pub->publish(message);
-                } else
-                if (mag_sub.has_update()) {
+                }
+                else if (mag_sub.has_update()) {
                     topic = "mag";
                     magnetometer_sample_t mag = mag_sub.get_value();
                     auto message = sensor_msgs::msg::MagneticField();
@@ -302,20 +338,51 @@ private:
                     message.magnetic_field.z = mag.magnetic_field[2];
                     message.magnetic_field_covariance = {{0}};
                     m_mag_pub->publish(message);
-                } else
-                if (ping_latency_sub.has_update()) {
+                }
+                else if (ping_latency_sub.has_update()) {
                     topic = "ping_latency";
                     auto val = ping_latency_sub.get_value();
                     auto message = std_msgs::msg::Float64();
                     message.data = val;
                     m_ping_latency_pub->publish(message);
-                } else
-                if (ap_latency_sub.has_update()) {
+                }
+                else if (ap_latency_sub.has_update()) {
                     topic = "ap_latency";
                     auto val = ap_latency_sub.get_value();
                     auto message = std_msgs::msg::Float64();
                     message.data = val;
                     m_ap_latency_pub->publish(message);
+                }
+                else if (ctrl_status_sub.has_update()) {
+                    topic = "ctrl_status";
+                    auto val = ctrl_status_sub.get_value();
+                    auto message = autopilot_msgs::msg::ControlStatus();
+                    message.mode = val.mode;
+                    m_ctrl_status_pub->publish(message);
+                }
+                else if (attitude_filter_out_sub.has_update()) {
+                    topic = "attitude_filter_out";
+                    auto val = attitude_filter_out_sub.get_value();
+                    auto message = geometry_msgs::msg::PoseStamped();
+                    message.header.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME) + m_timestamp_offset;
+                    message.pose.orientation.w = val.attitude.w;
+                    message.pose.orientation.x = val.attitude.x;
+                    message.pose.orientation.y = val.attitude.y;
+                    message.pose.orientation.z = val.attitude.z;
+                    m_attitude_filter_out_pub->publish(message);
+                }
+                else if (ctrl_attitude_status_sub.has_update()) {
+                    topic = "ctrl_attitude_status";
+                    auto val = ctrl_attitude_status_sub.get_value();
+                    auto message = autopilot_msgs::msg::AttitudeControllerStatus();
+                    message.header.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME) + m_timestamp_offset;
+                    message.angular_rate_ref.x = val.angular_rate_ref[0];
+                    message.angular_rate_ref.y = val.angular_rate_ref[1];
+                    message.angular_rate_ref.z = val.angular_rate_ref[2];
+                    message.torque.x = val.torque[0];
+                    message.torque.y = val.torque[1];
+                    message.torque.z = val.torque[2];
+                    m_ctrl_attitude_status_pub->publish(message);
                 }
             } catch(rclcpp::exceptions::RCLError const& e) {
                 std::cout << "Message: " << e.what() << "\n";
@@ -406,7 +473,14 @@ private:
     msgbus::Topic<float> m_ap_latency_buf;
     rclcpp::Publisher<autopilot_msgs::msg::ActuatorPositionsStamped>::SharedPtr m_output_pub;
     msgbus::Topic<actuators_stamped_t> m_actuator_output_buf;
-    rclcpp::Subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>::SharedPtr m_ap_ctrl_sub;
+    rclcpp::Publisher<autopilot_msgs::msg::ControlStatus>::SharedPtr m_ctrl_status_pub;
+    msgbus::Topic<control_status_t> m_ctrl_status_buf;
+    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr m_attitude_filter_out_pub;
+    msgbus::Topic<attitude_filter_output_t> m_attitude_filter_out_buf;
+    rclcpp::Publisher<autopilot_msgs::msg::AttitudeControllerStatus>::SharedPtr m_ctrl_attitude_status_pub;
+    msgbus::Topic<attitude_controller_status_t> m_ctrl_attitude_status_buf;
+    rclcpp::Subscription<autopilot_msgs::msg::AttitudeTrajectorySetpoint>::SharedPtr m_att_ctrl_sub;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr m_att_ref_sub;
 };
 
 

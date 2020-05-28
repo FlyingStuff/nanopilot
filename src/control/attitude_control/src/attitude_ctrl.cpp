@@ -1,8 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-// #include <sensor_msgs/msg/imu.hpp>
 #include <autopilot_msgs/msg/attitude_trajectory_setpoint.hpp>
-#include <autopilot_msgs/msg/rate_control_setpoint.hpp>
-// #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 using std::placeholders::_1;
 #include <iostream>
@@ -50,7 +47,7 @@ public:
             "attitude_setpoint", sub_qos_settings, std::bind(&AttitudeCtrl::att_setpt_cb, this, _1));
         pose_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
             "pose", sub_qos_settings, std::bind(&AttitudeCtrl::pose_cb, this, _1));
-        ctrl_pub = this->create_publisher<autopilot_msgs::msg::RateControlSetpoint>("control", pub_qos_settings);
+        ctrl_pub = this->create_publisher<autopilot_msgs::msg::AttitudeTrajectorySetpoint>("control", pub_qos_settings);
 
         control_timer = create_wall_timer(
             5ms, std::bind(&AttitudeCtrl::control_update, this));
@@ -60,7 +57,7 @@ public:
 private:
     void control_update(void)
     {
-        auto ctrl_msg = autopilot_msgs::msg::RateControlSetpoint();
+        auto ctrl_msg = autopilot_msgs::msg::AttitudeTrajectorySetpoint();
 
         if (!pose_msg || !att_setpt_msg) {
             return;
@@ -75,10 +72,10 @@ private:
         double yaw_time_cst = 0.5; // [s]
         Eigen::Vector3d K(1/roll_time_cst, 1/pitch_time_cst, 1/yaw_time_cst);
         Eigen::Vector3d max_rate_setpt(2, 2, 2);
-        auto setpt_body_to_nav = Eigen::Quaterniond(att_setpt_msg->orientation.w,
-            att_setpt_msg->orientation.x,
-            att_setpt_msg->orientation.y,
-            att_setpt_msg->orientation.z);
+        auto setpt_body_to_nav = Eigen::Quaterniond(att_setpt_msg->attitude.w,
+            att_setpt_msg->attitude.x,
+            att_setpt_msg->attitude.y,
+            att_setpt_msg->attitude.z);
         auto estimate_body_to_nav = Eigen::Quaterniond(pose_msg->pose.orientation.w,
             pose_msg->pose.orientation.x,
             pose_msg->pose.orientation.y,
@@ -99,10 +96,14 @@ private:
         Eigen::Vector3d rate_setpt = -K.cwiseProduct(att_error_vec);
         rate_setpt = rate_setpt.cwiseMin(max_rate_setpt).cwiseMax(-max_rate_setpt);
         ctrl_msg.header.stamp = pose_msg->header.stamp;
-        ctrl_msg.rate_control_setpoint.x = rate_setpt[0];
-        ctrl_msg.rate_control_setpoint.y = rate_setpt[1];
-        ctrl_msg.rate_control_setpoint.z = rate_setpt[2];
-        ctrl_msg.force = att_setpt_msg->force;
+        ctrl_msg.attitude.w = NAN;
+        ctrl_msg.attitude.x = NAN;
+        ctrl_msg.attitude.y = NAN;
+        ctrl_msg.attitude.z = NAN;
+        ctrl_msg.angular_rate.x = rate_setpt[0];
+        ctrl_msg.angular_rate.y = rate_setpt[1];
+        ctrl_msg.angular_rate.z = rate_setpt[2];
+        ctrl_msg.acceleration = att_setpt_msg->acceleration;
         ctrl_pub->publish(ctrl_msg);
 
         auto dt = this->now() - rclcpp::Time(pose_msg->header.stamp);
@@ -131,7 +132,7 @@ private:
     geometry_msgs::msg::PoseStamped::SharedPtr pose_msg;
 
     // ROS Publishers
-    rclcpp::Publisher<autopilot_msgs::msg::RateControlSetpoint>::SharedPtr ctrl_pub;
+    rclcpp::Publisher<autopilot_msgs::msg::AttitudeTrajectorySetpoint>::SharedPtr ctrl_pub;
 
     rclcpp::TimerBase::SharedPtr control_timer;
 };

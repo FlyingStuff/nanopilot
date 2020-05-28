@@ -7,7 +7,7 @@
 
 
 
-enum control_mode_t {CTRL_MODE_DISARMED, CTRL_MODE_MANUAL, CTRL_MODE_AP, CTRL_MODE_DIRECT_ACTUATORS};
+enum control_mode_t {CTRL_MODE_DISARMED=0, CTRL_MODE_MANUAL=1, CTRL_MODE_AP=2, CTRL_MODE_DIRECT_ACTUATORS=3};
 typedef struct {
     control_mode_t mode;
     bool ap_timeout;

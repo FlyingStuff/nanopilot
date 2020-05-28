@@ -29,15 +29,11 @@ enum RosInterfaceCommMsgID : comm_msg_id_t {
     ACTUATOR_OUTPUT=11,
     CONTROL_STATUS=12,
     AP_LATENCY=13,
-    // RATE_CTRL_SETPOINT_RPY=12,
-    // RATE_CTRL_MEASURED_RPY=13,
-    // RATE_CTRL_OUTPUT_RPY=14,
-    // AP_CONTROL=15,
-    // OUTPUT_IS_ARMED=16,
-    // AP_IN_CONTROL=17,
     IMU=20,
     MAGNETOMETER=22,
     BAROMETER=23,
+    ATTITUDE_FILTER_OUTPUT=40,
+    ATTITUDE_FILTER_REFERENCE=41,
     SET_PARAMETERS=50,
     SET_PARAMETERS_RES=51,
     SAVE_PARAMETERS=52,
@@ -62,16 +58,6 @@ NOP_EXTERNAL_STRUCTURE(rc_input_s,
     signal,
     rssi,
     timestamp);
-
-// const int MAX_NB_ACTUATORS=16;
-// struct ap_ctrl_s {
-//     std::array<float, 3> rate_setpoint_rpy{{0, 0, 0}};
-//     std::array<float, MAX_NB_ACTUATORS> direct_output{{0}};
-//     std::array<float, 3> feed_forward_torque_rpy{{0, 0, 0}};
-//     std::array<float, 3> force_xyz{{0, 0, 0}};
-//     timestamp_t timestamp{0};
-// };
-// NOP_EXTERNAL_STRUCTURE(ap_ctrl_s, rate_setpoint_rpy, direct_output, feed_forward_torque_rpy, force_xyz, timestamp);
 
 #include "sensors.hpp"
 NOP_EXTERNAL_STRUCTURE(quaternion_s, w, x, y, z);
@@ -103,5 +89,12 @@ NOP_EXTERNAL_STRUCTURE(actuators_stamped_t,
     actuators,
     timestamp);
 
+#include "attitude_filter.hpp"
+NOP_EXTERNAL_STRUCTURE(attitude_filter_output_t,
+    attitude,
+    timestamp);
+NOP_EXTERNAL_STRUCTURE(external_attitude_reference_t,
+    attitude_reference,
+    timestamp);
 
 #endif /* ROS_INTERFACE_COMM_MSG_H */

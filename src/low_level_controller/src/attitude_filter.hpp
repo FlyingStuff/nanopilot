@@ -12,7 +12,6 @@
 #include "sensors.hpp"
 
 typedef struct {
-    float gyro_bias[3];
     quaternion_s attitude_reference;
     timestamp_t timestamp;
 } external_attitude_reference_t;

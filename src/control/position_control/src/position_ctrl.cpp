@@ -1,7 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include <autopilot_msgs/msg/position_trajectory_setpoint.hpp>
 #include <autopilot_msgs/msg/acceleration_trajectory_setpoint.hpp>
-#include <autopilot_msgs/msg/rate_control_setpoint.hpp>
+#include "autopilot_msgs/msg/control_status.hpp"
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
@@ -31,8 +31,8 @@ public:
             "pose", 1, std::bind(&PositionCtrl::pose_cb, this, _1));
         twist_sub = this->create_subscription<geometry_msgs::msg::TwistStamped>(
             "twist", 1, std::bind(&PositionCtrl::twist_cb, this, _1));
-        control_active_sub = this->create_subscription<std_msgs::msg::Bool>(
-            "ap_in_control", 1, std::bind(&PositionCtrl::control_active_cb, this, _1));
+        control_status_sub = this->create_subscription<autopilot_msgs::msg::ControlStatus>(
+            "control_status", 1, std::bind(&PositionCtrl::control_active_cb, this, _1));
 
         acc_ctrl_pub = this->create_publisher<autopilot_msgs::msg::AccelerationTrajectorySetpoint>("acceleration_setpoint", 10);
         vel_setpt_pub = this->create_publisher<geometry_msgs::msg::Vector3>("velocity_setpoint", 10);
@@ -206,9 +206,13 @@ private:
         current_twist_msg = msg;
     }
 
-    void control_active_cb(const std_msgs::msg::Bool::SharedPtr msg)
+    void control_active_cb(const autopilot_msgs::msg::ControlStatus::SharedPtr msg)
     {
-        control_active = msg->data;
+        if (msg->mode == autopilot_msgs::msg::ControlStatus::MODE_AP) {
+            control_active = true;
+        } else {
+            control_active = false;
+        }
     }
 
     void parameters_init(){
@@ -240,7 +244,7 @@ private:
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub;
     rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr twist_sub;
     rclcpp::Subscription<rcl_interfaces::msg::ParameterEvent>::SharedPtr sub_params;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr control_active_sub;
+    rclcpp::Subscription<autopilot_msgs::msg::ControlStatus>::SharedPtr control_status_sub;
 
     autopilot_msgs::msg::PositionTrajectorySetpoint::SharedPtr position_setpt_msg;
     geometry_msgs::msg::PoseStamped::SharedPtr current_pose_msg;

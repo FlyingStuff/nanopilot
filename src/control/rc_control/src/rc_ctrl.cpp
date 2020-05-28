@@ -99,11 +99,11 @@ private:
                     auto ctrl_msg = autopilot_msgs::msg::AttitudeTrajectorySetpoint();
                     ctrl_msg.header.frame_id = "NED";
                     ctrl_msg.header.stamp = msg->stamp;
-                    ctrl_msg.orientation.w = attitude.w();
-                    ctrl_msg.orientation.x = attitude.x();
-                    ctrl_msg.orientation.y = attitude.y();
-                    ctrl_msg.orientation.z = attitude.z();
-                    ctrl_msg.force.z = -thrust;
+                    ctrl_msg.attitude.w = attitude.w();
+                    ctrl_msg.attitude.x = attitude.x();
+                    ctrl_msg.attitude.y = attitude.y();
+                    ctrl_msg.attitude.z = attitude.z();
+                    ctrl_msg.acceleration.z = -thrust;
                     att_setpt_pub->publish(ctrl_msg);
                     auto pose_msg_setpt = geometry_msgs::msg::PoseStamped();
                     pose_msg_setpt.header.frame_id = "NED";
