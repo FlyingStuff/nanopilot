@@ -365,6 +365,7 @@ private:
                     auto val = attitude_filter_out_sub.get_value();
                     auto message = geometry_msgs::msg::PoseStamped();
                     message.header.stamp = rclcpp::Time(val.timestamp, RCL_SYSTEM_TIME) + m_timestamp_offset;
+                    message.header.frame_id = "NED"; // TODO
                     message.pose.orientation.w = val.attitude.w;
                     message.pose.orientation.x = val.attitude.x;
                     message.pose.orientation.y = val.attitude.y;
