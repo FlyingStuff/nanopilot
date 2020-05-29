@@ -19,6 +19,7 @@ typedef struct {
 typedef struct {
     float angular_rate[3]; // body frame
     quaternion_s attitude;
+    bool reference_valid;
     timestamp_t timestamp;
 } attitude_filter_output_t;
 

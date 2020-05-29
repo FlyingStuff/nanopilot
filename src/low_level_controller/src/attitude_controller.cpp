@@ -7,7 +7,7 @@ msgbus::Topic<attitude_controller_input_t> attitude_controller_input_topic;
 msgbus::Topic<attitude_controller_status_t> attitude_controller_status_topic;
 
 
-AttitudeController::AttitudeController() : 
+AttitudeController::AttitudeController() :
 m_ctrl_in_sub(attitude_controller_input_topic),
 m_att_sub(attitude_filter_output_topic)
 {
@@ -37,7 +37,7 @@ void AttitudeController::declare_parameters(parameter_namespace_t *ns)
     parameter_vector_declare_with_default(&m_force_ctrl_mix[1], &m_namespace, "fy_mix", m_force_ctrl_mix_buf[1], NB_ACTUATORS);
     parameter_vector_declare_with_default(&m_force_ctrl_mix[2], &m_namespace, "fz_mix", m_force_ctrl_mix_buf[2], NB_ACTUATORS);
 }
-    
+
 control_mode_t AttitudeController::process(const rc_input_s &rc_in, actuators_t &out)
 {
     timestamp_t now = timestamp_get();
@@ -65,8 +65,12 @@ control_mode_t AttitudeController::process(const rc_input_s &rc_in, actuators_t 
         if (timestamp_duration(ctrl_in.timestamp, now) > 0.1) {
             mode = CTRL_MODE_MANUAL;
         }
+        if (!att.reference_valid) {
+            mode = CTRL_MODE_MANUAL; // AP control is only allowed if they share the same attitude reference
+        }
     }
     if (mode == CTRL_MODE_MANUAL) {
+        // rate mode
         ctrl_in.attitude.w = NAN;
         ctrl_in.attitude.x = NAN;
         ctrl_in.attitude.y = NAN;

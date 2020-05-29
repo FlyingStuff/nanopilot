@@ -44,6 +44,7 @@ void attitude_filter_update()
 
 
         // time update
+        attitude_filter_out.reference_valid = false;
         attitude_filter_out.angular_rate[0] = omega_b[0];
         attitude_filter_out.angular_rate[1] = omega_b[1];
         attitude_filter_out.angular_rate[2] = omega_b[2];
