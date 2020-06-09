@@ -2,6 +2,7 @@
 #include "control_loop.hpp"
 #include <Eigen/Dense>
 #include "sensors.hpp"
+#include <math.h>
 #include <algorithm>
 
 msgbus::Topic<attitude_filter_output_t> attitude_filter_output_topic;
@@ -44,7 +45,7 @@ public:
     // parameters
     float gravity_align_time_cst{3.0f}; // [s]
     float attitude_reference_align_time_cst{3.0f}; // [s]
-    float reference_timeout{10.0f}; // [s]
+    float reference_timeout{5.0f}; // [s]
     float reference_acceptance_time_delta{0.1f}; // [s]
 
     const Eigen::Quaternionf &get_attitude() { return attitude_estimate; }
@@ -64,15 +65,19 @@ public:
 
     void measure_gravity(const Eigen::Vector3f &acceleration, timestamp_t timestamp)
     {
+        float measurement_period = std::max(0.0f, timestamp_duration(last_gravity_measurement, timestamp));
+        last_gravity_measurement = timestamp;
+
         if (reference_valid()) {
             return; // no gravity updates if we have an attitude reference
         }
-        float measurement_period = std::max(0.0f, timestamp_duration(last_gravity_measurement, timestamp));
-        last_gravity_measurement = timestamp;
 
         // no time correction is made, acceleration is synchronized with gyro time update
 
         float acc_norm = acceleration.norm();
+        if (acc_norm < 2.0f || acc_norm > 20.0f) {
+            return; // very low/high acceleration, don't use it
+        }
         auto acc_dir_b = acceleration/acc_norm;
         auto acc_dir_I = attitude_estimate._transformVector(acc_dir_b);
         const Eigen::Vector3f acc_dir_true_I(0, 0, -1);
@@ -171,7 +176,14 @@ void attitude_filter_update()
             att_ref.attitude_reference.x,
             att_ref.attitude_reference.y,
             att_ref.attitude_reference.z);
-        attitude_filter.measure_attitude_reference(q_ref, att_ref.timestamp);
+        if (isfinite(att_ref.attitude_reference.w)
+            && isfinite(att_ref.attitude_reference.x)
+            && isfinite(att_ref.attitude_reference.y)
+            && isfinite(att_ref.attitude_reference.z)
+            && q_ref.squaredNorm() < 1.001f && q_ref.squaredNorm() > 0.999f) {
+            attitude_filter.measure_attitude_reference(q_ref, att_ref.timestamp);
+        }
+
     }
 
     attitude_filter_output_t attitude_filter_out;
