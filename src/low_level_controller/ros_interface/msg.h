@@ -76,8 +76,11 @@ NOP_EXTERNAL_STRUCTURE(attitude_controller_input_t,
     acceleration,
     timestamp);
 NOP_EXTERNAL_STRUCTURE(attitude_controller_status_t,
+    attitude_setpt,
     angular_rate_ref,
     torque,
+    attitude_control,
+    rate_control,
     timestamp);
 
 #include "actuators.hpp"

@@ -1,4 +1,7 @@
 std_msgs/Header header
 
+geometry_msgs/Quaternion attitude_setpt
 geometry_msgs/Vector3 angular_rate_ref
 geometry_msgs/Vector3 torque
+bool attitude_control
+bool rate_control

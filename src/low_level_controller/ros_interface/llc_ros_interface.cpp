@@ -383,6 +383,12 @@ private:
                     message.torque.x = val.torque[0];
                     message.torque.y = val.torque[1];
                     message.torque.z = val.torque[2];
+                    message.attitude_setpt.w = val.attitude_setpt.w;
+                    message.attitude_setpt.x = val.attitude_setpt.x;
+                    message.attitude_setpt.y = val.attitude_setpt.y;
+                    message.attitude_setpt.z = val.attitude_setpt.z;
+                    message.attitude_control = val.attitude_control;
+                    message.rate_control = val.rate_control;
                     m_ctrl_attitude_status_pub->publish(message);
                 }
             } catch(rclcpp::exceptions::RCLError const& e) {

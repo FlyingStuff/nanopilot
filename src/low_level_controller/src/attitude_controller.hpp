@@ -20,6 +20,9 @@ typedef struct {
 typedef struct {
     float angular_rate_ref[3];
     float torque[3];
+    struct quaternion_s attitude_setpt;
+    bool attitude_control;
+    bool rate_control;
     timestamp_t timestamp;
 } attitude_controller_status_t;
 
@@ -32,9 +35,20 @@ private:
     PIDController m_pid_controller_rpy[3];
     LowPassFilter m_output_lp_rpy[3];
     parameter_namespace_t m_namespace;
-    // parameter_t m_attitude_roll_gain;
-    // parameter_t m_attitude_pitch_gain;
-    // parameter_t m_attitude_yaw_gain;
+    parameter_t m_attitude_roll_time_cst;
+    parameter_t m_attitude_pitch_time_cst;
+    parameter_t m_attitude_yaw_time_cst;
+    parameter_t m_attitude_tilt_twist_decompostition;
+    parameter_t m_max_roll_rate;
+    parameter_t m_max_pitch_rate;
+    parameter_t m_max_yaw_rate;
+    parameter_t m_Ixx;
+    parameter_t m_Iyy;
+    parameter_t m_Izz;
+    parameter_t m_Ixy;
+    parameter_t m_Ixz;
+    parameter_t m_Iyz;
+    parameter_t m_mass;
     parameter_t m_rc_roll_rate_gain;
     parameter_t m_rc_pitch_rate_gain;
     parameter_t m_rc_yaw_rate_gain;
@@ -51,7 +65,7 @@ private:
 public:
     explicit AttitudeController();
     void declare_parameters(parameter_namespace_t *ns);
-    
+
     virtual control_mode_t process(const rc_input_s &rc_in, actuators_t &out);
     virtual void notify_output_disabled();
     virtual void set_update_frequency(float freq);

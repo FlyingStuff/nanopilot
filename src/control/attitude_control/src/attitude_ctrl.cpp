@@ -15,6 +15,7 @@ using namespace std::chrono_literals;
  * (first tilt, then twist)
  * where rotation_twist is around twist_axis and rotation_tilt is around a
  * perpendicular axis
+ * output quaternions have positive real part
  */
 void rotation_split_tilt_twist(const Eigen::Quaterniond &rotation,
     const Eigen::Vector3d &twist_axis,
@@ -32,6 +33,9 @@ void rotation_split_tilt_twist(const Eigen::Quaterniond &rotation,
     auto b = qv_dot_t * s;
     rotation_twist.vec() = b * t;
     rotation_tilt = rotation_twist.conjugate()*q;
+    if (rotation_tilt.w() < 0) {
+        rotation_tilt.coeffs() = -rotation_tilt.coeffs();
+    }
 }
 
 class AttitudeCtrl : public rclcpp::Node
